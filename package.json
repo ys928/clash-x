@@ -133,10 +133,10 @@
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
       "eslint --fix --max-warnings=0",
-      "biome format --write"
+      "biome format --write --no-errors-on-unmatched"
     ],
     "*.{css,scss,json}": [
-      "biome format --write"
+      "biome format --write --no-errors-on-unmatched"
     ]
   },
   "type": "module",
