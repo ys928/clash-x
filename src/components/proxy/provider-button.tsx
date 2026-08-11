@@ -218,12 +218,12 @@ export const ProviderButton = () => {
                       overflow: 'hidden',
                       transition: 'all 0.2s',
                     },
-                    ({ palette: { mode, primary } }) => {
-                      const bgcolor = mode === 'light' ? '#ffffff' : '#24252f'
-                      const hoverColor =
-                        mode === 'light'
-                          ? alpha(primary.main, 0.1)
-                          : alpha(primary.main, 0.2)
+                    ({ palette: { mode, primary, background } }) => {
+                      const bgcolor = background.paper
+                      const hoverColor = alpha(
+                        primary.main,
+                        mode === 'light' ? 0.1 : 0.14,
+                      )
 
                       return {
                         backgroundColor: bgcolor,

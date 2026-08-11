@@ -9,10 +9,10 @@ use clash_verge_logging::{Type, logging_error};
 #[cfg(target_os = "macos")]
 use clash_verge_logging::logging;
 
-const DARK_BACKGROUND_COLOR: Color = Color(46, 48, 61, 255); // #2E303D
-const LIGHT_BACKGROUND_COLOR: Color = Color(245, 245, 245, 255); // #F5F5F5
-const DARK_BACKGROUND_HEX: &str = "#2E303D";
-const LIGHT_BACKGROUND_HEX: &str = "#F5F5F5";
+const DARK_BACKGROUND_COLOR: Color = Color(26, 27, 30, 255); // #1A1B1E
+const LIGHT_BACKGROUND_COLOR: Color = Color(242, 243, 245, 255); // #F2F3F5
+const DARK_BACKGROUND_HEX: &str = "#1A1B1E";
+const LIGHT_BACKGROUND_HEX: &str = "#F2F3F5";
 
 // 定义默认窗口尺寸常量
 const DEFAULT_WIDTH: f64 = 940.0;
@@ -21,10 +21,7 @@ const DEFAULT_HEIGHT: f64 = 700.0;
 const MINIMAL_WIDTH: f64 = 520.0;
 const MINIMAL_HEIGHT: f64 = 520.0;
 
-#[cfg(target_os = "linux")]
 const DEFAULT_DECORATIONS: bool = false;
-#[cfg(not(target_os = "linux"))]
-const DEFAULT_DECORATIONS: bool = true;
 
 const fn restored_window_size_is_too_small(width: u32, height: u32) -> bool {
     width < MINIMAL_WIDTH as u32 || height < MINIMAL_HEIGHT as u32

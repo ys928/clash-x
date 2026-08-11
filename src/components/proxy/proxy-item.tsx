@@ -75,9 +75,9 @@ export const ProxyItem = (props: Props) => {
         onClick={unresolved ? undefined : () => onClick?.(member)}
         sx={[
           { borderRadius: 1 },
-          ({ palette: { mode, primary } }) => {
-            const bgcolor = mode === 'light' ? '#ffffff' : '#24252f'
-            const selectColor = mode === 'light' ? primary.main : primary.light
+          ({ palette: { mode, primary, background } }) => {
+            const bgcolor = background.paper
+            const selectColor = primary.main
             const showDelay = delayValue > 0
 
             return {
@@ -88,10 +88,7 @@ export const ProxyItem = (props: Props) => {
                 width: `calc(100% + 3px)`,
                 marginLeft: `-3px`,
                 borderLeft: `3px solid ${selectColor}`,
-                bgcolor:
-                  mode === 'light'
-                    ? alpha(primary.main, 0.15)
-                    : alpha(primary.main, 0.35),
+                bgcolor: alpha(primary.main, mode === 'light' ? 0.1 : 0.14),
               },
               backgroundColor: bgcolor,
               marginBottom: '8px',

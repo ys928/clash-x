@@ -54,10 +54,10 @@ export const ProxyItemMini = (props: Props) => {
           justifyContent: 'space-between',
           alignItems: 'center',
         },
-        ({ palette: { mode, primary } }) => {
-          const bgcolor = mode === 'light' ? '#ffffff' : '#24252f'
+        ({ palette: { mode, primary, background } }) => {
+          const bgcolor = background.paper
           const showDelay = delayValue > 0
-          const selectColor = mode === 'light' ? primary.main : primary.light
+          const selectColor = primary.main
 
           return {
             '&:hover .the-check': { display: !showDelay ? 'block' : 'none' },
@@ -74,10 +74,7 @@ export const ProxyItemMini = (props: Props) => {
               width: `calc(100% + 3px)`,
               marginLeft: `-3px`,
               borderLeft: `3px solid ${selectColor}`,
-              bgcolor:
-                mode === 'light'
-                  ? alpha(primary.main, 0.15)
-                  : alpha(primary.main, 0.35),
+              bgcolor: alpha(primary.main, mode === 'light' ? 0.1 : 0.14),
             },
             backgroundColor: bgcolor,
           }

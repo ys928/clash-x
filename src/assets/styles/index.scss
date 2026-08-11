@@ -16,12 +16,14 @@ body {
 }
 
 :root {
-  --primary-main: #5b5c9d;
-  --text-primary: #1f1f1f;
-  --selection-color: #f5f5f5;
-  --scroller-color: #8c8c8c;
-  --background-color: #f5f5f5;
-  --background-color-alpha: rgba(24, 103, 192, 0.1);
+  --primary-main: #3d6fd9;
+  --text-primary: #1c1d21;
+  --selection-color: #f2f3f5;
+  --scroller-color: #a8abb2;
+  --background-color: #f2f3f5;
+  --background-paper: #ffffff;
+  --background-elevated: #ffffff;
+  --background-color-alpha: rgba(61, 111, 217, 0.1);
   --border-radius: 8px;
 }
 
@@ -46,12 +48,6 @@ body {
 body {
   overflow: hidden;
 }
-
-// @media (prefers-color-scheme: dark) {
-//   :root {
-//     background-color: rgba(18, 18, 18, 1);
-//   }
-// }
 
 .user-none {
   user-select: none;

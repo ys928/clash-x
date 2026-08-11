@@ -1,5 +1,4 @@
-import { Close, CropSquare, FilterNone, Minimize } from '@mui/icons-material'
-import { Box, IconButton } from '@mui/material'
+import { RemoveRounded } from '@mui/icons-material'
 import {
   forwardRef,
   type PointerEvent,
@@ -21,8 +20,47 @@ const RESIZE_HANDLES = [
   { direction: 'NorthWest', position: 'north-west' },
 ] as const
 
+const CloseIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+    <path
+      d="M1.5 1.5l7 7M8.5 1.5l-7 7"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
+const MaximizeIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+    <rect
+      x="1.5"
+      y="1.5"
+      width="7"
+      height="7"
+      rx="0.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.1"
+    />
+  </svg>
+)
+
+const RestoreIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+    <path
+      d="M3 2.5h4.5V7M2.5 3v4.5H7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.1"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 export const WindowResizeHandles = () => {
   const { currentWindow, maximized } = useWindowControls()
+  const OS = getSystem()
 
   const startResizeDragging = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
@@ -43,7 +81,9 @@ export const WindowResizeHandles = () => {
     [currentWindow],
   )
 
-  if (getSystem() !== 'linux' || maximized) return null
+  const needsCustomResize =
+    OS === 'linux' || OS === 'windows' || OS === 'unknown'
+  if (!needsCustomResize || maximized) return null
 
   return (
     <div
@@ -63,7 +103,7 @@ export const WindowResizeHandles = () => {
   )
 }
 
-export const WindowControls = forwardRef(function WindowControls(props, ref) {
+export const WindowControls = forwardRef(function WindowControls(_props, ref) {
   const OS = getSystem()
   const {
     currentWindow,
@@ -94,96 +134,59 @@ export const WindowControls = forwardRef(function WindowControls(props, ref) {
     ],
   )
 
-  // 通过前端对 tauri 窗口进行翻转全屏时会短暂地与系统图标重叠渲染。
-  // 这可能是上游缺陷，保险起见跨平台以窗口的最大化翻转为准。
+  if (OS === 'macos') {
+    return (
+      <div className="window-controls window-controls--mac">
+        <button
+          type="button"
+          className="window-controls__mac-btn window-controls__mac-btn--close"
+          aria-label="Close"
+          onClick={close}
+        />
+        <button
+          type="button"
+          className="window-controls__mac-btn window-controls__mac-btn--minimize"
+          aria-label="Minimize"
+          onClick={minimize}
+        />
+        <button
+          type="button"
+          className="window-controls__mac-btn window-controls__mac-btn--maximize"
+          aria-label={maximized ? 'Restore' : 'Maximize'}
+          data-window-action="maximize"
+          onClick={toggleMaximize}
+        />
+      </div>
+    )
+  }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        alignItems: 'center',
-        '> button': {
-          cursor: 'default',
-        },
-      }}
-    >
-      {OS === 'macos' && (
-        <>
-          {/* macOS 风格：关闭 → 最小化 → 全屏 */}
-          <IconButton size="small" sx={{ fontSize: 14 }} onClick={close}>
-            <Close fontSize="inherit" color="inherit" />
-          </IconButton>
-          <IconButton size="small" sx={{ fontSize: 14 }} onClick={minimize}>
-            <Minimize fontSize="inherit" color="inherit" />
-          </IconButton>
-          <IconButton
-            size="small"
-            sx={{ fontSize: 14 }}
-            onClick={toggleMaximize}
-          >
-            {maximized ? (
-              <FilterNone fontSize="inherit" color="inherit" />
-            ) : (
-              <CropSquare fontSize="inherit" color="inherit" />
-            )}
-          </IconButton>
-        </>
-      )}
-
-      {OS === 'windows' && (
-        <>
-          {/* Windows 风格：最小化 → 最大化 → 关闭 */}
-          <IconButton size="small" sx={{ fontSize: 16 }} onClick={minimize}>
-            <Minimize fontSize="inherit" color="inherit" />
-          </IconButton>
-          <IconButton
-            size="small"
-            sx={{ fontSize: 16 }}
-            onClick={toggleMaximize}
-          >
-            {maximized ? (
-              <FilterNone fontSize="inherit" color="inherit" />
-            ) : (
-              <CropSquare fontSize="inherit" color="inherit" />
-            )}
-          </IconButton>
-          <IconButton
-            size="small"
-            sx={{ fontSize: 16, ':hover': { bgcolor: 'red', color: 'white' } }}
-            onClick={close}
-          >
-            <Close fontSize="inherit" color="inherit" />
-          </IconButton>
-        </>
-      )}
-
-      {OS === 'linux' && (
-        <>
-          {/* Linux 桌面常见布局（GNOME/KDE 多为：最小化 → 最大化 → 关闭） */}
-          <IconButton size="small" sx={{ fontSize: 16 }} onClick={minimize}>
-            <Minimize fontSize="inherit" color="inherit" />
-          </IconButton>
-          <IconButton
-            size="small"
-            sx={{ fontSize: 16 }}
-            onClick={toggleMaximize}
-          >
-            {maximized ? (
-              <FilterNone fontSize="inherit" color="inherit" />
-            ) : (
-              <CropSquare fontSize="inherit" color="inherit" />
-            )}
-          </IconButton>
-          <IconButton
-            size="small"
-            sx={{ fontSize: 16, ':hover': { bgcolor: 'red', color: 'white' } }}
-            onClick={close}
-          >
-            <Close fontSize="inherit" color="inherit" />
-          </IconButton>
-        </>
-      )}
-    </Box>
+    <div className="window-controls window-controls--win">
+      <button
+        type="button"
+        className="window-controls__win-btn"
+        aria-label="Minimize"
+        onClick={minimize}
+      >
+        <RemoveRounded sx={{ fontSize: 14 }} />
+      </button>
+      <button
+        type="button"
+        className="window-controls__win-btn"
+        aria-label={maximized ? 'Restore' : 'Maximize'}
+        data-window-action="maximize"
+        onClick={toggleMaximize}
+      >
+        {maximized ? <RestoreIcon /> : <MaximizeIcon />}
+      </button>
+      <button
+        type="button"
+        className="window-controls__win-btn window-controls__win-btn--close"
+        aria-label="Close"
+        onClick={close}
+      >
+        <CloseIcon />
+      </button>
+    </div>
   )
 })

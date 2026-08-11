@@ -10,7 +10,11 @@ import SettingVergeAdvanced from '@/components/setting/setting-verge-advanced'
 import SettingVergeBasic from '@/components/setting/setting-verge-basic'
 import { openWebUrl } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
-import { useThemeMode } from '@/services/states'
+
+const settingPanelSx = {
+  borderRadius: 2,
+  backgroundColor: 'background.paper',
+} as const
 
 const SettingPage = () => {
   const { t } = useTranslation()
@@ -30,9 +34,6 @@ const SettingPage = () => {
   const toTelegramChannel = useLockFn(() => {
     return openWebUrl('https://t.me/clash_verge_re')
   })
-
-  const mode = useThemeMode()
-  const isDark = mode === 'light' ? false : true
 
   return (
     <BasePage
@@ -72,40 +73,18 @@ const SettingPage = () => {
     >
       <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
         <Grid size={6}>
-          <Box
-            sx={{
-              borderRadius: 2,
-              marginBottom: 1.5,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
-            }}
-          >
+          <Box sx={{ ...settingPanelSx, marginBottom: 1.5 }}>
             <SettingSystem onError={onError} />
           </Box>
-          <Box
-            sx={{
-              borderRadius: 2,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
-            }}
-          >
+          <Box sx={settingPanelSx}>
             <SettingClash onError={onError} />
           </Box>
         </Grid>
         <Grid size={6}>
-          <Box
-            sx={{
-              borderRadius: 2,
-              marginBottom: 1.5,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
-            }}
-          >
+          <Box sx={{ ...settingPanelSx, marginBottom: 1.5 }}>
             <SettingVergeBasic onError={onError} />
           </Box>
-          <Box
-            sx={{
-              borderRadius: 2,
-              backgroundColor: isDark ? '#282a36' : '#ffffff',
-            }}
-          >
+          <Box sx={settingPanelSx}>
             <SettingVergeAdvanced onError={onError} />
           </Box>
         </Grid>

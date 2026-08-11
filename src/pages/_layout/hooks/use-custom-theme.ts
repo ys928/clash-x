@@ -1,4 +1,10 @@
-import { alpha, createTheme, Theme as MuiTheme, Shadows } from '@mui/material'
+import {
+  alpha,
+  createTheme,
+  Theme as MuiTheme,
+  Shadows,
+  type ThemeOptions,
+} from '@mui/material'
 import {
   getCurrentWebviewWindow,
   WebviewWindow,
@@ -26,6 +32,8 @@ const TOP_LEVEL_AT_RULES = [
   '@color-profile',
 ]
 let cssScopeSupport: boolean | null = null
+
+type ThemeDefaults = typeof defaultTheme
 
 const canUseCssScope = () => {
   if (cssScopeSupport !== null) {
@@ -60,6 +68,174 @@ const wrapCssInjectionWithScope = (css?: string) => {
 ${css}
 }`
   return scopedBlock
+}
+
+const buildThemeOptions = (
+  mode: 'light' | 'dark',
+  dt: ThemeDefaults,
+  setting: NonNullable<IVergeConfig['theme_setting']>,
+): ThemeOptions => {
+  const primaryMain = setting.primary_color || dt.primary_color
+  const dividerColor =
+    mode === 'light' ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'
+  const selectedBg = alpha(primaryMain, mode === 'light' ? 0.1 : 0.14)
+  const hoverBg = dt.background_elevated
+
+  return {
+    breakpoints: {
+      values: { xs: 0, sm: 650, md: 900, lg: 1200, xl: 1536 },
+    },
+    shape: {
+      borderRadius: 8,
+    },
+    palette: {
+      mode,
+      primary: { main: primaryMain },
+      secondary: { main: setting.secondary_color || dt.secondary_color },
+      info: { main: setting.info_color || dt.info_color },
+      error: { main: setting.error_color || dt.error_color },
+      warning: { main: setting.warning_color || dt.warning_color },
+      success: { main: setting.success_color || dt.success_color },
+      text: {
+        primary: setting.primary_text || dt.primary_text,
+        secondary: setting.secondary_text || dt.secondary_text,
+      },
+      divider: dividerColor,
+      background: {
+        default: dt.background_default,
+        paper: dt.background_color,
+      },
+    },
+    shadows: Array(25).fill('none') as Shadows,
+    typography: {
+      fontFamily: setting.font_family
+        ? `${setting.font_family}, ${dt.font_family}`
+        : dt.font_family,
+      fontWeightMedium: 500,
+      fontWeightBold: 600,
+      h6: { fontWeight: 600 },
+      subtitle1: { fontWeight: 500 },
+      button: { fontWeight: 500, textTransform: 'none' },
+    },
+    components: {
+      MuiButton: {
+        defaultProps: {
+          disableElevation: true,
+        },
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            boxShadow: 'none',
+          },
+          contained: {
+            boxShadow: 'none',
+            '&:hover': {
+              boxShadow: 'none',
+            },
+          },
+          outlined: {
+            borderWidth: 1,
+            '&:hover': {
+              borderWidth: 1,
+            },
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            boxShadow: 'none',
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            backgroundImage: 'none',
+            border: `1px solid ${dividerColor}`,
+            boxShadow: 'none',
+          },
+        },
+      },
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            backgroundImage: 'none',
+            border: `1px solid ${dividerColor}`,
+            boxShadow: 'none',
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            '&:hover': {
+              backgroundColor: hoverBg,
+            },
+            '&.Mui-selected': {
+              backgroundColor: selectedBg,
+              '&:hover': {
+                backgroundColor: selectedBg,
+              },
+            },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            '&:hover': {
+              backgroundColor: alpha(
+                primaryMain,
+                mode === 'light' ? 0.06 : 0.1,
+              ),
+            },
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            backgroundColor:
+              mode === 'light'
+                ? dt.background_elevated
+                : dt.background_elevated,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: dividerColor,
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: alpha(primaryMain, 0.4),
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: primaryMain,
+              borderWidth: 1,
+            },
+          },
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            backgroundColor: mode === 'light' ? '#1C1D21' : '#2A2B2F',
+            fontSize: 12,
+            borderRadius: 6,
+            padding: '6px 10px',
+          },
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            boxShadow: 'none',
+          },
+        },
+      },
+    },
+  }
 }
 
 /**
@@ -147,85 +323,45 @@ export const useCustomTheme = () => {
     let muiTheme: MuiTheme
 
     try {
-      muiTheme = createTheme({
-        breakpoints: {
-          values: { xs: 0, sm: 650, md: 900, lg: 1200, xl: 1536 },
-        },
-        palette: {
-          mode,
-          primary: { main: setting.primary_color || dt.primary_color },
-          secondary: { main: setting.secondary_color || dt.secondary_color },
-          info: { main: setting.info_color || dt.info_color },
-          error: { main: setting.error_color || dt.error_color },
-          warning: { main: setting.warning_color || dt.warning_color },
-          success: { main: setting.success_color || dt.success_color },
-          text: {
-            primary: setting.primary_text || dt.primary_text,
-            secondary: setting.secondary_text || dt.secondary_text,
-          },
-          background: {
-            paper: dt.background_color,
-            default: dt.background_color,
-          },
-        },
-        shadows: Array(25).fill('none') as Shadows,
-        typography: {
-          fontFamily: setting.font_family
-            ? `${setting.font_family}, ${dt.font_family}`
-            : dt.font_family,
-        },
-      })
+      muiTheme = createTheme(buildThemeOptions(mode, dt, setting))
     } catch (e) {
       console.error('Error creating MUI theme, falling back to defaults:', e)
-      muiTheme = createTheme({
-        breakpoints: {
-          values: { xs: 0, sm: 650, md: 900, lg: 1200, xl: 1536 },
-        },
-        palette: {
-          mode,
-          primary: { main: dt.primary_color },
-          secondary: { main: dt.secondary_color },
-          info: { main: dt.info_color },
-          error: { main: dt.error_color },
-          warning: { main: dt.warning_color },
-          success: { main: dt.success_color },
-          text: { primary: dt.primary_text, secondary: dt.secondary_text },
-          background: {
-            paper: dt.background_color,
-            default: dt.background_color,
-          },
-        },
-        typography: { fontFamily: dt.font_family },
-      })
+      muiTheme = createTheme(buildThemeOptions(mode, dt, {}))
     }
 
     const rootEle = document.documentElement
     if (rootEle) {
-      const backgroundColor = mode === 'light' ? '#ECECEC' : dt.background_color
-      const selectColor = mode === 'light' ? '#f5f5f5' : '#3E3E3E'
-      const scrollColor = mode === 'light' ? '#90939980' : '#555555'
       const dividerColor =
         mode === 'light' ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)'
+      const selectColor = mode === 'light' ? '#F2F3F5' : '#2A2B2F'
+      const scrollColor = mode === 'light' ? '#A8ABB2' : '#4A4B50'
+
       rootEle.style.setProperty('--divider-color', dividerColor)
-      rootEle.style.setProperty('--background-color', backgroundColor)
+      rootEle.style.setProperty('--background-color', dt.background_default)
+      rootEle.style.setProperty('--background-paper', dt.background_color)
+      rootEle.style.setProperty('--background-elevated', dt.background_elevated)
       rootEle.style.setProperty('--selection-color', selectColor)
       rootEle.style.setProperty('--scroller-color', scrollColor)
       rootEle.style.setProperty('--primary-main', muiTheme.palette.primary.main)
+      rootEle.style.setProperty(
+        '--text-secondary',
+        muiTheme.palette.text.secondary,
+      )
       rootEle.style.setProperty(
         '--background-color-alpha',
         alpha(muiTheme.palette.primary.main, 0.1),
       )
       rootEle.style.setProperty(
         '--window-border-color',
-        mode === 'light' ? '#cccccc' : '#1E1E1E',
+        mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.06)',
       )
       rootEle.style.setProperty(
         '--scrollbar-bg',
-        mode === 'light' ? '#f1f1f1' : '#2E303D',
+        mode === 'light' ? '#E8EAED' : dt.background_default,
       )
       rootEle.style.setProperty(
         '--scrollbar-thumb',
-        mode === 'light' ? '#c1c1c1' : '#555555',
+        mode === 'light' ? '#B8BBC2' : '#3D3E42',
       )
       rootEle.style.setProperty(
         '--user-background-image',
@@ -258,7 +394,6 @@ export const useCustomTheme = () => {
       }
       const effectiveInjectedCss = scopedCss ?? setting.css_injection ?? ''
       const globalStyles = `
-        /* 修复滚动条样式 */
         ::-webkit-scrollbar {
           width: 8px;
           height: 8px;
@@ -269,10 +404,9 @@ export const useCustomTheme = () => {
           border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-          background-color: ${mode === 'light' ? '#a1a1a1' : '#666666'};
+          background-color: ${mode === 'light' ? '#9CA0A8' : '#505156'};
         }
 
-        /* 背景图处理 */
         body {
           background-color: var(--background-color);
           ${
@@ -289,20 +423,21 @@ export const useCustomTheme = () => {
           }
         }
 
-        /* 修复可能的白色边框 */
         .MuiPaper-root {
           border-color: var(--window-border-color) !important;
         }
 
-        /* 确保模态框和对话框也使用暗色主题 */
         .MuiDialog-paper {
-          background-color: ${mode === 'light' ? '#ffffff' : '#2E303D'} !important;
+          background-color: var(--background-paper) !important;
         }
 
-        /* 移除可能的白色点或线条 */
-        * {
-          outline: none !important;
-          box-shadow: none !important;
+        .MuiMenu-paper {
+          background-color: var(--background-paper) !important;
+        }
+
+        *:focus-visible {
+          outline: 2px solid ${alpha(muiTheme.palette.primary.main, 0.5)} !important;
+          outline-offset: 1px;
         }
       `
 

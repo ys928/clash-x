@@ -26,6 +26,7 @@
       -ms-user-select: none;
       overflow: hidden;
       border-right: 1px solid var(--divider-color);
+      background-color: var(--background-paper);
 
       .the-logo {
         position: relative;
@@ -83,6 +84,7 @@
       position: relative;
       flex: 1 1 100%;
       height: 100%;
+      background-color: var(--background-color);
 
       .the-bar {
         height: 36px;
@@ -194,28 +196,146 @@
   }
 }
 
+.app-titlebar {
+  --titlebar-height: 40px;
+  --titlebar-control-width: 46px;
+
+  flex: 0 0 var(--titlebar-height);
+  width: 100%;
+  height: var(--titlebar-height);
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  background-color: var(--background-paper);
+  border-bottom: 1px solid var(--divider-color);
+  user-select: none;
+  -webkit-user-select: none;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  &__title {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary, #8b8d93);
+  }
+
+  &__drag {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    height: 100%;
+
+    &--leading {
+      padding: 0 12px;
+      align-items: center;
+    }
+
+    &--trailing {
+      margin-left: auto;
+    }
+  }
+}
+
+.window-controls {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+
+  &--mac {
+    gap: 8px;
+    align-items: center;
+  }
+
+  &__mac-btn {
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: default;
+    transition: opacity 0.15s ease;
+
+    &--close {
+      background-color: #ff5f57;
+    }
+
+    &--minimize {
+      background-color: #febc2e;
+    }
+
+    &--maximize {
+      background-color: #28c840;
+    }
+
+    &:hover {
+      opacity: 0.85;
+    }
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+
+  &--win {
+    height: 100%;
+  }
+
+  &__win-btn {
+    width: var(--titlebar-control-width);
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    &:hover {
+      background-color: var(--background-elevated);
+    }
+
+    &:active {
+      background-color: var(--background-color-alpha);
+    }
+
+    &--close:hover {
+      background-color: #e81123;
+      color: #ffffff;
+    }
+
+    &--close:active {
+      background-color: #bf0f1d;
+      color: #ffffff;
+    }
+  }
+}
+
 .linux,
 .windows,
 .unknown {
   &.layout {
-    .the_titlebar {
-      width: 100%;
-      display: flex;
-      justify-content: flex-end;
-      padding: 10px;
-      box-sizing: border-box;
-      height: 36px;
-      border-bottom: 1px solid var(--divider-color);
-
-      &-drag-region {
-        align-self: stretch;
-        flex: 1 1 auto;
-      }
-    }
-
     .layout-content__left .the-logo {
       flex: 1 0 58px;
-      margin-top: 10px;
+      margin-top: 4px;
       margin-left: 10px;
       padding-top: 5px;
       padding-left: 10px;
@@ -224,35 +344,19 @@
     }
 
     .layout-content__right .the-content {
-      top: 5px;
+      top: 0;
     }
   }
 }
 
 .macos {
   &.layout {
-    .the_titlebar {
-      width: 100%;
-      display: flex;
-      justify-content: flex-start;
-      padding: 10px;
-      box-sizing: border-box;
-      height: 36px;
-      border-bottom: 1px solid var(--divider-color);
-
-      &-drag-region {
-        align-self: stretch;
-        flex: 1 1 auto;
-        order: 1;
-      }
-    }
-
     .layout-content__left {
-      padding-top: 5px;
+      padding-top: 4px;
     }
 
     .layout-content__right .the-content {
-      top: 5px;
+      top: 0;
     }
 
     .layout-content__left .the-newbtn {

@@ -24,7 +24,7 @@ import {
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import type { CSSProperties } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useNavigate } from 'react-router'
 import { MihomoWebSocket } from 'tauri-plugin-mihomo-api'
@@ -33,18 +33,15 @@ import iconDark from '@/assets/image/icon_dark.svg?react'
 import iconLight from '@/assets/image/icon_light.svg?react'
 import LogoSvg from '@/assets/image/logo.svg?react'
 import { BaseErrorBoundary } from '@/components/base'
+import { CustomTitlebar } from '@/components/layout/custom-titlebar'
 import { LayoutItem } from '@/components/layout/layout-item'
 import { LayoutTraffic } from '@/components/layout/layout-traffic'
 import { NoticeManager } from '@/components/layout/notice-manager'
 import { ServiceMigrationDialog } from '@/components/layout/service-migration-dialog'
 import { UpdateButton } from '@/components/layout/update-button'
-import {
-  WindowControls,
-  WindowResizeHandles,
-} from '@/components/layout/window-controller'
+import { WindowResizeHandles } from '@/components/layout/window-controller'
 import { useI18n } from '@/hooks/use-i18n'
 import { useVerge } from '@/hooks/use-verge'
-import { useWindowDecorations } from '@/hooks/use-window'
 import { useThemeMode } from '@/services/states'
 import getSystem from '@/utils/get-system'
 
@@ -145,9 +142,6 @@ const Layout = () => {
   const [menuContextPosition, setMenuContextPosition] =
     useState<MenuContextPosition | null>(null)
 
-  const windowControlsRef = useRef<any>(null)
-  const { decorated } = useWindowDecorations()
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -221,20 +215,6 @@ const Layout = () => {
     void patchVerge({ collapse_navbar: !navCollapsed })
   }, [navCollapsed, patchVerge])
 
-  const customTitlebar = useMemo(
-    () =>
-      decorated === false ? (
-        <div className="the_titlebar">
-          <div
-            className="the_titlebar-drag-region"
-            data-tauri-drag-region="true"
-          />
-          <WindowControls ref={windowControlsRef} />
-        </div>
-      ) : null,
-    [decorated],
-  )
-
   useLoadingOverlay(themeReady)
 
   const handleNotice = useCallback(
@@ -264,12 +244,12 @@ const Layout = () => {
         style={{
           width: '100vw',
           height: '100vh',
-          background: mode === 'light' ? '#fff' : '#181a1b',
+          background: mode === 'light' ? '#F2F3F5' : '#1A1B1E',
           transition: 'background 0.2s',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: mode === 'light' ? '#333' : '#fff',
+          color: mode === 'light' ? '#1C1D21' : '#E8E8EA',
         }}
       ></div>
     )
@@ -324,10 +304,8 @@ const Layout = () => {
             : {},
         ]}
       >
-        {decorated === false && <WindowResizeHandles />}
-
-        {/* Custom titlebar - rendered only when decorated is false, memoized for performance */}
-        {customTitlebar}
+        <WindowResizeHandles />
+        <CustomTitlebar />
 
         <div className="layout-content">
           <div className="layout-content__left">

@@ -58,8 +58,8 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
   const { verge } = useVerge()
   const enable_group_icon = verge?.enable_group_icon ?? true
   const mode = useThemeMode()
-  const isDark = mode === 'dark'
-  const itembackgroundcolor = isDark ? '#282A36' : '#ffffff'
+  const itembackgroundcolor =
+    mode === 'dark' ? 'var(--background-paper)' : 'var(--background-paper)'
   const iconCachePath = useIconCache({
     icon: group.icon,
     cacheKey: group.name.replaceAll(' ', ''),

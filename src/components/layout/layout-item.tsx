@@ -81,19 +81,30 @@ export const LayoutItem = (props: Props) => {
             '&:active': draggable ? { cursor: 'grabbing' } : {},
             '& .MuiListItemText-primary': {
               color: 'text.primary',
-              fontWeight: '700',
+              fontWeight: 600,
             },
           },
           ({ palette: { mode, primary } }) => {
-            const bgcolor =
-              mode === 'light'
-                ? alpha(primary.main, 0.15)
-                : alpha(primary.main, 0.35)
-            const color = mode === 'light' ? '#1f1f1f' : '#ffffff'
+            const selectedBg = alpha(
+              primary.main,
+              mode === 'light' ? 0.1 : 0.14,
+            )
             return {
-              '&.Mui-selected': { bgcolor },
-              '&.Mui-selected:hover': { bgcolor },
-              '&.Mui-selected .MuiListItemText-primary': { color },
+              '&:hover': {
+                backgroundColor: 'var(--background-elevated)',
+              },
+              '&.Mui-selected': {
+                bgcolor: selectedBg,
+                borderLeft: `3px solid ${primary.main}`,
+                marginLeft: '7px',
+                paddingLeft: '5px',
+              },
+              '&.Mui-selected:hover': {
+                bgcolor: selectedBg,
+              },
+              '&.Mui-selected .MuiListItemText-primary': {
+                color: 'text.primary',
+              },
             }
           },
         ]}
@@ -105,7 +116,7 @@ export const LayoutItem = (props: Props) => {
         {(effectiveMenuIcon === 'monochrome' || !effectiveMenuIcon) && (
           <ListItemIcon
             sx={{
-              color: 'text.primary',
+              color: match ? 'primary.main' : 'text.secondary',
               marginLeft: '6px',
               cursor: draggable ? 'grab' : 'inherit',
             }}
