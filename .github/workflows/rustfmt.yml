@@ -5,6 +5,8 @@
 name: Check Formatting
 
 on:
+  push:
+    branches: [dev]
   pull_request:
 
 permissions:
@@ -29,17 +31,17 @@ jobs:
               - '**/*.rs'
 
       - name: Skip if no Rust changes
-        if: steps.check_rust.outputs.rust != 'true'
+        if: github.event_name == 'pull_request' && steps.check_rust.outputs.rust != 'true'
         run: echo "No Rust changes, skipping rustfmt."
 
       - name: install Rust stable and rustfmt
-        if: steps.check_rust.outputs.rust == 'true'
+        if: github.event_name == 'push' || steps.check_rust.outputs.rust == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
 
       - name: run cargo fmt
-        if: steps.check_rust.outputs.rust == 'true'
+        if: github.event_name == 'push' || steps.check_rust.outputs.rust == 'true'
         run: cargo fmt --manifest-path ./src-tauri/Cargo.toml --all -- --check
 
   # taplo:

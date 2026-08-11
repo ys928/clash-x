@@ -1,6 +1,8 @@
 name: Frontend Check
 
 on:
+  push:
+    branches: [dev]
   pull_request:
   workflow_dispatch:
 
@@ -39,23 +41,23 @@ jobs:
               - 'vite.config.*'
 
       - name: Skip if no frontend changes
-        if: steps.check_frontend.outputs.frontend != 'true'
+        if: github.event_name == 'pull_request' && steps.check_frontend.outputs.frontend != 'true'
         run: echo "No frontend changes, skipping frontend checks."
 
       - name: Install pnpm
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         uses: pnpm/action-setup@v6
         with:
           run_install: false
 
       - uses: actions/setup-node@v7
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         with:
           node-version: '24.19.0'
           cache: 'pnpm'
 
       - name: Restore pnpm cache
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         uses: actions/cache@v6
         with:
           path: ~/.pnpm-store
@@ -64,24 +66,24 @@ jobs:
             pnpm-shared-stable-${{ runner.os }}-
 
       - run: pnpm install --frozen-lockfile
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
 
       - name: Run Prettier check
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         run: pnpm format:check
 
       - name: Run ESLint
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         run: pnpm lint
 
       - name: Run TypeScript typecheck
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         run: pnpm typecheck
 
       - name: Run tests
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         run: pnpm test
 
       - name: Run Knip
-        if: steps.check_frontend.outputs.frontend == 'true'
+        if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         run: pnpm knip:check

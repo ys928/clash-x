@@ -24,7 +24,3 @@ pnpm dev
 
 - 上游仓库：[clash-verge-rev/clash-verge-rev](https://github.com/clash-verge-rev/clash-verge-rev)
 - 上游文档与发行版请参阅其 [README](https://github.com/clash-verge-rev/clash-verge-rev#readme) / [Releases](https://github.com/clash-verge-rev/clash-verge-rev/releases)
-
-## License
-
-GPL-3.0。详见 [LICENSE](./LICENSE)。
