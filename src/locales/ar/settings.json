@@ -6,7 +6,12 @@
       "github": "مستودع Github"
     },
     "actionsGroupLabel": "روابط الإعدادات",
-    "title": "الإعدادات"
+    "title": "الإعدادات",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

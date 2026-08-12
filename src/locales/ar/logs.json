@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "السجلات"
+    "title": "السجلات",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Newest first",

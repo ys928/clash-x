@@ -4,7 +4,9 @@
       "updateAll": "Барлык профильләрне яңарту",
       "viewRuntimeConfig": "Кулланылган конфигурацияне карау",
       "reactivate": "Профильләрне янәдән активлаштыру",
-      "import": "Импорт"
+      "import": "Импорт",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

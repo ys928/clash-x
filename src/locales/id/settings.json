@@ -6,7 +6,12 @@
       "github": "Repositori Github"
     },
     "actionsGroupLabel": "Tautan pengaturan",
-    "title": "Pengaturan"
+    "title": "Pengaturan",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "Conexiones"
+    "title": "Conexiones",
+    "actions": {
+      "more": "More"
+    }
   },
   "components": {
     "fields": {
@@ -24,7 +27,9 @@
     "actions": {
       "active": "Active",
       "closed": "Closed",
-      "closeConnection": "Cerrar conexión"
+      "closeConnection": "Cerrar conexión",
+      "showClosed": "Show closed history",
+      "hideClosed": "Hide closed history"
     },
     "columnManager": {
       "title": "Columnas",

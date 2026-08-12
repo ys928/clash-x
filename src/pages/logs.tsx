@@ -1,9 +1,10 @@
 import {
-  PlayCircleOutlineRounded,
+  MoreVert,
   PauseCircleOutlineRounded,
+  PlayCircleOutlineRounded,
   SwapVertRounded,
 } from '@mui/icons-material'
-import { Box, Button, IconButton, MenuItem } from '@mui/material'
+import { Box, Button, IconButton, Menu, MenuItem } from '@mui/material'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -30,6 +31,7 @@ const LogPage = () => {
 
   const [match, setMatch] = useState(() => (_: string) => true)
   const [searchState, setSearchState] = useState<SearchState>()
+  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
   const {
     response: { data: logData },
     refreshGetClashLog,
@@ -40,10 +42,7 @@ const LogPage = () => {
       return []
     }
 
-    // Server-side filtering handles level filtering via query parameters
-    // We only need to apply search filtering here
     return logData.filter((data) => {
-      // 构建完整的搜索文本，包含时间、类型和内容
       const searchText =
         `${data.time || ''} ${data.type} ${data.payload}`.toLowerCase()
 
@@ -98,7 +97,7 @@ const LogPage = () => {
         overflow: 'auto',
       }}
       header={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconButton
             title={t(
               enableLog ? 'shared.actions.pause' : 'shared.actions.resume',
@@ -116,28 +115,6 @@ const LogPage = () => {
               <PlayCircleOutlineRounded />
             )}
           </IconButton>
-          <IconButton
-            title={t(
-              isDescending
-                ? 'logs.actions.showAscending'
-                : 'logs.actions.showDescending',
-            )}
-            aria-label={t(
-              isDescending
-                ? 'logs.actions.showAscending'
-                : 'logs.actions.showDescending',
-            )}
-            size="small"
-            color="inherit"
-            onClick={handleToggleOrder}
-          >
-            <SwapVertRounded
-              sx={{
-                transform: isDescending ? 'scaleY(-1)' : 'none',
-                transition: 'transform 0.2s ease',
-              }}
-            />
-          </IconButton>
 
           <Button
             size="small"
@@ -148,6 +125,40 @@ const LogPage = () => {
           >
             {t('shared.actions.clear')}
           </Button>
+
+          <IconButton
+            size="small"
+            color="inherit"
+            onClick={(event) => setOverflowAnchor(event.currentTarget)}
+            aria-label={t('logs.page.actions.more')}
+          >
+            <MoreVert fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={overflowAnchor}
+            open={Boolean(overflowAnchor)}
+            onClose={() => setOverflowAnchor(null)}
+          >
+            <MenuItem
+              onClick={() => {
+                handleToggleOrder()
+                setOverflowAnchor(null)
+              }}
+            >
+              <SwapVertRounded
+                fontSize="small"
+                sx={{
+                  mr: 1,
+                  transform: isDescending ? 'scaleY(-1)' : 'none',
+                }}
+              />
+              {t(
+                isDescending
+                  ? 'logs.actions.showAscending'
+                  : 'logs.actions.showDescending',
+              )}
+            </MenuItem>
+          </Menu>
         </Box>
       }
     >

@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import yaml from 'js-yaml'
+import { dump as yamlDump, load as yamlLoad } from 'js-yaml'
 import ts from 'typescript'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -1020,7 +1020,7 @@ function loadBackendLocales() {
     const raw = fs.readFileSync(localePath, 'utf8')
     let data
     try {
-      const parsed = yaml.load(raw)
+      const parsed = yamlLoad(raw)
       data = isPlainObject(parsed) ? parsed : {}
     } catch (error) {
       console.warn(`Warning: failed to parse ${localePath}: ${error.message}`)
@@ -1093,7 +1093,7 @@ function writeLocale(locale, data, options) {
     if (locale.format === 'yaml-file') {
       const target = locale.files[0].path
       backupIfNeeded(target, backups, options)
-      const serialized = yaml.dump(data ?? {}, { lineWidth: -1, noRefs: true })
+      const serialized = yamlDump(data ?? {}, { lineWidth: -1, noRefs: true })
       fs.writeFileSync(target, `${serialized.trimEnd()}\n`, 'utf8')
       success = true
       return

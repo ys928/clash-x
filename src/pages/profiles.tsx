@@ -19,12 +19,25 @@ import {
   ClearRounded,
   ContentPasteRounded,
   DeleteRounded,
+  ExpandLess,
+  ExpandMore,
   IndeterminateCheckBoxRounded,
   LocalFireDepartmentRounded,
+  MoreVert,
   RefreshRounded,
   TextSnippetOutlined,
 } from '@mui/icons-material'
-import { Box, Button, Divider, Grid, IconButton, Stack } from '@mui/material'
+import {
+  Box,
+  Button,
+  Collapse,
+  Divider,
+  Grid,
+  IconButton,
+  Menu,
+  MenuItem,
+  Stack,
+} from '@mui/material'
 import { TauriEvent } from '@tauri-apps/api/event'
 import { readText } from '@tauri-apps/plugin-clipboard-manager'
 import { readTextFile } from '@tauri-apps/plugin-fs'
@@ -151,6 +164,26 @@ const ProfilePage = () => {
   const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(
     () => new Set(),
   )
+  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
+  const [showEnhance, setShowEnhance] = useState(() => {
+    try {
+      return localStorage.getItem('profiles-show-enhance') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const toggleShowEnhance = useCallback(() => {
+    setShowEnhance((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('profiles-show-enhance', String(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }, [])
 
   // Profile 切换在前端串行执行；队列中只保留用户最后一次选择。
   const latestSwitchTargetRef = useRef<string | null>(null)
@@ -774,16 +807,6 @@ const ProfilePage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {!batchMode ? (
             <>
-              {/* Batch mode toggle button */}
-              <IconButton
-                size="small"
-                color="inherit"
-                title={t('profiles.page.batch.title')}
-                onClick={toggleBatchMode}
-              >
-                <CheckBoxOutlineBlankRounded />
-              </IconButton>
-
               <IconButton
                 size="small"
                 color="inherit"
@@ -793,25 +816,6 @@ const ProfilePage = () => {
                 <RefreshRounded />
               </IconButton>
 
-              <IconButton
-                size="small"
-                color="inherit"
-                title={t('profiles.page.actions.viewRuntimeConfig')}
-                onClick={() => configRef.current?.open()}
-              >
-                <TextSnippetOutlined />
-              </IconButton>
-
-              <IconButton
-                size="small"
-                color="primary"
-                title={t('profiles.page.actions.reactivate')}
-                onClick={() => onEnhance(true)}
-              >
-                <LocalFireDepartmentRounded />
-              </IconButton>
-
-              {/* 故障检测和紧急恢复按钮 */}
               {(error || isStale) && (
                 <IconButton
                   size="small"
@@ -832,6 +836,64 @@ const ProfilePage = () => {
                   <ClearRounded />
                 </IconButton>
               )}
+
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={(event) => setOverflowAnchor(event.currentTarget)}
+                aria-label={t('profiles.page.actions.more')}
+              >
+                <MoreVert fontSize="small" />
+              </IconButton>
+              <Menu
+                anchorEl={overflowAnchor}
+                open={Boolean(overflowAnchor)}
+                onClose={() => setOverflowAnchor(null)}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setOverflowAnchor(null)
+                    toggleBatchMode()
+                  }}
+                >
+                  <CheckBoxOutlineBlankRounded
+                    fontSize="small"
+                    sx={{ mr: 1 }}
+                  />
+                  {t('profiles.page.batch.title')}
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setOverflowAnchor(null)
+                    configRef.current?.open()
+                  }}
+                >
+                  <TextSnippetOutlined fontSize="small" sx={{ mr: 1 }} />
+                  {t('profiles.page.actions.viewRuntimeConfig')}
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setOverflowAnchor(null)
+                    void onEnhance(true)
+                  }}
+                >
+                  <LocalFireDepartmentRounded fontSize="small" sx={{ mr: 1 }} />
+                  {t('profiles.page.actions.reactivate')}
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setOverflowAnchor(null)
+                    toggleShowEnhance()
+                  }}
+                >
+                  {showEnhance ? (
+                    <ExpandLess fontSize="small" sx={{ mr: 1 }} />
+                  ) : (
+                    <ExpandMore fontSize="small" sx={{ mr: 1 }} />
+                  )}
+                  {t('profiles.page.actions.toggleEnhance')}
+                </MenuItem>
+              </Menu>
             </>
           ) : (
             // Batch mode header
@@ -1014,36 +1076,38 @@ const ProfilePage = () => {
               </SortableContext>
             </Grid>
           </Box>
-          <Divider
-            variant="middle"
-            flexItem
-            sx={{ width: `calc(100% - 32px)`, borderColor: dividercolor }}
-          ></Divider>
-          <Box sx={{ mt: 1.5, mb: '10px' }}>
-            <Grid container spacing={{ xs: 1, lg: 1 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                <ProfileMore
-                  id="Merge"
-                  onSave={async (prev, curr) => {
-                    if (prev !== curr) {
-                      await onEnhance(false)
-                    }
-                  }}
-                />
+          <Collapse in={showEnhance}>
+            <Divider
+              variant="middle"
+              flexItem
+              sx={{ width: `calc(100% - 32px)`, borderColor: dividercolor }}
+            ></Divider>
+            <Box sx={{ mt: 1.5, mb: '10px' }}>
+              <Grid container spacing={{ xs: 1, lg: 1 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
+                  <ProfileMore
+                    id="Merge"
+                    onSave={async (prev, curr) => {
+                      if (prev !== curr) {
+                        await onEnhance(false)
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
+                  <ProfileMore
+                    id="Script"
+                    logInfo={chainLogs['Script']}
+                    onSave={async (prev, curr) => {
+                      if (prev !== curr) {
+                        await onEnhance(false)
+                      }
+                    }}
+                  />
+                </Grid>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                <ProfileMore
-                  id="Script"
-                  logInfo={chainLogs['Script']}
-                  onSave={async (prev, curr) => {
-                    if (prev !== curr) {
-                      await onEnhance(false)
-                    }
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
+            </Box>
+          </Collapse>
         </Box>
         <DragOverlay />
       </DndContext>

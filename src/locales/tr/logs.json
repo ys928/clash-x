@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "Günlükler"
+    "title": "Günlükler",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Newest first",

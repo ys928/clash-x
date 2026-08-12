@@ -6,7 +6,12 @@
       "github": "مخزن GitHub"
     },
     "actionsGroupLabel": "پیوندهای تنظیمات",
-    "title": "تنظیمات"
+    "title": "تنظیمات",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

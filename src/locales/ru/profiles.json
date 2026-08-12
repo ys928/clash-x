@@ -4,7 +4,9 @@
       "updateAll": "Обновить все профили",
       "viewRuntimeConfig": "Просмотреть текущую конфигурацию",
       "reactivate": "Перезапустить профиль",
-      "import": "Импортировать"
+      "import": "Импортировать",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

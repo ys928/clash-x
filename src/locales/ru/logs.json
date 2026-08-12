@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "Логи"
+    "title": "Логи",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Сначала новые",

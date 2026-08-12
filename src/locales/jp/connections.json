@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "接続"
+    "title": "接続",
+    "actions": {
+      "more": "More"
+    }
   },
   "components": {
     "fields": {
@@ -24,7 +27,9 @@
     "actions": {
       "active": "Active",
       "closed": "Closed",
-      "closeConnection": "接続を閉じる"
+      "closeConnection": "接続を閉じる",
+      "showClosed": "Show closed history",
+      "hideClosed": "Hide closed history"
     },
     "columnManager": {
       "title": "列",

@@ -4,7 +4,9 @@
       "updateAll": "모든 프로필 업데이트",
       "viewRuntimeConfig": "런타임 설정 보기",
       "reactivate": "프로필 재활성화",
-      "import": "가져오기"
+      "import": "가져오기",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

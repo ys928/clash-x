@@ -10,7 +10,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config"
+      "clearChainConfig": "Delete Chain Config",
+      "more": "More"
     },
     "provider": {
       "title": "Proxy Provider",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "Delay check URL",
       "showBasic": "Proxy basic",
       "showDetail": "Proxy detail",
-      "filter": "Filter"
+      "filter": "Filter",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "Delay check URL"

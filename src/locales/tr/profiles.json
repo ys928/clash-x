@@ -4,7 +4,9 @@
       "updateAll": "Tüm Profilleri Güncelle",
       "viewRuntimeConfig": "Çalışma Zamanı Yapılandırmasını Görüntüle",
       "reactivate": "Profilleri Yeniden Etkinleştir",
-      "import": "İçe Aktar"
+      "import": "İçe Aktar",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

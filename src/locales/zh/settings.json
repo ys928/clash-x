@@ -6,7 +6,12 @@
       "github": "GitHub 项目地址"
     },
     "actionsGroupLabel": "设置相关链接",
-    "title": "设置"
+    "title": "设置",
+    "sections": {
+      "appearance": "外观",
+      "behavior": "行为",
+      "advanced": "高级"
+    }
   },
   "sections": {
     "system": {

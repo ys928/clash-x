@@ -10,7 +10,8 @@
       "connect": "연결",
       "disconnect": "연결 해제",
       "connecting": "연결 중...",
-      "clearChainConfig": "체인 구성 삭제"
+      "clearChainConfig": "체인 구성 삭제",
+      "more": "More"
     },
     "provider": {
       "title": "프록시 제공자",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "지연 확인 URL",
       "showBasic": "프록시 기본",
       "showDetail": "프록시 상세",
-      "filter": "필터"
+      "filter": "필터",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "지연 확인 URL"

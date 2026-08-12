@@ -10,7 +10,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config"
+      "clearChainConfig": "Delete Chain Config",
+      "more": "More"
     },
     "provider": {
       "title": "Vekil Sağlayıcısı",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "Gecikme kontrol URL'si",
       "showBasic": "Temel Vekil",
       "showDetail": "Vekil detayı",
-      "filter": "Filtre"
+      "filter": "Filtre",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "Gecikme kontrol URL'si"

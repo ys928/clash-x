@@ -1,5 +1,10 @@
-import { LanOutlined, LanRounded, WarningRounded } from '@mui/icons-material'
-import { Box, Button, ButtonGroup } from '@mui/material'
+import {
+  LanOutlined,
+  LanRounded,
+  MoreVert,
+  WarningRounded,
+} from '@mui/icons-material'
+import { Box, Divider, IconButton, Menu, MenuItem } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -30,7 +35,6 @@ const isMode = (value: unknown): value is Mode =>
 const ProxyPage = () => {
   const { t } = useTranslation()
 
-  // 从 localStorage 恢复链式代理按钮状态
   const [isChainMode, setIsChainMode] = useState(() => {
     try {
       const saved = localStorage.getItem('proxy-chain-mode-enabled')
@@ -44,6 +48,7 @@ const ProxyPage = () => {
     (_: string | null, action: string | null) => action,
     null as string | null,
   )
+  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
 
   const { clashConfig } = useClashConfigData()
   const { refreshClashConfig } = useAppRefreshers()
@@ -58,12 +63,10 @@ const ProxyPage = () => {
   const chainWarning = t('proxies.page.chain.warning')
 
   const onChangeMode = useLockFn(async (mode: Mode) => {
-    // 断开连接
     if (mode !== curMode && verge?.auto_close_connection) {
       closeAllConnections()
     }
     try {
-      // patchClashMode 在后端 PATCH 失败时会 reject，需提示用户而非静默失败
       await patchClashMode(mode)
       refreshClashConfig()
     } catch (error) {
@@ -75,11 +78,9 @@ const ProxyPage = () => {
     const newChainMode = !isChainMode
 
     setIsChainMode(newChainMode)
-    // 保存链式代理按钮状态到 localStorage
     localStorage.setItem('proxy-chain-mode-enabled', newChainMode.toString())
 
     if (!newChainMode) {
-      // 退出链式代理模式时，清除链式代理配置
       try {
         debugLog('Exiting chain mode, clearing chain configuration')
         await updateProxyChainConfigInRuntime(null)
@@ -90,7 +91,6 @@ const ProxyPage = () => {
     }
   })
 
-  // 当开启链式代理模式时，获取配置数据
   useEffect(() => {
     if (!isChainMode) {
       updateChainConfigData(null)
@@ -160,37 +160,54 @@ const ProxyPage = () => {
         )
       }
       header={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ProviderButton />
-
-          <ButtonGroup size="small">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <IconButton
+            size="small"
+            color="inherit"
+            onClick={(event) => setOverflowAnchor(event.currentTarget)}
+            aria-label={t('proxies.page.actions.more')}
+          >
+            <MoreVert fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={overflowAnchor}
+            open={Boolean(overflowAnchor)}
+            onClose={() => setOverflowAnchor(null)}
+            slotProps={{ paper: { sx: { minWidth: 220 } } }}
+          >
+            <Box sx={{ px: 1.5, py: 1 }}>
+              <ProviderButton />
+            </Box>
+            <Divider />
             {MODES.map((mode) => (
-              <Button
+              <MenuItem
                 key={mode}
-                variant={mode === curMode ? 'contained' : 'outlined'}
-                onClick={() => onChangeMode(mode)}
+                selected={mode === curMode}
+                onClick={() => {
+                  setOverflowAnchor(null)
+                  void onChangeMode(mode)
+                }}
                 sx={{ textTransform: 'capitalize' }}
               >
                 {t(`proxies.page.modes.${mode}`)}
-              </Button>
+              </MenuItem>
             ))}
-          </ButtonGroup>
-
-          <Button
-            size="small"
-            variant={isChainMode ? 'contained' : 'outlined'}
-            onClick={onToggleChainMode}
-            sx={{ ml: 1 }}
-            startIcon={
-              isChainMode ? (
-                <LanRounded fontSize="small" />
+            <Divider />
+            <MenuItem
+              selected={isChainMode}
+              onClick={() => {
+                setOverflowAnchor(null)
+                void onToggleChainMode()
+              }}
+            >
+              {isChainMode ? (
+                <LanRounded fontSize="small" sx={{ mr: 1 }} />
               ) : (
-                <LanOutlined fontSize="small" />
-              )
-            }
-          >
-            {t('proxies.page.actions.toggleChain')}
-          </Button>
+                <LanOutlined fontSize="small" sx={{ mr: 1 }} />
+              )}
+              {t('proxies.page.actions.toggleChain')}
+            </MenuItem>
+          </Menu>
         </Box>
       }
     >

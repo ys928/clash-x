@@ -4,7 +4,9 @@
       "updateAll": "Actualizar todas las suscripciones",
       "viewRuntimeConfig": "Ver configuración en tiempo de ejecución",
       "reactivate": "Reactivar suscripciones",
-      "import": "Importar"
+      "import": "Importar",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

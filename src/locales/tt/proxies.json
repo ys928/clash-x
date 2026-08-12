@@ -10,7 +10,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config"
+      "clearChainConfig": "Delete Chain Config",
+      "more": "More"
     },
     "provider": {
       "title": "Прокси провайдеры",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "Задержканы тикшерү URL-ы",
       "showBasic": "Прокси турында кыскача мәгълүмат",
       "showDetail": "Прокси турында тулы мәгълүмат",
-      "filter": "Фильтр"
+      "filter": "Фильтр",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "Задержканы тикшерү URL-ы"

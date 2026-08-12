@@ -6,7 +6,12 @@
       "github": "GitHub 저장소"
     },
     "actionsGroupLabel": "설정 링크",
-    "title": "설정"
+    "title": "설정",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

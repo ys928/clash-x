@@ -1,8 +1,7 @@
 import {
-  DnsOutlined,
   HelpOutlineRounded,
   HistoryEduOutlined,
-  RouterOutlined,
+  MoreVert,
   SettingsOutlined,
   SpeedOutlined,
 } from '@mui/icons-material'
@@ -10,6 +9,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,8 +18,11 @@ import {
   FormGroup,
   Grid,
   IconButton,
+  Menu,
+  MenuItem,
+  Paper,
   Skeleton,
-  Tooltip,
+  Typography,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
@@ -31,7 +34,7 @@ import { CurrentProxyCard } from '@/components/home/current-proxy-card'
 import { EnhancedCard } from '@/components/home/enhanced-card'
 import { EnhancedTrafficStats } from '@/components/home/enhanced-traffic-stats'
 import { HomeProfileCard } from '@/components/home/home-profile-card'
-import { ProxyTunCard } from '@/components/home/proxy-tun-card'
+import ProxyControlSwitches from '@/components/shared/proxy-control-switches'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useVerge } from '@/hooks/use-verge'
 import { entry_lightweight_mode, openWebUrl } from '@/services/cmds'
@@ -68,7 +71,6 @@ export const preloadHomePageCards = () =>
     preloadSystemInfoCard().catch(() => {}),
   ])
 
-// 定义首页卡片设置接口
 interface HomeCardsSettings {
   profile: boolean
   proxy: boolean
@@ -89,11 +91,11 @@ const DEFAULT_HOME_CARDS: HomeCardsSettings = {
   proxy: true,
   network: true,
   mode: true,
-  traffic: true,
-  clashinfo: true,
-  systeminfo: true,
-  test: true,
-  ip: true,
+  traffic: false,
+  clashinfo: false,
+  systeminfo: false,
+  test: false,
+  ip: false,
 }
 
 const serializeCardFlags = (cards: HomeCardsSettings) =>
@@ -102,13 +104,11 @@ const serializeCardFlags = (cards: HomeCardsSettings) =>
     .map((key) => `${key}:${cards[key] ? 1 : 0}`)
     .join('|')
 
-// 首页设置对话框组件接口
 interface HomeSettingsDialogProps {
   onClose: () => void
   homeCards: HomeCardsSettings
 }
 
-// 首页设置对话框组件
 const HomeSettingsDialog = ({
   onClose,
   homeCards,
@@ -227,29 +227,48 @@ const HomeSettingsDialog = ({
   )
 }
 
+const sectionSx = {
+  p: 2,
+  borderRadius: 2,
+  bgcolor: 'background.paper',
+  border: '1px solid',
+  borderColor: 'divider',
+} as const
+
 const HomePage = () => {
   const { t } = useTranslation()
   const { verge } = useVerge()
   const { current, mutateProfiles } = useProfiles()
 
-  // 设置弹窗的状态
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [moreInfoOpen, setMoreInfoOpen] = useState(false)
+  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
 
-  // 卡片显示状态
   const homeCards =
     (verge?.home_cards as HomeCardsSettings | undefined) ?? DEFAULT_HOME_CARDS
 
-  // 文档链接函数
   const toGithubDoc = useLockFn(() => {
     return openWebUrl('https://clash-verge-rev.github.io/index.html')
   })
 
-  // 新增：打开设置弹窗
   const openSettings = useCallback(() => {
+    setOverflowAnchor(null)
     setSettingsOpen(true)
   }, [])
 
-  const renderCard = useCallback(
+  const hasExtraCards = useMemo(
+    () =>
+      Boolean(
+        homeCards.traffic ||
+          homeCards.test ||
+          homeCards.ip ||
+          homeCards.clashinfo ||
+          homeCards.systeminfo,
+      ),
+    [homeCards],
+  )
+
+  const renderExtraCard = useCallback(
     (cardKey: string, component: React.ReactNode, size: number = 6) => {
       if (!homeCards[cardKey]) return null
 
@@ -262,94 +281,190 @@ const HomePage = () => {
     [homeCards],
   )
 
-  const criticalCards = useMemo(
-    () => [
-      renderCard(
-        'profile',
-        <HomeProfileCard current={current} onProfileUpdated={mutateProfiles} />,
-      ),
-      renderCard('proxy', <CurrentProxyCard />),
-      renderCard('network', <NetworkSettingsCard />),
-      renderCard('mode', <ClashModeEnhancedCard />),
-    ],
-    [current, mutateProfiles, renderCard],
-  )
-
-  const nonCriticalCards = useMemo(
-    () => [
-      renderCard(
-        'traffic',
-        <EnhancedCard
-          title={t('home.page.cards.trafficStats')}
-          icon={<SpeedOutlined />}
-          iconColor="secondary"
-        >
-          <EnhancedTrafficStats />
-        </EnhancedCard>,
-        12,
-      ),
-      renderCard(
-        'test',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazyTestCard />
-        </Suspense>,
-      ),
-      renderCard(
-        'ip',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazyIpInfoCard />
-        </Suspense>,
-      ),
-      renderCard(
-        'clashinfo',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazyClashInfoCard />
-        </Suspense>,
-      ),
-      renderCard(
-        'systeminfo',
-        <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
-          <LazySystemInfoCard />
-        </Suspense>,
-      ),
-    ],
-    [t, renderCard],
-  )
   return (
     <BasePage
       title={t('home.page.title')}
       contentStyle={{ padding: 2 }}
       header={
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Tooltip title={t('home.page.tooltips.lightweightMode')} arrow>
-            <IconButton
-              onClick={async () => await entry_lightweight_mode()}
-              size="small"
-              color="inherit"
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => setMoreInfoOpen((open) => !open)}
+            sx={{ textTransform: 'none' }}
+          >
+            {t('home.page.actions.moreInfo')}
+          </Button>
+          <IconButton
+            size="small"
+            color="inherit"
+            onClick={(event) => setOverflowAnchor(event.currentTarget)}
+            aria-label={t('home.page.actions.more')}
+          >
+            <MoreVert fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={overflowAnchor}
+            open={Boolean(overflowAnchor)}
+            onClose={() => setOverflowAnchor(null)}
+          >
+            <MenuItem
+              onClick={async () => {
+                setOverflowAnchor(null)
+                await entry_lightweight_mode()
+              }}
             >
-              <HistoryEduOutlined />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('home.page.tooltips.manual')} arrow>
-            <IconButton onClick={toGithubDoc} size="small" color="inherit">
-              <HelpOutlineRounded />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('home.page.tooltips.settings')} arrow>
-            <IconButton onClick={openSettings} size="small" color="inherit">
-              <SettingsOutlined />
-            </IconButton>
-          </Tooltip>
+              <HistoryEduOutlined fontSize="small" sx={{ mr: 1 }} />
+              {t('home.page.tooltips.lightweightMode')}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setOverflowAnchor(null)
+                void toGithubDoc()
+              }}
+            >
+              <HelpOutlineRounded fontSize="small" sx={{ mr: 1 }} />
+              {t('home.page.tooltips.manual')}
+            </MenuItem>
+            <MenuItem onClick={openSettings}>
+              <SettingsOutlined fontSize="small" sx={{ mr: 1 }} />
+              {t('home.page.tooltips.settings')}
+            </MenuItem>
+          </Menu>
         </Box>
       }
     >
-      <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
-        {criticalCards}
+      <Box
+        sx={{
+          maxWidth: 880,
+          mx: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        {homeCards.network !== false && (
+          <Paper elevation={0} sx={sectionSx}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 1.5, fontWeight: 600 }}
+            >
+              {t('home.page.cards.networkSettings')}
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 1,
+              }}
+            >
+              <ProxyControlSwitches
+                label={t('settings.sections.system.toggles.systemProxy')}
+                noRightPadding
+              />
+              <ProxyControlSwitches
+                label={t('settings.sections.system.toggles.tunMode')}
+                noRightPadding
+              />
+            </Box>
+          </Paper>
+        )}
 
-        {nonCriticalCards}
-      </Grid>
+        {homeCards.mode !== false && (
+          <Paper elevation={0} sx={sectionSx}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ mb: 1.5, fontWeight: 600 }}
+            >
+              {t('home.page.cards.proxyMode')}
+            </Typography>
+            <ClashModeCard compact />
+          </Paper>
+        )}
 
-      {/* 首页设置弹窗 */}
+        {(homeCards.profile !== false || homeCards.proxy !== false) && (
+          <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
+            {homeCards.profile !== false && (
+              <Grid size={6}>
+                <HomeProfileCard
+                  current={current}
+                  onProfileUpdated={mutateProfiles}
+                />
+              </Grid>
+            )}
+            {homeCards.proxy !== false && (
+              <Grid size={6}>
+                <CurrentProxyCard />
+              </Grid>
+            )}
+          </Grid>
+        )}
+
+        <Collapse in={moreInfoOpen || hasExtraCards}>
+          <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
+            {renderExtraCard(
+              'traffic',
+              <EnhancedCard
+                title={t('home.page.cards.trafficStats')}
+                icon={<SpeedOutlined />}
+                iconColor="secondary"
+              >
+                <EnhancedTrafficStats />
+              </EnhancedCard>,
+              12,
+            )}
+            {renderExtraCard(
+              'test',
+              <Suspense
+                fallback={<Skeleton variant="rectangular" height={200} />}
+              >
+                <LazyTestCard />
+              </Suspense>,
+            )}
+            {renderExtraCard(
+              'ip',
+              <Suspense
+                fallback={<Skeleton variant="rectangular" height={200} />}
+              >
+                <LazyIpInfoCard />
+              </Suspense>,
+            )}
+            {renderExtraCard(
+              'clashinfo',
+              <Suspense
+                fallback={<Skeleton variant="rectangular" height={200} />}
+              >
+                <LazyClashInfoCard />
+              </Suspense>,
+            )}
+            {renderExtraCard(
+              'systeminfo',
+              <Suspense
+                fallback={<Skeleton variant="rectangular" height={200} />}
+              >
+                <LazySystemInfoCard />
+              </Suspense>,
+            )}
+            {!hasExtraCards && moreInfoOpen && (
+              <Grid size={12}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ py: 2, textAlign: 'center' }}
+                >
+                  {t('home.page.empty.enableCardsHint')}
+                  <Button size="small" onClick={openSettings} sx={{ ml: 1 }}>
+                    {t('home.page.tooltips.settings')}
+                  </Button>
+                </Typography>
+              </Grid>
+            )}
+          </Grid>
+        </Collapse>
+      </Box>
+
       {settingsOpen && (
         <HomeSettingsDialog
           key={serializeCardFlags(homeCards)}
@@ -358,36 +473,6 @@ const HomePage = () => {
         />
       )}
     </BasePage>
-  )
-}
-
-// 增强版网络设置卡片组件
-const NetworkSettingsCard = () => {
-  const { t } = useTranslation()
-  return (
-    <EnhancedCard
-      title={t('home.page.cards.networkSettings')}
-      icon={<DnsOutlined />}
-      iconColor="primary"
-      action={null}
-    >
-      <ProxyTunCard />
-    </EnhancedCard>
-  )
-}
-
-// 增强版 Clash 模式卡片组件
-const ClashModeEnhancedCard = () => {
-  const { t } = useTranslation()
-  return (
-    <EnhancedCard
-      title={t('home.page.cards.proxyMode')}
-      icon={<RouterOutlined />}
-      iconColor="info"
-      action={null}
-    >
-      <ClashModeCard />
-    </EnhancedCard>
   )
 }
 

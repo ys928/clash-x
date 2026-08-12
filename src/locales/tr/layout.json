@@ -9,7 +9,8 @@
         "rules": "Kurallar",
         "logs": "Günlükler",
         "unlock": "Test",
-        "settings": "Ayarlar"
+        "settings": "Ayarlar",
+        "more": "More"
       },
       "menu": {
         "reorderMode": "Menu reorder mode",

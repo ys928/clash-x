@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "연결"
+    "title": "연결",
+    "actions": {
+      "more": "More"
+    }
   },
   "components": {
     "fields": {
@@ -24,7 +27,9 @@
     "actions": {
       "active": "Active",
       "closed": "Closed",
-      "closeConnection": "연결 닫기"
+      "closeConnection": "연결 닫기",
+      "showClosed": "Show closed history",
+      "hideClosed": "Hide closed history"
     },
     "columnManager": {
       "title": "열",

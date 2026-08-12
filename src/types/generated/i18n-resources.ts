@@ -9,6 +9,8 @@ export interface TranslationResources {
           active: string
           closeConnection: string
           closed: string
+          hideClosed: string
+          showClosed: string
         }
         columnManager: {
           dragHandle: string
@@ -34,6 +36,9 @@ export interface TranslationResources {
         }
       }
       page: {
+        actions: {
+          more: string
+        }
         title: string
       }
     }
@@ -165,10 +170,19 @@ export interface TranslationResources {
         }
       }
       page: {
+        actions: {
+          more: string
+          moreInfo: string
+        }
         cards: {
           networkSettings: string
           proxyMode: string
           trafficStats: string
+        }
+        empty: {
+          addProfile: string
+          enableCardsHint: string
+          noProfile: string
         }
         settings: {
           cards: {
@@ -207,6 +221,7 @@ export interface TranslationResources {
             connections: string
             home: string
             logs: string
+            more: string
             profiles: string
             proxies: string
             rules: string
@@ -245,6 +260,9 @@ export interface TranslationResources {
         showDescending: string
       }
       page: {
+        actions: {
+          more: string
+        }
         title: string
       }
     }
@@ -399,7 +417,9 @@ export interface TranslationResources {
       page: {
         actions: {
           import: string
+          more: string
           reactivate: string
+          toggleEnhance: string
           updateAll: string
           viewRuntimeConfig: string
         }
@@ -492,6 +512,7 @@ export interface TranslationResources {
           connect: string
           connecting: string
           disconnect: string
+          more: string
           toggleChain: string
         }
         chain: {
@@ -568,6 +589,7 @@ export interface TranslationResources {
           delayCheckUrl: string
           filter: string
           locate: string
+          moreTools: string
           showBasic: string
           showDetail: string
           sortDefault: string
@@ -1188,6 +1210,11 @@ export interface TranslationResources {
           telegram: string
         }
         actionsGroupLabel: string
+        sections: {
+          advanced: string
+          appearance: string
+          behavior: string
+        }
         title: string
       }
       sections: {

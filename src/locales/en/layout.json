@@ -2,14 +2,15 @@
   "components": {
     "navigation": {
       "tabs": {
-        "home": "Home",
-        "proxies": "Proxies",
+        "home": "Overview",
+        "proxies": "Nodes",
         "profiles": "Profiles",
         "connections": "Connections",
         "rules": "Rules",
         "logs": "Logs",
-        "unlock": "Test",
-        "settings": "Settings"
+        "unlock": "Unlock",
+        "settings": "Settings",
+        "more": "More"
       },
       "menu": {
         "reorderMode": "Menu reorder mode",

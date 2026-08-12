@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "لاگ‌ها"
+    "title": "لاگ‌ها",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Newest first",

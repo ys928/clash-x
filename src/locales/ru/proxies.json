@@ -10,7 +10,8 @@
       "connect": "Подключиться",
       "disconnect": "Отключиться",
       "connecting": "Подключение...",
-      "clearChainConfig": "Очистить цепочку"
+      "clearChainConfig": "Очистить цепочку",
+      "more": "More"
     },
     "provider": {
       "title": "Провайдеры прокси",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "URL для проверки задержки",
       "showBasic": "Показывать меньше информации о прокси",
       "showDetail": "Показывать больше информации о прокси",
-      "filter": "Фильтр"
+      "filter": "Фильтр",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "URL для проверки задержки"

@@ -10,7 +10,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config"
+      "clearChainConfig": "Delete Chain Config",
+      "more": "More"
     },
     "provider": {
       "title": "Proveedor de proxies",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "URL de prueba de latencia",
       "showBasic": "Ocultar detalles del nodo",
       "showDetail": "Mostrar detalles del nodo",
-      "filter": "Filtrar nodos"
+      "filter": "Filtrar nodos",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "URL de prueba de latencia"

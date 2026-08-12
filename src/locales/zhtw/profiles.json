@@ -4,7 +4,9 @@
       "updateAll": "更新所有訂閱",
       "viewRuntimeConfig": "查看執行時訂閱",
       "reactivate": "重新啟用訂閱",
-      "import": "匯入"
+      "import": "匯入",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

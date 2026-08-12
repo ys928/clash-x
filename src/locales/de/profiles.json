@@ -4,7 +4,9 @@
       "updateAll": "Alle Abonnements aktualisieren",
       "viewRuntimeConfig": "Laufzeit-Abonnement anzeigen",
       "reactivate": "Abonnement erneut aktivieren",
-      "import": "Importieren"
+      "import": "Importieren",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

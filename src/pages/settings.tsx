@@ -1,6 +1,16 @@
 import { GitHub, HelpOutlineRounded, Telegram } from '@mui/icons-material'
-import { Box, ButtonGroup, IconButton, Grid } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  ButtonGroup,
+  IconButton,
+  Typography,
+} from '@mui/material'
 import { useLockFn } from 'ahooks'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BasePage } from '@/components/base'
@@ -16,8 +26,17 @@ const settingPanelSx = {
   backgroundColor: 'background.paper',
 } as const
 
+const ADVANCED_OPEN_KEY = 'settings-advanced-open'
+
 const SettingPage = () => {
   const { t } = useTranslation()
+  const [advancedOpen, setAdvancedOpen] = useState(() => {
+    try {
+      return localStorage.getItem(ADVANCED_OPEN_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
 
   const onError = (err: any) => {
     showNotice.error(err)
@@ -34,6 +53,15 @@ const SettingPage = () => {
   const toTelegramChannel = useLockFn(() => {
     return openWebUrl('https://t.me/clash_verge_re')
   })
+
+  const handleAdvancedChange = (_: unknown, expanded: boolean) => {
+    setAdvancedOpen(expanded)
+    try {
+      localStorage.setItem(ADVANCED_OPEN_KEY, String(expanded))
+    } catch {
+      /* ignore */
+    }
+  }
 
   return (
     <BasePage
@@ -71,24 +99,55 @@ const SettingPage = () => {
         </ButtonGroup>
       }
     >
-      <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
-        <Grid size={6}>
-          <Box sx={{ ...settingPanelSx, marginBottom: 1.5 }}>
-            <SettingSystem onError={onError} />
-          </Box>
-          <Box sx={settingPanelSx}>
-            <SettingClash onError={onError} />
-          </Box>
-        </Grid>
-        <Grid size={6}>
-          <Box sx={{ ...settingPanelSx, marginBottom: 1.5 }}>
-            <SettingVergeBasic onError={onError} />
-          </Box>
-          <Box sx={settingPanelSx}>
-            <SettingVergeAdvanced onError={onError} />
-          </Box>
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          maxWidth: 920,
+          mx: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
+        <Box sx={settingPanelSx}>
+          <SettingSystem onError={onError} />
+        </Box>
+
+        <Box sx={settingPanelSx}>
+          <SettingVergeBasic onError={onError} mode="essentials" />
+        </Box>
+
+        <Accordion
+          disableGutters
+          elevation={0}
+          expanded={advancedOpen}
+          onChange={handleAdvancedChange}
+          sx={{
+            ...settingPanelSx,
+            '&:before': { display: 'none' },
+            overflow: 'hidden',
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{ px: 2, minHeight: 48 }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {t('settings.page.sections.advanced')}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ px: 0, pb: 1.5, pt: 0 }}>
+            <Box sx={{ px: 0, mb: 1.5 }}>
+              <SettingClash onError={onError} />
+            </Box>
+            <Box sx={{ px: 0, mb: 1.5 }}>
+              <SettingVergeBasic onError={onError} mode="advanced" />
+            </Box>
+            <Box sx={{ px: 0 }}>
+              <SettingVergeAdvanced onError={onError} />
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
     </BasePage>
   )
 }

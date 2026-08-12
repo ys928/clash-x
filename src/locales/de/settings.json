@@ -6,7 +6,12 @@
       "github": "GitHub-Projektadresse"
     },
     "actionsGroupLabel": "Einstellungslinks",
-    "title": "Einstellungen"
+    "title": "Einstellungen",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

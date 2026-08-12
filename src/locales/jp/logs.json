@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "ログ"
+    "title": "ログ",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Newest first",

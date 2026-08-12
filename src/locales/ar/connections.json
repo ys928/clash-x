@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "الاتصالات"
+    "title": "الاتصالات",
+    "actions": {
+      "more": "More"
+    }
   },
   "components": {
     "fields": {
@@ -24,7 +27,9 @@
     "actions": {
       "active": "Active",
       "closed": "Closed",
-      "closeConnection": "إغلاق الاتصال"
+      "closeConnection": "إغلاق الاتصال",
+      "showClosed": "Show closed history",
+      "hideClosed": "Hide closed history"
     },
     "columnManager": {
       "title": "الأعمدة",

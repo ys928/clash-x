@@ -4,7 +4,9 @@
       "updateAll": "Perbarui Semua Profil",
       "viewRuntimeConfig": "Lihat Konfigurasi Runtime",
       "reactivate": "Reaktivasi Profil",
-      "import": "Impor"
+      "import": "Impor",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

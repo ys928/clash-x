@@ -6,7 +6,12 @@
       "github": "GitHub репозиториясе"
     },
     "actionsGroupLabel": "Көйләү сылтамалары",
-    "title": "Көйләүләр"
+    "title": "Көйләүләр",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

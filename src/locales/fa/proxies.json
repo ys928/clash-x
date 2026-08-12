@@ -10,7 +10,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config"
+      "clearChainConfig": "Delete Chain Config",
+      "more": "More"
     },
     "provider": {
       "title": "تأمین‌کننده پروکسی",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "آدرس بررسی تأخیر",
       "showBasic": "پراکسی پایه",
       "showDetail": "جزئیات پراکسی",
-      "filter": "فیلتر"
+      "filter": "فیلتر",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "آدرس بررسی تأخیر"

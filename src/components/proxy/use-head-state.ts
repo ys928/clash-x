@@ -12,7 +12,7 @@ export interface HeadState {
   filterMatchCase?: boolean
   filterMatchWholeWord?: boolean
   filterUseRegularExpression?: boolean
-  textState: 'url' | 'filter' | null
+  textState: 'url' | 'filter' | 'tools' | null
   testUrl: string
 }
 

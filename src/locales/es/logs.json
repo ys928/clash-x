@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "Registros"
+    "title": "Registros",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Newest first",

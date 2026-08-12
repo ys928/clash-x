@@ -10,7 +10,8 @@
       "connect": "连接",
       "disconnect": "断开",
       "connecting": "连接中...",
-      "clearChainConfig": "删除链式配置"
+      "clearChainConfig": "删除链式配置",
+      "more": "更多"
     },
     "provider": {
       "title": "代理集合",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "延迟测试链接",
       "showBasic": "隐藏节点细节",
       "showDetail": "展示节点细节",
-      "filter": "过滤节点"
+      "filter": "过滤节点",
+      "moreTools": "更多工具"
     },
     "placeholders": {
       "delayCheckUrl": "延迟测试链接"

@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "连接"
+    "title": "连接",
+    "actions": {
+      "more": "更多"
+    }
   },
   "components": {
     "fields": {
@@ -24,7 +27,9 @@
     "actions": {
       "active": "活跃",
       "closed": "已关闭",
-      "closeConnection": "关闭连接"
+      "closeConnection": "关闭连接",
+      "showClosed": "显示已关闭历史",
+      "hideClosed": "隐藏已关闭历史"
     },
     "columnManager": {
       "title": "列设置",

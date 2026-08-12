@@ -4,7 +4,9 @@
       "updateAll": "Update All Profiles",
       "viewRuntimeConfig": "View Runtime Config",
       "reactivate": "Reactivate Profiles",
-      "import": "Import"
+      "import": "Import",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

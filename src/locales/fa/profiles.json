@@ -4,7 +4,9 @@
       "updateAll": "به‌روزرسانی همه پروفایل‌ها",
       "viewRuntimeConfig": "مشاهده پیکربندی زمان اجرا",
       "reactivate": "فعال‌سازی مجدد پروفایل‌ها",
-      "import": "وارد کردن"
+      "import": "وارد کردن",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

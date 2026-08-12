@@ -10,7 +10,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config"
+      "clearChainConfig": "Delete Chain Config",
+      "more": "More"
     },
     "provider": {
       "title": "Penyedia Proksi",
@@ -37,7 +38,8 @@
       "delayCheckUrl": "URL Periksa Keterlambatan",
       "showBasic": "Dasar Proksi",
       "showDetail": "Detail Proksi",
-      "filter": "Filter"
+      "filter": "Filter",
+      "moreTools": "More tools"
     },
     "placeholders": {
       "delayCheckUrl": "URL Periksa Keterlambatan"

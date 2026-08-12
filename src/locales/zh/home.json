@@ -24,7 +24,16 @@
       },
       "title": "首页设置"
     },
-    "title": "首页"
+    "title": "概览",
+    "actions": {
+      "moreInfo": "更多信息",
+      "more": "更多操作"
+    },
+    "empty": {
+      "noProfile": "还没有配置，添加订阅即可开始使用。",
+      "addProfile": "添加配置",
+      "enableCardsHint": "额外信息卡片已隐藏，可在此处开启："
+    }
   },
   "components": {
     "proxyTun": {

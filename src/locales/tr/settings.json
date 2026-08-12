@@ -6,7 +6,12 @@
       "github": "Github Repo"
     },
     "actionsGroupLabel": "Ayar bağlantıları",
-    "title": "Ayarlar"
+    "title": "Ayarlar",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

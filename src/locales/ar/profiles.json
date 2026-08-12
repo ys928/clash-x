@@ -4,7 +4,9 @@
       "updateAll": "تحديث جميع الملفات الشخصية",
       "viewRuntimeConfig": "عرض تكوين وقت التشغيل",
       "reactivate": "إعادة تنشيط الملفات الشخصية",
-      "import": "استيراد"
+      "import": "استيراد",
+      "more": "More",
+      "toggleEnhance": "Merge & Script"
     },
     "batch": {
       "actions": {

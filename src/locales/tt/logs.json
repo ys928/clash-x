@@ -1,6 +1,9 @@
 {
   "page": {
-    "title": "Логлар"
+    "title": "Логлар",
+    "actions": {
+      "more": "More"
+    }
   },
   "actions": {
     "showDescending": "Newest first",

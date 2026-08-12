@@ -12,13 +12,27 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Box, List, Menu, MenuItem, Paper, ThemeProvider } from '@mui/material'
+import { ExpandLess, ExpandMore, MoreHorizOutlined } from '@mui/icons-material'
+import {
+  Box,
+  Collapse,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Paper,
+  ThemeProvider,
+  alpha,
+} from '@mui/material'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useNavigate } from 'react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router'
 import { MihomoWebSocket } from 'tauri-plugin-mihomo-api'
 
 import { BaseErrorBoundary } from '@/components/base'
@@ -40,7 +54,13 @@ import {
   useNavMenuOrder,
 } from './_layout/hooks'
 import { handleNoticeMessage } from './_layout/utils'
-import { navItems } from './_navigation'
+import {
+  moreNavItems,
+  navItems,
+  primaryNavItems,
+  settingsNavItem,
+} from './_navigation'
+import { moreNavPathSet } from './_navigation-meta'
 
 import 'dayjs/locale/ru'
 import 'dayjs/locale/zh-cn'
@@ -92,6 +112,31 @@ const SortableNavMenuItem = ({ item, label }: SortableNavMenuItemProps) => {
   )
 }
 
+const filterOrderedItems = (
+  order: string[],
+  items: readonly NavItem[],
+): NavItem[] => {
+  const map = new Map(items.map((item) => [item.path, item] as const))
+  const seen = new Set<string>()
+  const result: NavItem[] = []
+
+  for (const path of order) {
+    const item = map.get(path)
+    if (item && !seen.has(path)) {
+      result.push(item)
+      seen.add(path)
+    }
+  }
+
+  for (const item of items) {
+    if (!seen.has(item.path)) {
+      result.push(item)
+    }
+  }
+
+  return result
+}
+
 dayjs.extend(relativeTime)
 
 const OS = getSystem()
@@ -105,6 +150,7 @@ const Layout = () => {
   const navCollapsed = verge?.collapse_navbar ?? false
   const { switchLanguage } = useI18n()
   const navigate = useNavigate()
+  const location = useLocation()
   const themeReady = useMemo(() => Boolean(theme), [theme])
 
   // 开发环境下检测 MihomoWebSocket 的所有实例
@@ -128,6 +174,18 @@ const Layout = () => {
   const [menuUnlocked, setMenuUnlocked] = useState(false)
   const [menuContextPosition, setMenuContextPosition] =
     useState<MenuContextPosition | null>(null)
+  const moreRouteActive = moreNavPathSet.has(location.pathname)
+  const [moreExpanded, setMoreExpanded] = useState(moreRouteActive)
+  const [prevMoreRouteActive, setPrevMoreRouteActive] =
+    useState(moreRouteActive)
+
+  // Expand "More" when navigating into a nested route; allow manual collapse after.
+  if (moreRouteActive !== prevMoreRouteActive) {
+    setPrevMoreRouteActive(moreRouteActive)
+    if (moreRouteActive) {
+      setMoreExpanded(true)
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -155,19 +213,49 @@ const Layout = () => {
     [patchVerge],
   )
 
-  const {
-    menuOrder,
-    navItemMap,
-    handleMenuDragEnd,
-    isDefaultOrder,
-    resetMenuOrder,
-  } = useNavMenuOrder({
-    enabled: menuUnlocked,
-    items: navItems,
-    storedOrder: verge?.menu_order,
-    onOptimisticUpdate: handleMenuOrderOptimisticUpdate,
-    onPersist: handleMenuOrderPersist,
-  })
+  // Persist a combined order: primary (reorderable) + more (stable relative) for compatibility.
+  const { menuOrder, handleMenuDragEnd, isDefaultOrder, resetMenuOrder } =
+    useNavMenuOrder({
+      enabled: menuUnlocked,
+      items: primaryNavItems,
+      storedOrder: verge?.menu_order,
+      onOptimisticUpdate: (primaryOrder) => {
+        const moreOrder = (verge?.menu_order ?? []).filter((path) =>
+          moreNavPathSet.has(path),
+        )
+        const missingMore = moreNavItems
+          .map((item) => item.path)
+          .filter((path) => !moreOrder.includes(path))
+        handleMenuOrderOptimisticUpdate([
+          ...primaryOrder,
+          ...moreOrder,
+          ...missingMore,
+        ])
+      },
+      onPersist: async (primaryOrder) => {
+        const moreOrder = (verge?.menu_order ?? []).filter((path) =>
+          moreNavPathSet.has(path),
+        )
+        const missingMore = moreNavItems
+          .map((item) => item.path)
+          .filter((path) => !moreOrder.includes(path))
+        await handleMenuOrderPersist([
+          ...primaryOrder,
+          ...moreOrder,
+          ...missingMore,
+        ])
+      },
+    })
+
+  const orderedPrimaryItems = useMemo(
+    () => filterOrderedItems(menuOrder, primaryNavItems),
+    [menuOrder],
+  )
+
+  const orderedMoreItems = useMemo(
+    () => filterOrderedItems(verge?.menu_order ?? [], moreNavItems),
+    [verge?.menu_order],
+  )
 
   const handleMenuContextMenu = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -224,6 +312,86 @@ const Layout = () => {
       switchLanguage(language)
     }
   }, [language, switchLanguage])
+
+  const renderNavList = (items: NavItem[], sortable: boolean) => {
+    if (sortable) {
+      return items.map((item) => (
+        <SortableNavMenuItem
+          key={item.path}
+          item={item}
+          label={t(item.label)}
+        />
+      ))
+    }
+
+    return items.map((item) => (
+      <LayoutItem key={item.path} to={item.path} icon={item.icon}>
+        {t(item.label)}
+      </LayoutItem>
+    ))
+  }
+
+  const moreToggle = (
+    <ListItem sx={{ py: 0.5, maxWidth: 250, mx: 'auto', padding: '4px 0px' }}>
+      <ListItemButton
+        selected={moreRouteActive && !moreExpanded}
+        onClick={() => setMoreExpanded((open) => !open)}
+        sx={[
+          {
+            borderRadius: 2,
+            marginLeft: 1.25,
+            paddingLeft: 1,
+            paddingRight: 1,
+            marginRight: 1.25,
+            '& .MuiListItemText-primary': {
+              color: 'text.primary',
+              fontWeight: 600,
+            },
+          },
+          ({ palette: { mode: paletteMode, primary } }) => {
+            const selectedBg = alpha(
+              primary.main,
+              paletteMode === 'light' ? 0.1 : 0.14,
+            )
+            return {
+              '&:hover': {
+                backgroundColor: 'var(--background-elevated)',
+              },
+              '&.Mui-selected': {
+                bgcolor: selectedBg,
+                borderLeft: `3px solid ${primary.main}`,
+                marginLeft: '7px',
+                paddingLeft: '5px',
+              },
+            }
+          },
+        ]}
+        title={
+          navCollapsed ? t('layout.components.navigation.tabs.more') : undefined
+        }
+        aria-label={t('layout.components.navigation.tabs.more')}
+        aria-expanded={moreExpanded}
+      >
+        <ListItemIcon
+          sx={{
+            color: moreRouteActive ? 'primary.main' : 'text.secondary',
+            marginLeft: '6px',
+          }}
+        >
+          <MoreHorizOutlined />
+        </ListItemIcon>
+        <ListItemText
+          sx={{ textAlign: 'center', marginLeft: '-35px' }}
+          primary={t('layout.components.navigation.tabs.more')}
+        />
+        {moreExpanded ? (
+          <ExpandLess fontSize="small" sx={{ color: 'text.secondary' }} />
+        ) : (
+          <ExpandMore fontSize="small" sx={{ color: 'text.secondary' }} />
+        )}
+      </ListItemButton>
+    </ListItem>
+  )
 
   if (!themeReady) {
     return (
@@ -325,40 +493,44 @@ const Layout = () => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleMenuDragEnd}
               >
-                <SortableContext items={menuOrder}>
+                <SortableContext
+                  items={orderedPrimaryItems.map((item) => item.path)}
+                >
                   <List
                     className="the-menu"
                     onContextMenu={handleMenuContextMenu}
                   >
-                    {menuOrder.map((path) => {
-                      const item = navItemMap.get(path)
-                      if (!item) {
-                        return null
-                      }
-                      return (
-                        <SortableNavMenuItem
-                          key={item.path}
-                          item={item}
-                          label={t(item.label)}
-                        />
-                      )
-                    })}
+                    {renderNavList(orderedPrimaryItems, true)}
+                    {moreToggle}
+                    <Collapse in={moreExpanded} timeout="auto" unmountOnExit>
+                      <List disablePadding sx={{ pl: navCollapsed ? 0 : 1 }}>
+                        {renderNavList(orderedMoreItems, false)}
+                      </List>
+                    </Collapse>
+                    <LayoutItem
+                      to={settingsNavItem.path}
+                      icon={settingsNavItem.icon}
+                    >
+                      {t(settingsNavItem.label)}
+                    </LayoutItem>
                   </List>
                 </SortableContext>
               </DndContext>
             ) : (
               <List className="the-menu" onContextMenu={handleMenuContextMenu}>
-                {menuOrder.map((path) => {
-                  const item = navItemMap.get(path)
-                  if (!item) {
-                    return null
-                  }
-                  return (
-                    <LayoutItem key={item.path} to={item.path} icon={item.icon}>
-                      {t(item.label)}
-                    </LayoutItem>
-                  )
-                })}
+                {renderNavList(orderedPrimaryItems, false)}
+                {moreToggle}
+                <Collapse in={moreExpanded} timeout="auto" unmountOnExit>
+                  <List disablePadding sx={{ pl: navCollapsed ? 0 : 1 }}>
+                    {renderNavList(orderedMoreItems, false)}
+                  </List>
+                </Collapse>
+                <LayoutItem
+                  to={settingsNavItem.path}
+                  icon={settingsNavItem.icon}
+                >
+                  {t(settingsNavItem.label)}
+                </LayoutItem>
               </List>
             )}
 

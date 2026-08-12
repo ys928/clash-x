@@ -24,7 +24,16 @@
       },
       "title": "Startseite-Einstellungen"
     },
-    "title": "Startseite"
+    "title": "Startseite",
+    "actions": {
+      "moreInfo": "More info",
+      "more": "More actions"
+    },
+    "empty": {
+      "noProfile": "No profile yet. Add a subscription to get started.",
+      "addProfile": "Add profile",
+      "enableCardsHint": "Extra cards are hidden. Enable them in"
+    }
   },
   "components": {
     "proxyTun": {

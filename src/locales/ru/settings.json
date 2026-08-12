@@ -6,7 +6,12 @@
       "github": "GitHub репозиторий"
     },
     "actionsGroupLabel": "Ссылки настроек",
-    "title": "Настройки"
+    "title": "Настройки",
+    "sections": {
+      "appearance": "Appearance",
+      "behavior": "Behavior",
+      "advanced": "Advanced"
+    }
   },
   "sections": {
     "system": {

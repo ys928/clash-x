@@ -56,7 +56,12 @@ const MODE_ICONS: Record<ClashMode, ReactNode> = {
   direct: <DirectionsRounded fontSize="small" />,
 }
 
-export const ClashModeCard = () => {
+interface ClashModeCardProps {
+  /** Compact segmented control without description banner. */
+  compact?: boolean
+}
+
+export const ClashModeCard = ({ compact = false }: ClashModeCardProps) => {
   const { t } = useTranslation()
   const { verge } = useVerge()
   const { clashConfig } = useClashConfigData()
@@ -125,8 +130,9 @@ export const ClashModeCard = () => {
   // 按钮样式
   const buttonStyles = (mode: ClashMode) => ({
     cursor: 'pointer',
-    px: 2,
-    py: 1.2,
+    px: compact ? 1.5 : 2,
+    py: compact ? 0.85 : 1.2,
+    ...(compact ? { flex: 1 } : {}),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -138,14 +144,14 @@ export const ClashModeCard = () => {
     position: 'relative',
     overflow: 'visible',
     '&:hover': {
-      transform: 'translateY(-1px)',
+      transform: compact ? undefined : 'translateY(-1px)',
       boxShadow: 1,
     },
     '&:active': {
-      transform: 'translateY(1px)',
+      transform: compact ? undefined : 'translateY(1px)',
     },
     '&::after':
-      mode === currentMode
+      !compact && mode === currentMode
         ? {
             content: '""',
             position: 'absolute',
@@ -183,7 +189,7 @@ export const ClashModeCard = () => {
         sx={{
           display: 'flex',
           justifyContent: 'center',
-          py: 1,
+          py: compact ? 0 : 1,
           position: 'relative',
           zIndex: 2,
         }}
@@ -210,20 +216,22 @@ export const ClashModeCard = () => {
       </Stack>
 
       {/* 说明文本区域 */}
-      <Box
-        sx={{
-          width: '100%',
-          my: 1,
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          overflow: 'visible',
-        }}
-      >
-        <Typography variant="caption" component="div" sx={descriptionStyles}>
-          {modeDescription}
-        </Typography>
-      </Box>
+      {!compact && (
+        <Box
+          sx={{
+            width: '100%',
+            my: 1,
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            overflow: 'visible',
+          }}
+        >
+          <Typography variant="caption" component="div" sx={descriptionStyles}>
+            {modeDescription}
+          </Typography>
+        </Box>
+      )}
     </Box>
   )
 }
