@@ -1,5 +1,4 @@
 import {
-  HelpOutlineRounded,
   HistoryEduOutlined,
   MoreVert,
   SettingsOutlined,
@@ -24,7 +23,6 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material'
-import { useLockFn } from 'ahooks'
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,7 +35,7 @@ import { HomeProfileCard } from '@/components/home/home-profile-card'
 import ProxyControlSwitches from '@/components/shared/proxy-control-switches'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useVerge } from '@/hooks/use-verge'
-import { entry_lightweight_mode, openWebUrl } from '@/services/cmds'
+import { entry_lightweight_mode } from '@/services/cmds'
 
 const preloadTestCard = () =>
   import('@/components/home/test-card').then((module) => ({
@@ -241,15 +239,10 @@ const HomePage = () => {
   const { current, mutateProfiles } = useProfiles()
 
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [moreInfoOpen, setMoreInfoOpen] = useState(false)
   const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
 
   const homeCards =
     (verge?.home_cards as HomeCardsSettings | undefined) ?? DEFAULT_HOME_CARDS
-
-  const toGithubDoc = useLockFn(() => {
-    return openWebUrl('https://clash-verge-rev.github.io/index.html')
-  })
 
   const openSettings = useCallback(() => {
     setOverflowAnchor(null)
@@ -287,14 +280,6 @@ const HomePage = () => {
       contentStyle={{ padding: 2 }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Button
-            size="small"
-            color="inherit"
-            onClick={() => setMoreInfoOpen((open) => !open)}
-            sx={{ textTransform: 'none' }}
-          >
-            {t('home.page.actions.moreInfo')}
-          </Button>
           <IconButton
             size="small"
             color="inherit"
@@ -316,15 +301,6 @@ const HomePage = () => {
             >
               <HistoryEduOutlined fontSize="small" sx={{ mr: 1 }} />
               {t('home.page.tooltips.lightweightMode')}
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setOverflowAnchor(null)
-                void toGithubDoc()
-              }}
-            >
-              <HelpOutlineRounded fontSize="small" sx={{ mr: 1 }} />
-              {t('home.page.tooltips.manual')}
             </MenuItem>
             <MenuItem onClick={openSettings}>
               <SettingsOutlined fontSize="small" sx={{ mr: 1 }} />
@@ -402,7 +378,7 @@ const HomePage = () => {
           </Grid>
         )}
 
-        <Collapse in={moreInfoOpen || hasExtraCards}>
+        <Collapse in={hasExtraCards}>
           <Grid container spacing={1.5} columns={{ xs: 6, sm: 6, md: 12 }}>
             {renderExtraCard(
               'traffic',
@@ -446,20 +422,6 @@ const HomePage = () => {
               >
                 <LazySystemInfoCard />
               </Suspense>,
-            )}
-            {!hasExtraCards && moreInfoOpen && (
-              <Grid size={12}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ py: 2, textAlign: 'center' }}
-                >
-                  {t('home.page.empty.enableCardsHint')}
-                  <Button size="small" onClick={openSettings} sx={{ ml: 1 }}>
-                    {t('home.page.tooltips.settings')}
-                  </Button>
-                </Typography>
-              </Grid>
             )}
           </Grid>
         </Collapse>

@@ -36,7 +36,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Stack,
 } from '@mui/material'
 import { TauriEvent } from '@tauri-apps/api/event'
 import { readText } from '@tauri-apps/plugin-clipboard-manager'
@@ -49,6 +48,7 @@ import { useLocation } from 'react-router'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
 import {
+  BaseDialog,
   BasePage,
   BaseStyledTextField,
   type DialogRef,
@@ -145,7 +145,7 @@ const ProfilePage = () => {
   const location = useLocation()
   const { addListener } = useListen()
   const [url, setUrl] = useState('')
-  const [disabled, setDisabled] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [activatings, setActivatings] = useState<string[]>([])
   const [switchTarget, setSwitchTarget] = useState<string | null>(null)
   const [visibleSwitchingProfile, setVisibleSwitchingProfile] = useState<
@@ -321,6 +321,7 @@ const ProfilePage = () => {
     const handleImportSuccess = async (noticeKey: string) => {
       showNotice.success(noticeKey)
       setUrl('')
+      setImportOpen(false)
       await performRobustRefresh()
     }
     try {
@@ -353,7 +354,6 @@ const ProfilePage = () => {
         )
       }
     } finally {
-      setDisabled(false)
       setLoading(false)
     }
   }
@@ -696,6 +696,24 @@ const ProfilePage = () => {
     if (text) setUrl(text)
   }
 
+  const openImportDialog = useCallback(async () => {
+    setImportOpen(true)
+    if (url) return
+    try {
+      const text = (await readText())?.trim()
+      if (text && /^https?:\/\//i.test(text)) {
+        setUrl(text)
+      }
+    } catch {
+      /* ignore clipboard errors */
+    }
+  }, [url])
+
+  const closeImportDialog = useCallback(() => {
+    if (loading) return
+    setImportOpen(false)
+  }, [loading])
+
   // Batch selection functions
   const toggleBatchMode = () => {
     setBatchMode(!batchMode)
@@ -807,6 +825,23 @@ const ProfilePage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {!batchMode ? (
             <>
+              <Button
+                size="small"
+                color="inherit"
+                onClick={() => void openImportDialog()}
+                sx={{ textTransform: 'none', minWidth: 0, px: 1 }}
+              >
+                {t('profiles.page.actions.import')}
+              </Button>
+              <Button
+                size="small"
+                color="inherit"
+                onClick={() => viewerRef.current?.create()}
+                sx={{ textTransform: 'none', minWidth: 0, px: 1 }}
+              >
+                {t('shared.actions.new')}
+              </Button>
+
               <IconButton
                 size="small"
                 color="inherit"
@@ -941,78 +976,6 @@ const ProfilePage = () => {
         </Box>
       }
     >
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{
-          pt: 1,
-          mb: 0.5,
-          mx: '10px',
-          height: '36px',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <BaseStyledTextField
-          value={url}
-          variant="outlined"
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
-              return
-            }
-            if (!url || disabled || loading) {
-              return
-            }
-            event.preventDefault()
-            void onImport()
-          }}
-          placeholder={t('profiles.page.importForm.placeholder')}
-          slotProps={{
-            input: {
-              sx: { pr: 1 },
-              endAdornment: !url ? (
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  title={t('profiles.page.importForm.actions.paste')}
-                  onClick={onCopyLink}
-                >
-                  <ContentPasteRounded fontSize="inherit" />
-                </IconButton>
-              ) : (
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  title={t('shared.actions.clear')}
-                  onClick={() => setUrl('')}
-                >
-                  <ClearRounded fontSize="inherit" />
-                </IconButton>
-              ),
-            },
-          }}
-        />
-        <Button
-          disabled={!url || disabled}
-          loading={loading}
-          variant="contained"
-          size="small"
-          sx={{ borderRadius: '6px' }}
-          onClick={onImport}
-        >
-          {t('profiles.page.actions.import')}
-        </Button>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{ borderRadius: '6px' }}
-          onClick={() => viewerRef.current?.create()}
-        >
-          {t('shared.actions.new')}
-        </Button>
-      </Stack>
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -1022,7 +985,8 @@ const ProfilePage = () => {
           sx={{
             pl: '10px',
             pr: '10px',
-            height: 'calc(100% - 48px)',
+            pt: 1.5,
+            height: '100%',
             overflowY: 'auto',
           }}
         >
@@ -1123,6 +1087,61 @@ const ProfilePage = () => {
         }}
       />
       <ConfigViewer ref={configRef} />
+      <BaseDialog
+        open={importOpen}
+        title={t('profiles.page.actions.import')}
+        contentSx={{ width: 420, maxWidth: '100%', pt: 1 }}
+        okBtn={t('profiles.page.actions.import')}
+        cancelBtn={t('shared.actions.cancel')}
+        disableOk={!url || loading}
+        loading={loading}
+        onOk={() => void onImport()}
+        onCancel={closeImportDialog}
+        onClose={closeImportDialog}
+      >
+        <BaseStyledTextField
+          autoFocus
+          value={url}
+          variant="outlined"
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
+              return
+            }
+            if (!url || loading) {
+              return
+            }
+            event.preventDefault()
+            void onImport()
+          }}
+          placeholder={t('profiles.page.importForm.placeholder')}
+          slotProps={{
+            input: {
+              sx: { pr: 1 },
+              endAdornment: !url ? (
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5 }}
+                  title={t('profiles.page.importForm.actions.paste')}
+                  onClick={() => void onCopyLink()}
+                >
+                  <ContentPasteRounded fontSize="inherit" />
+                </IconButton>
+              ) : (
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5 }}
+                  title={t('shared.actions.clear')}
+                  onClick={() => setUrl('')}
+                  disabled={loading}
+                >
+                  <ClearRounded fontSize="inherit" />
+                </IconButton>
+              ),
+            },
+          }}
+        />
+      </BaseDialog>
     </BasePage>
   )
 }
