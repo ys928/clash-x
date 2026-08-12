@@ -7,7 +7,6 @@ dist-ssr
 update.json
 scripts/_env.sh
 .vscode
-.tool-versions
 .idea
 .old
 .eslintcache
