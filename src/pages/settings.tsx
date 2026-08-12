@@ -1,15 +1,11 @@
-import { GitHub, HelpOutlineRounded, Telegram } from '@mui/icons-material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
-  ButtonGroup,
-  IconButton,
   Typography,
 } from '@mui/material'
-import { useLockFn } from 'ahooks'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -18,7 +14,6 @@ import SettingClash from '@/components/setting/setting-clash'
 import SettingSystem from '@/components/setting/setting-system'
 import SettingVergeAdvanced from '@/components/setting/setting-verge-advanced'
 import SettingVergeBasic from '@/components/setting/setting-verge-basic'
-import { openWebUrl } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 
 const settingPanelSx = {
@@ -42,18 +37,6 @@ const SettingPage = () => {
     showNotice.error(err)
   }
 
-  const toGithubRepo = useLockFn(() => {
-    return openWebUrl('https://github.com/clash-verge-rev/clash-verge-rev')
-  })
-
-  const toGithubDoc = useLockFn(() => {
-    return openWebUrl('https://clash-verge-rev.github.io/index.html')
-  })
-
-  const toTelegramChannel = useLockFn(() => {
-    return openWebUrl('https://t.me/clash_verge_re')
-  })
-
   const handleAdvancedChange = (_: unknown, expanded: boolean) => {
     setAdvancedOpen(expanded)
     try {
@@ -64,41 +47,7 @@ const SettingPage = () => {
   }
 
   return (
-    <BasePage
-      title={t('settings.page.title')}
-      header={
-        <ButtonGroup
-          variant="contained"
-          aria-label={t('settings.page.actionsGroupLabel')}
-        >
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t('settings.page.actions.manual')}
-            onClick={toGithubDoc}
-          >
-            <HelpOutlineRounded fontSize="inherit" />
-          </IconButton>
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t('settings.page.actions.telegram')}
-            onClick={toTelegramChannel}
-          >
-            <Telegram fontSize="inherit" />
-          </IconButton>
-
-          <IconButton
-            size="medium"
-            color="inherit"
-            title={t('settings.page.actions.github')}
-            onClick={toGithubRepo}
-          >
-            <GitHub fontSize="inherit" />
-          </IconButton>
-        </ButtonGroup>
-      }
-    >
+    <BasePage title={t('settings.page.title')}>
       <Box
         sx={{
           maxWidth: 920,

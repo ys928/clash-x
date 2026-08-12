@@ -36,6 +36,15 @@ import {
   resolveEmptyListReason,
   resolveProxyListState,
 } from './proxy-empty-state-model'
+import { ProxyFocusHeader } from './proxy-focus-header'
+import {
+  listVisibleGroups,
+  readProxyPageViewMode,
+  resolveFocusedGroupName,
+  STORAGE_KEY_GROUP,
+  writeProxyPageViewMode,
+  type ProxyPageViewMode,
+} from './proxy-focus-model'
 import {
   DEFAULT_HOVER_DELAY,
   ProxyGroupNavigator,
@@ -97,7 +106,9 @@ function useProxyRenderState(
     () =>
       isChainMode
         ? `${mode}:chain:${activeSelectedGroup ?? 'all'}`
-        : `${mode}:normal`,
+        : activeSelectedGroup
+          ? `${mode}:focus:${activeSelectedGroup}`
+          : `${mode}:normal`,
     [activeSelectedGroup, isChainMode, mode],
   )
 
@@ -364,7 +375,39 @@ function ChainProxyGroups(props: {
 
 function NormalProxyGroups(props: { mode: string }) {
   const { mode } = props
+  const { proxyView } = useProxiesData()
   const stickyListRef = useRef<StickyVirtualListHandle>(null)
+  const [viewMode, setViewMode] = useState<ProxyPageViewMode>(() =>
+    readProxyPageViewMode(),
+  )
+  // User override; null means "follow saved preference / primary heuristic".
+  const [groupOverride, setGroupOverride] = useState<string | null>(null)
+
+  const visibleGroups = useMemo(
+    () => listVisibleGroups(proxyView?.groups),
+    [proxyView?.groups],
+  )
+
+  const isRuleMode = mode === 'rule' || mode === 'script'
+  const showFocusChrome = isRuleMode && visibleGroups.length > 0
+
+  const focusedGroupName = useMemo(() => {
+    if (!isRuleMode) return null
+    let savedName: string | null
+    try {
+      savedName = localStorage.getItem(STORAGE_KEY_GROUP)
+    } catch {
+      savedName = null
+    }
+    return resolveFocusedGroupName(visibleGroups, {
+      currentName: groupOverride,
+      savedName,
+    })
+  }, [groupOverride, isRuleMode, visibleGroups])
+
+  const activeSelectedGroup =
+    showFocusChrome && viewMode === 'focus' ? focusedGroupName : null
+
   const {
     verge,
     renderList,
@@ -373,11 +416,27 @@ function NormalProxyGroups(props: { mode: string }) {
     handleCheckAll,
     getScrollPosition,
     saveScrollPosition,
-  } = useProxyRenderState(mode, false, null)
+  } = useProxyRenderState(mode, false, activeSelectedGroup)
   const emptyList = useEmptyRenderList()
   const renderFirstRef = useRef(true)
   // 恢复滚动位置期间设为 true，避免程序化滚动触发的 scroll 事件把中间值写回存储
   const isRestoringRef = useRef(false)
+
+  const handleViewModeChange = useCallback((next: ProxyPageViewMode) => {
+    setViewMode(next)
+    writeProxyPageViewMode(next)
+    renderFirstRef.current = true
+  }, [])
+
+  const handleSelectGroup = useCallback((groupName: string) => {
+    setGroupOverride(groupName)
+    try {
+      localStorage.setItem(STORAGE_KEY_GROUP, groupName)
+    } catch {
+      // ignore
+    }
+    renderFirstRef.current = true
+  }, [])
 
   // 目前无法使用 StickyVirtualList 的 initialOffset 值设置初始化，具体原因需排查
   // 从 localStorage 恢复滚动位置
@@ -593,27 +652,48 @@ function NormalProxyGroups(props: { mode: string }) {
   if (!hasRenderableItems(renderList)) return emptyList
 
   return (
-    <div style={{ position: 'relative', height: '100%' }}>
-      <StickyVirtualList
-        ref={stickyListRef}
-        items={renderList}
-        isGroupItem={(item) => item.type === 0}
-        getItemKey={(item) => item.key}
-        estimateGroupItemHeight={76}
-        estimateItemHeight={64}
-        renderGroupItem={renderGroupItem}
-        renderItem={renderProxyItem}
-      />
-
-      {/* 代理组导航栏 */}
-      {mode === 'rule' && (
-        <ProxyGroupNavigator
-          proxyGroupNames={proxyGroupNames}
-          onGroupLocation={handleGroupLocationByName}
-          enableHoverJump={verge?.enable_hover_jump_navigator ?? true}
-          hoverDelay={verge?.hover_jump_navigator_delay ?? DEFAULT_HOVER_DELAY}
+    <div
+      style={{
+        position: 'relative',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {showFocusChrome && (
+        <ProxyFocusHeader
+          groups={visibleGroups}
+          selectedGroupName={focusedGroupName}
+          viewMode={viewMode}
+          onSelectGroup={handleSelectGroup}
+          onViewModeChange={handleViewModeChange}
         />
       )}
+
+      <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+        <StickyVirtualList
+          ref={stickyListRef}
+          items={renderList}
+          isGroupItem={(item) => item.type === 0}
+          getItemKey={(item) => item.key}
+          estimateGroupItemHeight={76}
+          estimateItemHeight={64}
+          renderGroupItem={renderGroupItem}
+          renderItem={renderProxyItem}
+        />
+
+        {/* 全部组视图才需要侧边快速跳转；聚焦模式只有一组 */}
+        {isRuleMode && viewMode === 'all' && (
+          <ProxyGroupNavigator
+            proxyGroupNames={proxyGroupNames}
+            onGroupLocation={handleGroupLocationByName}
+            enableHoverJump={verge?.enable_hover_jump_navigator ?? true}
+            hoverDelay={
+              verge?.hover_jump_navigator_delay ?? DEFAULT_HOVER_DELAY
+            }
+          />
+        )}
+      </div>
     </div>
   )
 }

@@ -553,6 +553,19 @@ export interface TranslationResources {
             title: string
           }
         }
+        focus: {
+          allTitle: string
+          current: string
+          groupCount: string
+          hint: string
+          modes: {
+            all: string
+            focus: string
+          }
+          primary: string
+          title: string
+          viewMode: string
+        }
         labels: {
           delayCheckReset: string
           nodeCount: string

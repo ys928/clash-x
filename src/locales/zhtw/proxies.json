@@ -24,6 +24,19 @@
       "title": "代理規則",
       "select": "選擇規則"
     },
+    "focus": {
+      "title": "選擇節點",
+      "allTitle": "全部代理組",
+      "viewMode": "檢視模式",
+      "modes": {
+        "focus": "聚焦",
+        "all": "全部組"
+      },
+      "current": "目前",
+      "primary": "常用",
+      "groupCount": "共 {{count}} 個代理組",
+      "hint": "日常流量一般走主代理組。其他組用於規則分流，多數情況下無需手動修改。"
+    },
     "labels": {
       "proxyCount": "節點數量",
       "delayCheckReset": "測試延遲以取消固定",
@@ -86,7 +99,7 @@
       "directMode": "直連模式"
     },
     "title": {
-      "default": "代理組",
+      "default": "節點",
       "chainMode": "鏈式代理模式"
     }
   },

@@ -24,6 +24,19 @@
       "title": "Proxy Rules",
       "select": "Select Rules"
     },
+    "focus": {
+      "title": "Choose a node",
+      "allTitle": "All proxy groups",
+      "viewMode": "View mode",
+      "modes": {
+        "focus": "Focus",
+        "all": "All groups"
+      },
+      "current": "Current",
+      "primary": "Primary",
+      "groupCount": "{{count}} groups total",
+      "hint": "Most traffic uses the primary group. Other groups are for rule-based routing and usually do not need changes."
+    },
     "labels": {
       "proxyCount": "Proxy Count",
       "delayCheckReset": "Беркетелгәнне гамәлдән чыгару өчен задержканы тикшерү",

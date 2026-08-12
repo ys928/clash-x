@@ -24,6 +24,19 @@
       "title": "代理规则",
       "select": "选择规则"
     },
+    "focus": {
+      "title": "选择节点",
+      "allTitle": "全部代理组",
+      "viewMode": "视图模式",
+      "modes": {
+        "focus": "聚焦",
+        "all": "全部组"
+      },
+      "current": "当前",
+      "primary": "常用",
+      "groupCount": "共 {{count}} 个代理组",
+      "hint": "日常流量一般走主代理组。其他组用于规则分流，多数情况下无需手动修改。"
+    },
     "labels": {
       "proxyCount": "节点数量",
       "delayCheckReset": "进行延迟测试，以取消固定",
@@ -86,7 +99,7 @@
       "directMode": "直连模式"
     },
     "title": {
-      "default": "代理组",
+      "default": "节点",
       "chainMode": "链式代理模式"
     }
   },
