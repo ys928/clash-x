@@ -217,12 +217,32 @@ const buildThemeOptions = (
         },
       },
       MuiTooltip: {
+        defaultProps: {
+          arrow: true,
+          enterDelay: 400,
+        },
         styleOverrides: {
           tooltip: {
-            backgroundColor: mode === 'light' ? '#1C1D21' : '#2A2B2F',
+            backgroundColor:
+              mode === 'light' ? dt.primary_text : dt.background_elevated,
+            color: mode === 'light' ? '#FFFFFF' : dt.primary_text,
             fontSize: 12,
+            fontWeight: 500,
+            lineHeight: 1.4,
             borderRadius: 6,
             padding: '6px 10px',
+            border: mode === 'dark' ? `1px solid ${dividerColor}` : 'none',
+            boxShadow: 'none',
+            maxWidth: 280,
+          },
+          arrow: {
+            color: mode === 'light' ? dt.primary_text : dt.background_elevated,
+            ...(mode === 'dark' && {
+              '&::before': {
+                border: `1px solid ${dividerColor}`,
+                boxSizing: 'border-box',
+              },
+            }),
           },
         },
       },

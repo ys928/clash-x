@@ -12,14 +12,14 @@ import WifiTetheringOffRounded from '@mui/icons-material/WifiTetheringOffRounded
 import WifiTetheringRounded from '@mui/icons-material/WifiTetheringRounded'
 import { Box, IconButton, type SxProps, TextField } from '@mui/material'
 import { useDebounceFn } from 'ahooks'
-import { memo, useEffect } from 'react'
+import { memo, useEffect, type MouseEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { useVerge } from '@/hooks/use-verge'
 import delayManager from '@/services/delay'
 
-import { BaseSearchBox, type SearchState } from '../base'
+import { BaseSearchBox, BaseTooltip, type SearchState } from '../base'
 
 import type { ProxySortType } from './use-filter-sort'
 import type { HeadState } from './use-head-state'
@@ -33,6 +33,30 @@ interface Props {
   onCheckDelay: () => void
   onHeadState: (val: Partial<HeadState>) => void
 }
+
+const ToolButton = ({
+  title,
+  onClick,
+  children,
+}: {
+  title: string
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void
+  children: ReactNode
+}) => (
+  <BaseTooltip title={title}>
+    <IconButton
+      size="small"
+      color="inherit"
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick(e)
+      }}
+    >
+      {children}
+    </IconButton>
+  </BaseTooltip>
+)
 
 export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
   const {
@@ -87,6 +111,16 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
   }, [textState, flushFilter])
   useEffect(() => () => flushFilter(), [flushFilter])
 
+  const ensureOpen = () => {
+    if (!headState.open) {
+      // eslint-disable-next-line @eslint-react/dom-no-flush-sync
+      flushSync(() => onHeadState({ open: true }))
+    }
+  }
+
+  const toolsExpanded =
+    textState === 'tools' || textState === 'filter' || textState === 'url'
+
   return (
     <Box
       sx={{
@@ -101,7 +135,7 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
       }}
     >
       {textState === 'filter' && (
-        <Box sx={{ flex: '1 1 auto' }}>
+        <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
           <BaseSearchBox
             defaultValue={filterText}
             matchCase={filterMatchCase}
@@ -130,35 +164,24 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
             e.stopPropagation()
           }}
           onChange={(e) => onHeadState({ testUrl: e.target.value })}
-          sx={{ flex: '1 1 auto', input: { py: 0.65, px: 1 } }}
+          sx={{ flex: '1 1 auto', minWidth: 0, input: { py: 0.65, px: 1 } }}
         />
       )}
-      <IconButton
-        size="small"
-        color="inherit"
+
+      <ToolButton
         title={t('proxies.page.tooltips.locate')}
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (!headState.open)
-            // eslint-disable-next-line @eslint-react/dom-no-flush-sync
-            flushSync(() => onHeadState({ open: true }))
+        onClick={() => {
+          ensureOpen()
           onLocation()
         }}
       >
         <MyLocationRounded fontSize="inherit" />
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={t('proxies.page.tooltips.delayCheck')}
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (!headState.open)
-            // eslint-disable-next-line @eslint-react/dom-no-flush-sync
-            flushSync(() => onHeadState({ open: true }))
+        onClick={() => {
+          ensureOpen()
           // Remind the user that it is custom test url
           if (testUrl?.trim() && textState !== 'filter') {
             onHeadState({ textState: 'url' })
@@ -167,36 +190,12 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
         }}
       >
         <NetworkCheckRounded fontSize="inherit" />
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
-        title={t('proxies.page.tooltips.moreTools')}
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          onHeadState({
-            textState: textState === 'tools' ? null : 'tools',
-          })
-        }}
-      >
-        {textState === 'tools' ||
-        textState === 'filter' ||
-        textState === 'url' ? (
-          <MoreHorizRounded fontSize="inherit" color="primary" />
-        ) : (
-          <MoreHorizRounded fontSize="inherit" />
-        )}
-      </IconButton>
-
-      {(textState === 'tools' ||
-        textState === 'filter' ||
-        textState === 'url') && (
+      {/* Extra tools expand to the left of the toggle so the toggle stays anchored. */}
+      {toolsExpanded && (
         <>
-          <IconButton
-            size="small"
-            color="inherit"
+          <ToolButton
             title={
               [
                 t('proxies.page.tooltips.sortDefault'),
@@ -204,12 +203,8 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
                 t('proxies.page.tooltips.sortName'),
               ][sortType]
             }
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              if (!headState.open)
-                // eslint-disable-next-line @eslint-react/dom-no-flush-sync
-                flushSync(() => onHeadState({ open: true }))
+            onClick={() => {
+              ensureOpen()
               onHeadState({
                 sortType: ((sortType + 1) % 3) as ProxySortType,
               })
@@ -220,15 +215,11 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
             )}
             {sortType === 1 && <AccessTimeRounded fontSize="inherit" />}
             {sortType === 2 && <SortByAlphaRounded fontSize="inherit" />}
-          </IconButton>
+          </ToolButton>
 
-          <IconButton
-            size="small"
-            color="inherit"
+          <ToolButton
             title={t('proxies.page.tooltips.delayCheckUrl')}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
+            onClick={() => {
               onHeadState({
                 textState: textState === 'url' ? 'tools' : 'url',
               })
@@ -239,22 +230,16 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
             ) : (
               <WifiTetheringOffRounded fontSize="inherit" />
             )}
-          </IconButton>
+          </ToolButton>
 
-          <IconButton
-            size="small"
-            color="inherit"
+          <ToolButton
             title={
               showType
                 ? t('proxies.page.tooltips.showBasic')
                 : t('proxies.page.tooltips.showDetail')
             }
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              if (!headState.open)
-                // eslint-disable-next-line @eslint-react/dom-no-flush-sync
-                flushSync(() => onHeadState({ open: true }))
+            onClick={() => {
+              ensureOpen()
               onHeadState({ showType: !showType })
             }}
           >
@@ -263,18 +248,12 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
             ) : (
               <VisibilityOffRounded fontSize="inherit" />
             )}
-          </IconButton>
+          </ToolButton>
 
-          <IconButton
-            size="small"
-            color="inherit"
+          <ToolButton
             title={t('proxies.page.tooltips.filter')}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              if (!headState.open && textState !== 'filter')
-                // eslint-disable-next-line @eslint-react/dom-no-flush-sync
-                flushSync(() => onHeadState({ open: true }))
+            onClick={() => {
+              if (!headState.open && textState !== 'filter') ensureOpen()
               onHeadState({
                 textState: textState === 'filter' ? 'tools' : 'filter',
               })
@@ -285,9 +264,23 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
             ) : (
               <SearchRounded fontSize="inherit" />
             )}
-          </IconButton>
+          </ToolButton>
         </>
       )}
+
+      <ToolButton
+        title={t('proxies.page.tooltips.moreTools')}
+        onClick={() => {
+          onHeadState({
+            textState: toolsExpanded ? null : 'tools',
+          })
+        }}
+      >
+        <MoreHorizRounded
+          fontSize="inherit"
+          color={toolsExpanded ? 'primary' : 'inherit'}
+        />
+      </ToolButton>
     </Box>
   )
 })

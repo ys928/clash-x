@@ -86,7 +86,7 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
 
   if (type === 0) {
     return (
-      <div style={{ padding: '4px 8px' }}>
+      <div style={{ padding: '8px 10px 4px' }}>
         <ListItemButton
           dense
           sx={{
@@ -275,7 +275,7 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
         sx={{
           height: 56,
           display: 'grid',
-          my: 0.5,
+          my: 0.75,
           gap: 1,
           px: 2,
           gridTemplateColumns: `repeat(${item.col! || 2}, 1fr)`,

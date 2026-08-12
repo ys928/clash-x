@@ -1,10 +1,7 @@
 import { InfoRounded } from '@mui/icons-material'
-import {
-  Tooltip,
-  IconButton,
-  IconButtonProps,
-  SvgIconProps,
-} from '@mui/material'
+import { IconButton, IconButtonProps, SvgIconProps } from '@mui/material'
+
+import { BaseTooltip } from './base-tooltip'
 
 interface Props extends IconButtonProps {
   title?: string
@@ -15,10 +12,10 @@ export const TooltipIcon: React.FC<Props> = (props: Props) => {
   const { title = '', icon: Icon = InfoRounded, ...restProps } = props
 
   return (
-    <Tooltip title={title} placement="top">
+    <BaseTooltip title={title}>
       <IconButton color="inherit" size="small" {...restProps}>
         <Icon fontSize="inherit" style={{ cursor: 'pointer', opacity: 0.75 }} />
       </IconButton>
-    </Tooltip>
+    </BaseTooltip>
   )
 }

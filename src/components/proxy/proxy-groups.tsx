@@ -690,14 +690,22 @@ function NormalProxyGroups(props: { mode: string }) {
         />
       )}
 
-      <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+      <div
+        style={{
+          position: 'relative',
+          flex: 1,
+          minHeight: 0,
+          // Focus chrome already owns group identity; give the flat node grid breathing room.
+          paddingTop: showFocusChrome ? 10 : 0,
+        }}
+      >
         <StickyVirtualList
           ref={stickyListRef}
           items={renderList}
           isGroupItem={(item) => item.type === 0}
           getItemKey={(item) => item.key}
-          estimateGroupItemHeight={76}
-          estimateItemHeight={64}
+          estimateGroupItemHeight={80}
+          estimateItemHeight={68}
           renderGroupItem={renderGroupItem}
           renderItem={renderProxyItem}
         />

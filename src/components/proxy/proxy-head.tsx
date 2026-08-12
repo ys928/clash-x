@@ -12,10 +12,10 @@ import {
   SortRounded,
 } from '@mui/icons-material'
 import { Box, IconButton, TextField, type SxProps } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BaseSearchBox } from '@/components/base'
+import { BaseSearchBox, BaseTooltip } from '@/components/base'
 import { useVerge } from '@/hooks/use-verge'
 import delayManager from '@/services/delay'
 import { debugLog } from '@/utils/debug'
@@ -34,6 +34,22 @@ interface Props {
 }
 
 const defaultSx: SxProps = {}
+
+const ToolButton = ({
+  title,
+  onClick,
+  children,
+}: {
+  title: string
+  onClick: () => void
+  children: ReactNode
+}) => (
+  <BaseTooltip title={title}>
+    <IconButton size="small" color="inherit" onClick={onClick}>
+      {children}
+    </IconButton>
+  </BaseTooltip>
+)
 
 export const ProxyHead = ({
   sx = defaultSx,
@@ -75,18 +91,14 @@ export const ProxyHead = ({
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ...sx }}>
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={t('proxies.page.tooltips.locate')}
         onClick={onLocation}
       >
         <MyLocationRounded />
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={t('proxies.page.tooltips.delayCheck')}
         onClick={() => {
           debugLog(`[ProxyHead] 点击延迟测试按钮，组: ${groupName}`)
@@ -99,11 +111,9 @@ export const ProxyHead = ({
         }}
       >
         <NetworkCheckRounded />
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={
           [
             t('proxies.page.tooltips.sortDefault'),
@@ -118,11 +128,9 @@ export const ProxyHead = ({
         {sortType !== 1 && sortType !== 2 && <SortRounded />}
         {sortType === 1 && <AccessTimeRounded />}
         {sortType === 2 && <SortByAlphaRounded />}
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={t('proxies.page.tooltips.delayCheckUrl')}
         onClick={() =>
           onHeadState({ textState: textState === 'url' ? null : 'url' })
@@ -133,11 +141,9 @@ export const ProxyHead = ({
         ) : (
           <WifiTetheringOffRounded />
         )}
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={
           showType
             ? t('proxies.page.tooltips.showBasic')
@@ -146,18 +152,16 @@ export const ProxyHead = ({
         onClick={() => onHeadState({ showType: !showType })}
       >
         {showType ? <VisibilityRounded /> : <VisibilityOffRounded />}
-      </IconButton>
+      </ToolButton>
 
-      <IconButton
-        size="small"
-        color="inherit"
+      <ToolButton
         title={t('proxies.page.tooltips.filter')}
         onClick={() =>
           onHeadState({ textState: textState === 'filter' ? null : 'filter' })
         }
       >
         {textState === 'filter' ? <SearchOffRounded /> : <SearchRounded />}
-      </IconButton>
+      </ToolButton>
 
       {textState === 'filter' && (
         <Box sx={{ ml: 0.5, flex: '1 1 auto' }}>

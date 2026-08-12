@@ -7,12 +7,12 @@ import {
   MenuItem,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
 } from '@mui/material'
 import { useMemo, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { BaseTooltip } from '@/components/base'
 import type { ProxyGroupView } from '@/types/proxy-view'
 
 import { pickPrimaryGroup, type ProxyPageViewMode } from './proxy-focus-model'
@@ -133,11 +133,11 @@ export function ProxyFocusHeader({
           </Button>
 
           {showGroupHint && (
-            <Tooltip title={t('proxies.page.focus.hint')} arrow>
+            <BaseTooltip title={t('proxies.page.focus.hint')}>
               <InfoOutlined
                 sx={{ fontSize: 15, color: 'text.secondary', flexShrink: 0 }}
               />
-            </Tooltip>
+            </BaseTooltip>
           )}
 
           {!toolsExpanded && currentGroup?.now && (
