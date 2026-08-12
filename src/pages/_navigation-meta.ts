@@ -30,14 +30,6 @@ export const primaryNavKeys = ['home', 'proxies', 'profiles'] as const
 /** Nested under the “More” group. */
 export const moreNavKeys = ['connections', 'rules', 'logs', 'unlock'] as const
 
-export const settingsNavKey = 'settings' as const
-
-export const primaryNavPaths = primaryNavKeys.map(
-  (key) => navigationItems[key].path,
+export const moreNavPathSet = new Set<string>(
+  moreNavKeys.map((key) => navigationItems[key].path),
 )
-
-export const moreNavPaths = moreNavKeys.map((key) => navigationItems[key].path)
-
-export const moreNavPathSet = new Set<string>(moreNavPaths)
-
-export const settingsNavPath = navigationItems.settings.path
