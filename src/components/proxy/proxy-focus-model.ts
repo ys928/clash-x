@@ -2,12 +2,12 @@ import type { ProxyGroupView } from '@/types/proxy-view'
 
 /** Shared with the home current-proxy card so both surfaces stay in sync. */
 export const STORAGE_KEY_GROUP = 'clash-verge-selected-proxy-group'
-export const STORAGE_KEY_VIEW_MODE = 'proxy-page-view-mode'
+const STORAGE_KEY_VIEW_MODE = 'proxy-page-view-mode'
 
 export type ProxyPageViewMode = 'focus' | 'all'
 
 /** Names that usually mean "the group you pick nodes from every day". */
-export const PRIMARY_GROUP_KEYWORDS = [
+const PRIMARY_GROUP_KEYWORDS = [
   '节点选择',
   '自動選擇',
   '自动选择',
@@ -16,9 +16,8 @@ export const PRIMARY_GROUP_KEYWORDS = [
   'auto',
 ] as const
 
-export const isProxyPageViewMode = (
-  value: unknown,
-): value is ProxyPageViewMode => value === 'focus' || value === 'all'
+const isProxyPageViewMode = (value: unknown): value is ProxyPageViewMode =>
+  value === 'focus' || value === 'all'
 
 export const readProxyPageViewMode = (): ProxyPageViewMode => {
   try {

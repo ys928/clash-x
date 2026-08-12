@@ -11,7 +11,7 @@ export { BaseStyledSelect } from './base-styled-select'
 export { BaseStyledTextField } from './base-styled-text-field'
 export { MonacoEditor } from './monaco-editor'
 export { Switch } from './base-switch'
-export { BaseTooltip, type BaseTooltipProps } from './base-tooltip'
+export { BaseTooltip } from './base-tooltip'
 export { TooltipIcon } from './base-tooltip-icon'
 export { VirtualList, type VirtualListHandle } from './virtual-list'
 export {
