@@ -10,6 +10,9 @@ pre-commit:
         - "**/Cargo.toml"
         - "**/Cargo.lock"
       run: cargo fmt -- --emit=files
+    
+    - name: format
+      run: pnpm format:check
 
     - name: i18n
       glob:
@@ -33,9 +36,6 @@ pre-push:
         - "**/Cargo.toml"
         - "**/Cargo.lock"
       run: cargo clippy --all-targets --all-features -- -D warnings
-
-    - name: format
-      run: pnpm format:check
 
     - name: frontend-checks
       glob:
