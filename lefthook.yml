@@ -34,6 +34,9 @@ pre-push:
         - "**/Cargo.lock"
       run: cargo clippy --all-targets --all-features -- -D warnings
 
+    - name: format
+      run: pnpm format:check
+
     - name: frontend-checks
       glob:
         - "**/*.{js,jsx,ts,tsx,mjs,json,css,scss,html}"
