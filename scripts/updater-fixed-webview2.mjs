@@ -18,7 +18,7 @@ async function resolveUpdater() {
   const github = getOctokit(process.env.GITHUB_TOKEN)
 
   const currentTag = process.env.GITHUB_REF_NAME
-  let tagName = null
+  let tagName
 
   if (currentTag && STABLE_TAG_REGEX.test(currentTag)) {
     tagName = currentTag
@@ -33,7 +33,9 @@ async function resolveUpdater() {
   }
 
   if (!tagName) {
-    throw new Error('No stable release tag (vX.Y.Z) found for fixed-webview2 updater')
+    throw new Error(
+      'No stable release tag (vX.Y.Z) found for fixed-webview2 updater',
+    )
   }
 
   console.log('Stable tag:', tagName)
@@ -124,7 +126,9 @@ async function resolveUpdater() {
       tag: UPDATE_TAG_NAME,
     })
     updateRelease = response.data
-    console.log(`Found existing ${UPDATE_TAG_NAME} release with ID: ${updateRelease.id}`)
+    console.log(
+      `Found existing ${UPDATE_TAG_NAME} release with ID: ${updateRelease.id}`,
+    )
   } catch (error) {
     if (error.status === 404) {
       console.log(
