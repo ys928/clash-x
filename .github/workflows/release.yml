@@ -170,6 +170,40 @@ jobs:
             -F prerelease="$PRERELEASE" \
             --silent
 
+  # Upload update.json / update-proxy.json to the dedicated `updater` release
+  # so clients reading tauri.conf.json endpoints can detect the new version.
+  publish-updater:
+    if: ${{ !contains(github.ref_name, '-rc') }}
+    name: Publish updater manifests
+    runs-on: ubuntu-latest
+    needs: [update_tag]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+
+      - uses: pnpm/action-setup@v6
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate and upload update.json
+        run: pnpm updater
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate and upload fixed-webview2 update.json
+        run: pnpm updater-fixed-webview2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release:
     name: Release Build
     needs: [prepare_release]

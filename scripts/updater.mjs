@@ -21,41 +21,58 @@ async function resolveUpdater() {
   const options = { owner: context.repo.owner, repo: context.repo.repo }
   const github = getOctokit(process.env.GITHUB_TOKEN)
 
-  // Fetch all tags using pagination
-  let allTags = []
-  let page = 1
-  const perPage = 100
+  // Prefer the tag that triggered this workflow when it is a stable release.
+  const stableTagRegex = /^v\d+\.\d+\.\d+$/ // Matches vX.Y.Z format
+  const preReleaseRegex = /^(alpha|beta|rc|pre)$/i // Matches exact alpha/beta/rc/pre tags
+  const currentTag = process.env.GITHUB_REF_NAME
 
-  while (true) {
-    const { data: pageTags } = await github.rest.repos.listTags({
-      ...options,
-      per_page: perPage,
-      page: page,
-    })
+  let stableTag = null
+  let preReleaseTag = null
 
-    allTags = allTags.concat(pageTags)
+  if (currentTag && stableTagRegex.test(currentTag)) {
+    stableTag = { name: currentTag }
+    console.log(`Using workflow tag as stable release: ${currentTag}`)
+  } else {
+    // Fetch all tags using pagination
+    let allTags = []
+    let page = 1
+    const perPage = 100
 
-    // Break if we received fewer tags than requested (last page)
-    if (pageTags.length < perPage) {
-      break
+    while (true) {
+      const { data: pageTags } = await github.rest.repos.listTags({
+        ...options,
+        per_page: perPage,
+        page: page,
+      })
+
+      allTags = allTags.concat(pageTags)
+
+      // Break if we received fewer tags than requested (last page)
+      if (pageTags.length < perPage) {
+        break
+      }
+
+      page++
     }
 
-    page++
+    console.log(`Retrieved ${allTags.length} tags in total`)
+    console.log('All tags:', allTags.map((t) => t.name).join(', '))
+
+    stableTag = allTags.find((t) => stableTagRegex.test(t.name)) ?? null
+    preReleaseTag = allTags.find((t) => preReleaseRegex.test(t.name)) ?? null
   }
 
-  const tags = allTags
-  console.log(`Retrieved ${tags.length} tags in total`)
+  // Still look for dedicated alpha/beta channel tags when not already set
+  if (!preReleaseTag) {
+    const { data: channelTags } = await github.rest.repos.listTags({
+      ...options,
+      per_page: 20,
+      page: 1,
+    })
+    preReleaseTag =
+      channelTags.find((t) => preReleaseRegex.test(t.name)) ?? null
+  }
 
-  // More flexible tag detection with regex patterns
-  const stableTagRegex = /^v\d+\.\d+\.\d+$/ // Matches vX.Y.Z format
-  // const preReleaseRegex = /^v\d+\.\d+\.\d+-(alpha|beta|rc|pre)/i; // Matches vX.Y.Z-alpha/beta/rc format
-  const preReleaseRegex = /^(alpha|beta|rc|pre)$/i // Matches exact alpha/beta/rc/pre tags
-
-  // Get the latest stable tag and pre-release tag
-  const stableTag = tags.find((t) => stableTagRegex.test(t.name))
-  const preReleaseTag = tags.find((t) => preReleaseRegex.test(t.name))
-
-  console.log('All tags:', tags.map((t) => t.name).join(', '))
   console.log('Stable tag:', stableTag ? stableTag.name : 'None found')
   console.log(
     'Pre-release tag:',
@@ -66,6 +83,8 @@ async function resolveUpdater() {
   // Process stable release
   if (stableTag) {
     await processRelease(github, options, stableTag, false)
+  } else {
+    throw new Error('No stable release tag (vX.Y.Z) found for updater')
   }
 
   // Process pre-release if found
@@ -380,12 +399,14 @@ async function processRelease(github, options, tag, isAlpha) {
         `Failed to process ${isAlpha ? 'alpha' : 'stable'} release:`,
         error.message,
       )
+      throw error
     }
   } catch (error) {
     if (error.status === 404) {
       console.log(`Release not found for tag: ${tag.name}, skipping...`)
     } else {
       console.error(`Failed to get release for tag: ${tag.name}`, error.message)
+      throw error
     }
   }
 }
@@ -400,4 +421,7 @@ async function getSignature(url) {
   return response.text()
 }
 
-resolveUpdater().catch(console.error)
+resolveUpdater().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

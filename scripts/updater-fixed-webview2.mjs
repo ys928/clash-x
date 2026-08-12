@@ -1,12 +1,13 @@
 import { context, getOctokit } from '@actions/github'
 
-import { resolveUpdateLog } from './updatelog.mjs'
+import { resolveUpdateLog, resolveUpdateLogDefault } from './updatelog.mjs'
 
 const UPDATE_TAG_NAME = 'updater'
 const UPDATE_JSON_FILE = 'update-fixed-webview2.json'
 const UPDATE_JSON_PROXY = 'update-fixed-webview2-proxy.json'
+const STABLE_TAG_REGEX = /^v\d+\.\d+\.\d+$/
 
-/// generate update.json
+/// generate update-fixed-webview2.json
 /// upload to update tag's release asset
 async function resolveUpdater() {
   if (process.env.GITHUB_TOKEN === undefined) {
@@ -16,26 +17,38 @@ async function resolveUpdater() {
   const options = { owner: context.repo.owner, repo: context.repo.repo }
   const github = getOctokit(process.env.GITHUB_TOKEN)
 
-  const { data: tags } = await github.rest.repos.listTags({
-    ...options,
-    per_page: 10,
-    page: 1,
-  })
+  const currentTag = process.env.GITHUB_REF_NAME
+  let tagName = null
 
-  // get the latest publish tag
-  const tag = tags.find((t) => t.name.startsWith('v'))
+  if (currentTag && STABLE_TAG_REGEX.test(currentTag)) {
+    tagName = currentTag
+  } else {
+    const { data: tags } = await github.rest.repos.listTags({
+      ...options,
+      per_page: 100,
+      page: 1,
+    })
+    const tag = tags.find((t) => STABLE_TAG_REGEX.test(t.name))
+    tagName = tag?.name ?? null
+  }
 
-  console.log(tag)
+  if (!tagName) {
+    throw new Error('No stable release tag (vX.Y.Z) found for fixed-webview2 updater')
+  }
+
+  console.log('Stable tag:', tagName)
   console.log()
 
   const { data: latestRelease } = await github.rest.repos.getReleaseByTag({
     ...options,
-    tag: tag.name,
+    tag: tagName,
   })
 
   const updateData = {
-    name: tag.name,
-    notes: await resolveUpdateLog(tag.name), // use Changelog.md
+    name: tagName,
+    notes: await resolveUpdateLog(tagName).catch(() =>
+      resolveUpdateLogDefault().catch(() => 'No changelog available'),
+    ),
     pub_date: new Date().toISOString(),
     platforms: {
       'windows-x86_64': { signature: '', url: '' },
@@ -93,23 +106,45 @@ async function resolveUpdater() {
     }
   })
 
-  // 生成一个代理github的更新文件
-  // 使用 https://hub.fastgit.xyz/ 做github资源的加速
+  // Generate a proxy update file for accelerated GitHub resources
   const updateDataNew = JSON.parse(JSON.stringify(updateData))
 
   Object.entries(updateDataNew.platforms).forEach(([key, value]) => {
     if (value.url) {
-      updateDataNew.platforms[key].url = 'https://update.hwdns.net/' + value.url
+      updateDataNew.platforms[key].url = `https://update.hwdns.net/${value.url}`
     } else {
       console.log(`[Error]: updateDataNew.platforms.${key} is null`)
     }
   })
 
-  // update the update.json
-  const { data: updateRelease } = await github.rest.repos.getReleaseByTag({
-    ...options,
-    tag: UPDATE_TAG_NAME,
-  })
+  let updateRelease
+  try {
+    const response = await github.rest.repos.getReleaseByTag({
+      ...options,
+      tag: UPDATE_TAG_NAME,
+    })
+    updateRelease = response.data
+    console.log(`Found existing ${UPDATE_TAG_NAME} release with ID: ${updateRelease.id}`)
+  } catch (error) {
+    if (error.status === 404) {
+      console.log(
+        `Release with tag ${UPDATE_TAG_NAME} not found, creating new release...`,
+      )
+      const createResponse = await github.rest.repos.createRelease({
+        ...options,
+        tag_name: UPDATE_TAG_NAME,
+        name: 'Auto-update Stable Channel',
+        body: 'This release contains the update information for stable channel.',
+        prerelease: false,
+      })
+      updateRelease = createResponse.data
+      console.log(
+        `Created new ${UPDATE_TAG_NAME} release with ID: ${updateRelease.id}`,
+      )
+    } else {
+      throw error
+    }
+  }
 
   // delete the old assets
   for (const asset of updateRelease.assets) {
@@ -141,6 +176,10 @@ async function resolveUpdater() {
     name: UPDATE_JSON_PROXY,
     data: JSON.stringify(updateDataNew, null, 2),
   })
+
+  console.log(
+    `Successfully uploaded fixed-webview2 update files to ${UPDATE_TAG_NAME}`,
+  )
 }
 
 // get the signature file content
@@ -153,4 +192,7 @@ async function getSignature(url) {
   return response.text()
 }
 
-resolveUpdater().catch(console.error)
+resolveUpdater().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})
