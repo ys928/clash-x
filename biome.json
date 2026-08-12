@@ -1,46 +1,4 @@
 {
-  "$schema": "node_modules/@biomejs/biome/configuration_schema.json",
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "off"
-      }
-    }
-  },
-  "linter": {
-    "enabled": false
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 80,
-    "lineEnding": "lf"
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "all",
-      "semicolons": "asNeeded"
-    }
-  },
-  "files": {
-    "includes": [
-      "**",
-      "!dist",
-      "!node_modules",
-      "!src-tauri/target",
-      "!src-tauri/gen",
-      "!target",
-      "!Cargo.lock",
-      "!pnpm-lock.yaml",
-      "!README.md",
-      "!Changelog.md",
-      "!CONTRIBUTING.md",
-      "!.changelog_backups",
-      "!.github",
-      "!.pnpm-lock.yaml",
-      "!.vfox"
-    ]
-  }
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+  "extends": ["./.config/biome.json"]
 }

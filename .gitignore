@@ -6,7 +6,8 @@ dist-ssr
 *.local
 update.json
 scripts/_env.sh
-.vscode
+.vscode/*
+!.vscode/settings.json
 .idea
 .old
 .eslintcache

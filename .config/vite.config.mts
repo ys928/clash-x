@@ -5,8 +5,10 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 
+const repoRoot = path.resolve(import.meta.dirname, '..')
+
 export default defineConfig({
-  root: 'src',
+  root: path.join(repoRoot, 'src'),
   server: { port: 3000 },
   plugins: [
     svgr(),
@@ -16,21 +18,21 @@ export default defineConfig({
       renderLegacyChunks: false,
       modernPolyfills: ['es.object.has-own', 'web.structured-clone'],
       additionalModernPolyfills: [
-        path.resolve('./src/polyfills/matchMedia.js'),
-        path.resolve('./src/polyfills/WeakRef.js'),
-        path.resolve('./src/polyfills/RegExp.js'),
+        path.join(repoRoot, 'src/polyfills/matchMedia.js'),
+        path.join(repoRoot, 'src/polyfills/WeakRef.js'),
+        path.join(repoRoot, 'src/polyfills/RegExp.js'),
       ],
     }),
   ],
   build: {
-    outDir: '../dist',
+    outDir: path.join(repoRoot, 'dist'),
     emptyOutDir: true,
     chunkSizeWarningLimit: 4000,
   },
   resolve: {
     alias: {
-      '@': path.resolve('./src'),
-      '@root': path.resolve('.'),
+      '@': path.join(repoRoot, 'src'),
+      '@root': repoRoot,
       'monaco-editor/esm/vs/editor/editor.worker.js':
         'monaco-editor/editor/editor.worker',
     },

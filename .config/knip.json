@@ -14,6 +14,18 @@
     "duplicates",
     "cycles"
   ],
+  "eslint": {
+    "config": [".config/eslint.config.ts"]
+  },
+  "vite": {
+    "config": [".config/vite.config.mts"]
+  },
+  "vitest": {
+    "config": [".config/vitest.config.mts"]
+  },
+  "lefthook": {
+    "config": [".config/lefthook.yml"]
+  },
   "ignoreBinaries": ["rustc"],
   "ignoreIssues": {
     "src/types/generated/**": ["exports", "types"]

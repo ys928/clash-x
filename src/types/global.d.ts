@@ -12,7 +12,7 @@ type Platform =
   | 'netbsd'
 
 /**
- * defines in `vite.config.ts`
+ * defines in `.config/vite.config.mts`
  */
 declare const OS_PLATFORM: Platform
 

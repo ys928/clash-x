@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 import eslintJS from '@eslint/js'
 import eslintReact from '@eslint-react/eslint-plugin'
 import { defineConfig } from 'eslint/config'
@@ -41,11 +43,12 @@ export default defineConfig([
         projectService: {
           allowDefaultProject: [
             'eslint.config.ts',
-            `vite.config.mts`,
-            'scripts/*.mjs',
-            'tests/*.ts',
-            'src/polyfills/*.js',
-            'tests/*.mjs',
+            'vite.config.mts',
+            'vitest.config.mts',
+            '../scripts/*.mjs',
+            '../tests/*.ts',
+            '../src/polyfills/*.js',
+            '../tests/*.mjs',
           ],
         },
       },
@@ -57,7 +60,7 @@ export default defineConfig([
       },
       'import-x/resolver-next': [
         createTypeScriptImportResolver({
-          project: './tsconfig.json',
+          project: path.join(import.meta.dirname, '../tsconfig.json'),
         }),
       ],
     },

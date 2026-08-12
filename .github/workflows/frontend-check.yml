@@ -36,11 +36,9 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.nvmrc'
-              - 'knip.json'
-              - 'eslint.config.ts'
+              - '.config/**'
               - 'biome.json'
               - 'tsconfig.json'
-              - 'vite.config.*'
 
       - name: Skip if no frontend changes
         if: github.event_name == 'pull_request' && steps.check_frontend.outputs.frontend != 'true'

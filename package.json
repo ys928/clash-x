@@ -13,9 +13,9 @@
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' node scripts/with-signing-key.mjs tauri build",
     "build:fast": "cross-env NODE_OPTIONS='--max-old-space-size=4096' node scripts/with-signing-key.mjs tauri build -- --profile fast-release",
     "tauri": "tauri",
-    "web:dev": "vite",
-    "web:build": "tsc --noEmit && vite build",
-    "web:serve": "vite preview",
+    "web:dev": "vite --config .config/vite.config.mts",
+    "web:build": "tsc --noEmit && vite build --config .config/vite.config.mts",
+    "web:serve": "vite preview --config .config/vite.config.mts",
     "prebuild": "node scripts/prebuild.mjs",
     "updater": "node scripts/updater.mjs",
     "updater-fixed-webview2": "node scripts/updater-fixed-webview2.mjs",
@@ -27,19 +27,19 @@
     "release:deploytest": "pnpm release-version deploytest",
     "publish-version": "node scripts/publish-version.mjs",
     "eslint": "pnpm lint",
-    "lint": "eslint -c eslint.config.ts --max-warnings=0 --cache --cache-location .eslintcache src",
-    "lint:fix": "eslint -c eslint.config.ts --max-warnings=0 --cache --cache-location .eslintcache --fix src",
+    "lint": "eslint -c .config/eslint.config.ts --max-warnings=0 --cache --cache-location .eslintcache src",
+    "lint:fix": "eslint -c .config/eslint.config.ts --max-warnings=0 --cache --cache-location .eslintcache --fix src",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "i18n:check": "node scripts/cleanup-unused-i18n.mjs",
     "i18n:format": "node scripts/cleanup-unused-i18n.mjs --align --apply",
     "i18n:types": "node scripts/generate-i18n-keys.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --config .config/vitest.config.mts",
+    "test:watch": "vitest --config .config/vitest.config.mts",
     "test:dev-control": "node --test scripts/dev-control.test.mjs scripts/service-release.test.mjs",
-    "knip:check": "knip",
-    "knip:report": "knip --no-exit-code"
+    "knip:check": "knip --config .config/knip.json",
+    "knip:report": "knip --config .config/knip.json --no-exit-code"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -132,7 +132,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
-      "eslint --fix --max-warnings=0",
+      "eslint -c .config/eslint.config.ts --fix --max-warnings=0",
       "biome format --write --no-errors-on-unmatched"
     ],
     "*.{css,scss,json}": [
