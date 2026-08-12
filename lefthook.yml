@@ -1,0 +1,40 @@
+# Project-local Git hooks (binary comes from the `lefthook` npm package).
+glob_matcher: doublestar
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: rust-fmt
+      glob:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+      run: cargo fmt -- --emit=files
+
+    - name: i18n
+      glob:
+        - "src/locales/**"
+        - "crates/clash-verge-i18n/locales/**"
+      run: pnpm i18n:format && pnpm i18n:types && git add src/locales crates/clash-verge-i18n/locales src/types/generated
+
+    - name: lint-staged
+      glob:
+        - "**/*.{js,jsx,ts,tsx,mjs,json,css,scss,html}"
+      run: pnpm exec lint-staged
+
+pre-push:
+  parallel: true
+  skip:
+    - run: test -z "$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"
+  jobs:
+    - name: clippy
+      glob:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    - name: frontend-checks
+      glob:
+        - "**/*.{js,jsx,ts,tsx,mjs,json,css,scss,html}"
+      run: pnpm typecheck && pnpm knip:check
