@@ -25,7 +25,7 @@
       "select": "选择规则"
     },
     "focus": {
-      "title": "选择节点",
+      "title": "切换代理组",
       "allTitle": "全部代理组",
       "viewMode": "视图模式",
       "modes": {

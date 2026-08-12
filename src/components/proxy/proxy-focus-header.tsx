@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next'
 import type { ProxyGroupView } from '@/types/proxy-view'
 
 import { pickPrimaryGroup, type ProxyPageViewMode } from './proxy-focus-model'
+import { ProxyGroupTools } from './proxy-group-tools'
+import type { HeadState } from './use-head-state'
 
 interface ProxyFocusHeaderProps {
   groups: ProxyGroupView[]
@@ -23,6 +25,11 @@ interface ProxyFocusHeaderProps {
   viewMode: ProxyPageViewMode
   onSelectGroup: (groupName: string) => void
   onViewModeChange: (mode: ProxyPageViewMode) => void
+  /** Focus-mode tools; omitted in "all groups" view. */
+  headState?: HeadState
+  onLocation?: () => void
+  onCheckDelay?: () => void
+  onHeadState?: (val: Partial<HeadState>) => void
 }
 
 export function ProxyFocusHeader({
@@ -31,6 +38,10 @@ export function ProxyFocusHeader({
   viewMode,
   onSelectGroup,
   onViewModeChange,
+  headState,
+  onLocation,
+  onCheckDelay,
+  onHeadState,
 }: ProxyFocusHeaderProps) {
   const { t } = useTranslation()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
@@ -45,6 +56,15 @@ export function ProxyFocusHeader({
   )
 
   const showGroupHint = viewMode === 'focus' && groups.length > 1
+  const toolsExpanded =
+    headState?.textState === 'filter' || headState?.textState === 'url'
+  const showTools =
+    viewMode === 'focus' &&
+    !!currentGroup &&
+    !!headState &&
+    !!onLocation &&
+    !!onCheckDelay &&
+    !!onHeadState
 
   const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget)
@@ -63,91 +83,41 @@ export function ProxyFocusHeader({
     <Box
       sx={{
         px: 1.5,
-        pt: 1.25,
-        pb: 1,
+        py: 0.75,
         borderBottom: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        minHeight: 44,
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1,
-          mb: viewMode === 'focus' ? 1 : 0,
-        }}
-      >
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}
-          >
-            {viewMode === 'focus'
-              ? t('proxies.page.focus.title')
-              : t('proxies.page.focus.allTitle')}
-          </Typography>
-          {showGroupHint && (
-            <Tooltip title={t('proxies.page.focus.hint')} arrow>
-              <InfoOutlined
-                sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }}
-              />
-            </Tooltip>
-          )}
-        </Box>
-
-        <ToggleButtonGroup
-          size="small"
-          exclusive
-          value={viewMode}
-          onChange={(_, next: ProxyPageViewMode | null) => {
-            if (next) onViewModeChange(next)
-          }}
-          aria-label={t('proxies.page.focus.viewMode')}
-          sx={{
-            flexShrink: 0,
-            '& .MuiToggleButton-root': {
-              px: 1.25,
-              py: 0.25,
-              textTransform: 'none',
-              fontSize: 12,
-              lineHeight: 1.6,
-            },
-          }}
-        >
-          <ToggleButton value="focus">
-            {t('proxies.page.focus.modes.focus')}
-          </ToggleButton>
-          <ToggleButton value="all">
-            {t('proxies.page.focus.modes.all')}
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
-
-      {viewMode === 'focus' && (
+      {viewMode === 'focus' ? (
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            flexWrap: 'wrap',
+            gap: 0.75,
+            minWidth: 0,
+            flexShrink: toolsExpanded ? 0 : 1,
           }}
         >
           <Button
             size="small"
-            variant="outlined"
+            variant="text"
             endIcon={<ExpandMoreRounded />}
             onClick={handleMenuOpen}
             disabled={groups.length === 0}
+            aria-label={t('proxies.page.focus.title')}
             sx={{
               textTransform: 'none',
-              maxWidth: '100%',
-              borderColor: 'divider',
               color: 'text.primary',
-              fontWeight: 600,
+              fontWeight: 700,
+              fontSize: 14,
+              px: 0.75,
+              minWidth: 0,
+              maxWidth: toolsExpanded ? 140 : 260,
             }}
           >
             <Box
@@ -156,51 +126,87 @@ export function ProxyFocusHeader({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                maxWidth: 220,
               }}
             >
               {currentGroup?.name ?? t('proxies.page.empty.noAvailableGroups')}
             </Box>
           </Button>
 
-          {currentGroup?.type && (
-            <Chip
-              size="small"
-              label={currentGroup.type}
-              variant="outlined"
-              sx={{ height: 24, fontSize: 11 }}
-            />
+          {showGroupHint && (
+            <Tooltip title={t('proxies.page.focus.hint')} arrow>
+              <InfoOutlined
+                sx={{ fontSize: 15, color: 'text.secondary', flexShrink: 0 }}
+              />
+            </Tooltip>
           )}
 
-          {currentGroup?.now && (
-            <Chip
-              size="small"
-              color="primary"
-              variant="outlined"
-              label={`${t('proxies.page.focus.current')}: ${currentGroup.now}`}
-              sx={{
-                height: 24,
-                fontSize: 11,
-                maxWidth: '100%',
-                '& .MuiChip-label': {
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                },
-              }}
-            />
-          )}
-
-          {groups.length > 1 && (
+          {!toolsExpanded && currentGroup?.now && (
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ ml: { sm: 'auto' } }}
+              noWrap
+              title={currentGroup.now}
+              sx={{ maxWidth: 180, display: { xs: 'none', sm: 'block' } }}
             >
-              {t('proxies.page.focus.groupCount', { count: groups.length })}
+              {currentGroup.now}
             </Typography>
           )}
         </Box>
+      ) : (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+        >
+          {t('proxies.page.focus.allTitle')}
+        </Typography>
       )}
+
+      {showTools && (
+        <ProxyGroupTools
+          url={currentGroup!.testUrl}
+          groupName={currentGroup!.name}
+          headState={headState!}
+          onLocation={onLocation!}
+          onCheckDelay={onCheckDelay!}
+          onHeadState={onHeadState!}
+          sx={{
+            ml: 0.5,
+            flex: '1 1 auto',
+            minWidth: 0,
+            height: 32,
+            justifyContent: 'flex-end',
+          }}
+        />
+      )}
+
+      <ToggleButtonGroup
+        size="small"
+        exclusive
+        value={viewMode}
+        onChange={(_, next: ProxyPageViewMode | null) => {
+          if (next) onViewModeChange(next)
+        }}
+        aria-label={t('proxies.page.focus.viewMode')}
+        sx={{
+          flexShrink: 0,
+          ml: showTools ? 0 : 'auto',
+          '& .MuiToggleButton-root': {
+            px: 1.25,
+            py: 0.25,
+            textTransform: 'none',
+            fontSize: 12,
+            lineHeight: 1.6,
+          },
+        }}
+      >
+        <ToggleButton value="focus">
+          {t('proxies.page.focus.modes.focus')}
+        </ToggleButton>
+        <ToggleButton value="all">
+          {t('proxies.page.focus.modes.all')}
+        </ToggleButton>
+      </ToggleButtonGroup>
 
       <Menu
         anchorEl={menuAnchor}

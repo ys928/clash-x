@@ -319,7 +319,8 @@ export const useRenderList = (
             useRegularExpression: headState.filterUseRegularExpression,
           },
         )
-        if (!useRule || focusMode) {
+        // Global mode keeps an in-list toolbar. Focus mode moves tools into page chrome.
+        if (!useRule) {
           ret.push({ type: 1, key: `head-${group.name}`, group, headState })
         }
         if (occurrences.length === 0) {
@@ -385,6 +386,7 @@ export const useRenderList = (
 
   return {
     renderList,
+    headStates,
     onProxies: refreshProxy,
     onHeadState: setHeadState,
     currentColumns: col,

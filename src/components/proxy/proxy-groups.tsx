@@ -50,6 +50,7 @@ import {
   ProxyGroupNavigator,
 } from './proxy-group-navigator'
 import { ProxyRender } from './proxy-render'
+import { DEFAULT_STATE } from './use-head-state'
 import {
   hasRenderableItems,
   type IRenderItem,
@@ -97,7 +98,7 @@ function useProxyRenderState(
 ) {
   const { verge } = useVerge()
   const { proxyView } = useProxiesData()
-  const { renderList, onProxies, onHeadState } = useRenderList(
+  const { renderList, onProxies, onHeadState, headStates } = useRenderList(
     mode,
     isChainMode,
     activeSelectedGroup,
@@ -185,6 +186,7 @@ function useProxyRenderState(
   return {
     verge,
     renderList,
+    headStates,
     onProxies,
     onHeadState,
     handleCheckAll,
@@ -411,6 +413,7 @@ function NormalProxyGroups(props: { mode: string }) {
   const {
     verge,
     renderList,
+    headStates,
     onProxies,
     onHeadState,
     handleCheckAll,
@@ -667,6 +670,23 @@ function NormalProxyGroups(props: { mode: string }) {
           viewMode={viewMode}
           onSelectGroup={handleSelectGroup}
           onViewModeChange={handleViewModeChange}
+          headState={
+            focusedGroupName
+              ? (headStates[focusedGroupName] ?? DEFAULT_STATE)
+              : undefined
+          }
+          onLocation={() => {
+            const group = visibleGroups.find(
+              ({ name }) => name === focusedGroupName,
+            )
+            if (group) handleLocation(group)
+          }}
+          onCheckDelay={() => {
+            if (focusedGroupName) handleCheckAll(focusedGroupName)
+          }}
+          onHeadState={(patch) => {
+            if (focusedGroupName) onHeadState(focusedGroupName, patch)
+          }}
         />
       )}
 

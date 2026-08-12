@@ -25,7 +25,7 @@
       "select": "Select Rules"
     },
     "focus": {
-      "title": "Choose a node",
+      "title": "Switch group",
       "allTitle": "All proxy groups",
       "viewMode": "View mode",
       "modes": {
