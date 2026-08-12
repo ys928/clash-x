@@ -8,7 +8,6 @@ import { DialogRef, TooltipIcon } from '@/components/base'
 import { useVerge } from '@/hooks/use-verge'
 import { navigationItems } from '@/pages/_navigation-meta'
 import { copyClashEnv } from '@/services/cmds'
-import { supportedLanguages } from '@/services/i18n'
 import { showNotice } from '@/services/notice-service'
 import getSystem from '@/utils/get-system'
 
@@ -16,6 +15,7 @@ import { BackupViewer } from './mods/backup-viewer'
 import { ConfigViewer } from './mods/config-viewer'
 import { GuardState } from './mods/guard-state'
 import { HotkeyViewer } from './mods/hotkey-viewer'
+import { LanguageSelect } from './mods/language-select'
 import { LayoutViewer } from './mods/layout-viewer'
 import { MiscViewer } from './mods/misc-viewer'
 import { SettingItem, SettingList } from './mods/setting-comp'
@@ -29,26 +29,6 @@ interface Props {
 }
 
 const OS = getSystem()
-
-const languageOptions = supportedLanguages.map((code) => {
-  const labels: { [key: string]: string } = {
-    en: 'English',
-    ru: 'Русский',
-    zh: '简体中文',
-    fa: 'فارسی',
-    tt: 'Татар',
-    id: 'Bahasa Indonesia',
-    ar: 'العربية',
-    ko: '한국어',
-    tr: 'Türkçe',
-    de: 'Deutsch',
-    es: 'Español',
-    jp: '日本語',
-    zhtw: '繁體中文',
-  }
-  const label = labels[code] || code
-  return { code, label }
-})
 
 const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
   const { t } = useTranslation()
@@ -106,20 +86,10 @@ const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
             <GuardState
               value={language ?? 'en'}
               onCatch={onError}
-              onFormat={(e: any) => e.target.value}
               onChange={(e) => onChangeData({ language: e })}
               onGuard={(e) => patchVerge({ language: e })}
             >
-              <Select
-                size="small"
-                sx={{ width: 110, '> div': { py: '7.5px' } }}
-              >
-                {languageOptions.map(({ code, label }) => (
-                  <MenuItem key={code} value={code}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </Select>
+              <LanguageSelect />
             </GuardState>
           </SettingItem>
 
