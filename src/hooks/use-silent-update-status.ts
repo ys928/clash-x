@@ -6,7 +6,7 @@ import { setCacheData, useQuery } from '@/services/query-client'
 
 import { updateLastCheckTime } from './use-update'
 
-export const updateStatusQueryKey = ['updateStatus'] as const
+const updateStatusQueryKey = ['updateStatus'] as const
 
 const EMPTY_STATUS: UpdateStatus = {
   available: false,

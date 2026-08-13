@@ -67,6 +67,8 @@ pub fn resolve_setup_async() {
             init_core_manager().await;
         });
 
+        init_silent_updater();
+
         let _ = futures::join!(
             core_init,
             init_tray(),
@@ -74,7 +76,6 @@ pub fn resolve_setup_async() {
             init_hotkey(),
             init_auto_lightweight_boot(),
             init_auto_backup(),
-            init_silent_updater(),
         );
 
         Handle::refresh_clash();
@@ -134,7 +135,7 @@ pub(super) async fn init_auto_backup() {
     logging_error!(Type::Setup, AutoBackupManager::global().init().await);
 }
 
-async fn init_silent_updater() {
+fn init_silent_updater() {
     use crate::core::SilentUpdater;
     use crate::core::handle::Handle;
 
