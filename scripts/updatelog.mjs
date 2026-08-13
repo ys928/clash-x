@@ -2,9 +2,9 @@ import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
 
-const UPDATE_LOG = 'Changelog.md'
+const UPDATE_LOG = '.config/Changelog.md'
 
-// parse the Changelog.md
+// parse .config/Changelog.md
 export async function resolveUpdateLog(tag) {
   const cwd = process.cwd()
 
@@ -14,7 +14,7 @@ export async function resolveUpdateLog(tag) {
   const file = path.join(cwd, UPDATE_LOG)
 
   if (!fs.existsSync(file)) {
-    throw new Error('could not found Changelog.md')
+    throw new Error(`could not found ${UPDATE_LOG}`)
   }
 
   const data = await fsp.readFile(file, 'utf-8')
@@ -38,7 +38,7 @@ export async function resolveUpdateLog(tag) {
   })
 
   if (!map[tag]) {
-    throw new Error(`could not found "${tag}" in Changelog.md`)
+    throw new Error(`could not found "${tag}" in ${UPDATE_LOG}`)
   }
 
   return map[tag].join('\n').trim()
@@ -49,7 +49,7 @@ export async function resolveUpdateLogDefault() {
   const file = path.join(cwd, UPDATE_LOG)
 
   if (!fs.existsSync(file)) {
-    throw new Error('could not found Changelog.md')
+    throw new Error(`could not found ${UPDATE_LOG}`)
   }
 
   const data = await fsp.readFile(file, 'utf-8')
@@ -77,7 +77,7 @@ export async function resolveUpdateLogDefault() {
   }
 
   if (!firstTag) {
-    throw new Error('could not found any version tag in Changelog.md')
+    throw new Error(`could not found any version tag in ${UPDATE_LOG}`)
   }
 
   return content.join('\n').trim()

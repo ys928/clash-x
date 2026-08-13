@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
 # extract_update_logs.sh
-# 从 Changelog.md 提取最新版本 (## v...) 的更新内容
+# 从 .config/Changelog.md 提取最新版本 (## v...) 的更新内容
 # 并输出到屏幕或写入环境变量文件（如 GitHub Actions）
 
 set -euo pipefail
 
-CHANGELOG_FILE="Changelog.md"
+CHANGELOG_FILE=".config/Changelog.md"
 
 if [[ ! -f "$CHANGELOG_FILE" ]]; then
   echo "❌ 文件不存在: $CHANGELOG_FILE" >&2
