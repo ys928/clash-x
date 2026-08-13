@@ -35,7 +35,6 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - '.nvmrc'
               - '.config/**'
               - 'biome.json'
               - 'tsconfig.json'
@@ -53,7 +52,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: github.event_name == 'push' || steps.check_frontend.outputs.frontend == 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: 'package.json'
           cache: 'pnpm'
 
       - name: Restore pnpm cache
