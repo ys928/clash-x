@@ -33,6 +33,7 @@
     },
     "columnManager": {
       "title": "Spalten",
+      "hint": "Toggle visibility and drag to reorder",
       "dragHandle": "Drag handle"
     }
   }

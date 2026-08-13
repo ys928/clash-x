@@ -382,10 +382,12 @@ const Layout = () => {
           <MoreHorizOutlined />
         </ListItemIcon>
         <ListItemText
-          sx={{ textAlign: 'center', marginLeft: '-35px' }}
+          sx={{
+            textAlign: 'center',
+            pr: 3.25,
+          }}
           primary={t('layout.components.navigation.tabs.more')}
         />
-        {/* Absolutely positioned so it does not shift the centered label */}
         <Box
           className="nav-more-chevron"
           aria-hidden

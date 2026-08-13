@@ -33,6 +33,7 @@
     },
     "columnManager": {
       "title": "Столбцы",
+      "hint": "Toggle visibility and drag to reorder",
       "dragHandle": "Маркер перетаскивания"
     }
   }

@@ -1,4 +1,5 @@
 import {
+  CloseRounded,
   DeleteForeverRounded,
   MoreVert,
   TableChartRounded,
@@ -8,13 +9,16 @@ import {
 import {
   Box,
   Button,
-  ButtonGroup,
+  Chip,
+  Divider,
   Fab,
   IconButton,
   Menu,
   MenuItem,
   Tooltip,
+  Typography,
   Zoom,
+  alpha,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -80,7 +84,55 @@ const orderFunctionMap = ORDER_OPTIONS.reduce<Record<OrderKey, OrderFunc>>(
   {} as Record<OrderKey, OrderFunc>,
 )
 
+const controlSx = {
+  height: 34,
+  borderRadius: 1.5,
+  bgcolor: 'background.paper',
+  outline: 'none',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'divider',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'divider',
+  },
+  '&.Mui-focused': {
+    outline: 'none',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderWidth: 1,
+    borderColor: 'divider',
+  },
+  '&.Mui-focused:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'divider',
+  },
+} as const
+
+const menuPaperSx = {
+  mt: 0.75,
+  minWidth: 200,
+  borderRadius: 2,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'background.paper',
+  backgroundImage: 'none',
+  overflow: 'hidden',
+  boxShadow: (theme: { palette: { mode: 'light' | 'dark' } }) =>
+    theme.palette.mode === 'light'
+      ? '0 4px 16px rgba(15, 23, 42, 0.08)'
+      : '0 8px 24px rgba(0, 0, 0, 0.45)',
+  '& .MuiList-root': { py: 0.5 },
+  '& .MuiMenuItem-root': {
+    mx: 0.5,
+    px: 1.25,
+    py: 0.75,
+    minHeight: 34,
+    borderRadius: 1.25,
+    fontSize: 13,
+  },
+} as const
+
 const EMPTY_CONNECTIONS: IConnectionsItem[] = []
+
 const ConnectionsPage = () => {
   const { t } = useTranslation()
   const pageVisible = useVisibility()
@@ -166,6 +218,8 @@ const ConnectionsPage = () => {
     [],
   )
   const hasTableData = filterConn.length > 0
+  const activeCount = connections?.activeConnections.length ?? 0
+  const closedCount = connections?.closedConnections.length ?? 0
 
   return (
     <BasePage
@@ -184,17 +238,46 @@ const ConnectionsPage = () => {
         minHeight: 0,
       }}
       header={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Button size="small" variant="contained" onClick={onCloseAll}>
-            <span style={{ whiteSpace: 'nowrap' }}>
-              {t('shared.actions.closeAll')}
-            </span>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <Button
+            size="small"
+            variant="outlined"
+            color="inherit"
+            startIcon={<CloseRounded sx={{ fontSize: 16 }} />}
+            onClick={onCloseAll}
+            sx={{
+              height: 30,
+              px: 1.25,
+              borderRadius: 1.5,
+              borderColor: 'divider',
+              color: 'text.secondary',
+              fontWeight: 500,
+              fontSize: 13,
+              textTransform: 'none',
+              bgcolor: 'background.paper',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                borderColor: 'error.main',
+                color: 'error.main',
+                bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
+              },
+            }}
+          >
+            {t('shared.actions.closeAll')}
           </Button>
           <IconButton
             size="small"
             color="inherit"
             onClick={(event) => setOverflowAnchor(event.currentTarget)}
             aria-label={t('connections.page.actions.more')}
+            sx={{
+              width: 30,
+              height: 30,
+              borderRadius: 1.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            }}
           >
             <MoreVert fontSize="small" />
           </IconButton>
@@ -202,15 +285,23 @@ const ConnectionsPage = () => {
             anchorEl={overflowAnchor}
             open={Boolean(overflowAnchor)}
             onClose={() => setOverflowAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            slotProps={{ paper: { sx: menuPaperSx } }}
           >
-            <MenuItem disabled>
-              {t('shared.labels.downloaded')}:{' '}
-              {parseTraffic(traffic?.downTotal || 0)}
+            <MenuItem disabled sx={{ opacity: '1 !important' }}>
+              <Typography variant="caption" color="text.secondary">
+                {t('shared.labels.downloaded')}:{' '}
+                {parseTraffic(traffic?.downTotal || 0)}
+              </Typography>
             </MenuItem>
-            <MenuItem disabled>
-              {t('shared.labels.uploaded')}:{' '}
-              {parseTraffic(traffic?.upTotal || 0)}
+            <MenuItem disabled sx={{ opacity: '1 !important' }}>
+              <Typography variant="caption" color="text.secondary">
+                {t('shared.labels.uploaded')}:{' '}
+                {parseTraffic(traffic?.upTotal || 0)}
+              </Typography>
             </MenuItem>
+            <Divider sx={{ my: 0.5 }} />
             <MenuItem
               onClick={() => {
                 setSetting((o) =>
@@ -222,9 +313,9 @@ const ConnectionsPage = () => {
               }}
             >
               {isTableLayout ? (
-                <TableRowsRounded fontSize="small" sx={{ mr: 1 }} />
+                <TableRowsRounded fontSize="small" sx={{ mr: 1.25 }} />
               ) : (
-                <TableChartRounded fontSize="small" sx={{ mr: 1 }} />
+                <TableChartRounded fontSize="small" sx={{ mr: 1.25 }} />
               )}
               {isTableLayout
                 ? t('shared.actions.listView')
@@ -249,13 +340,15 @@ const ConnectionsPage = () => {
     >
       <Box
         sx={{
-          pt: 1,
-          mb: 0.5,
-          mx: '10px',
-          minHeight: '36px',
+          px: 1.5,
+          pt: 1.25,
+          pb: 1,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
+          flexWrap: 'wrap',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
           userSelect: 'text',
           position: 'sticky',
           top: 0,
@@ -263,70 +356,143 @@ const ConnectionsPage = () => {
         }}
       >
         {showClosed ? (
-          <ButtonGroup sx={{ mr: 1, flexBasis: 'content' }}>
-            <Button
-              size="small"
-              variant={connectionsType === 'active' ? 'contained' : 'outlined'}
-              onClick={() => selectConnectionsType('active')}
-            >
-              {t('connections.components.actions.active')}{' '}
-              {connections?.activeConnections.length}
-            </Button>
-            <Button
-              size="small"
-              variant={connectionsType === 'closed' ? 'contained' : 'outlined'}
-              onClick={() => selectConnectionsType('closed')}
-            >
-              {t('connections.components.actions.closed')}{' '}
-              {connections?.closedConnections.length}
-            </Button>
-          </ButtonGroup>
-        ) : (
           <Box
             sx={{
-              mr: 1,
-              px: 1,
-              py: 0.5,
-              fontSize: 13,
-              color: 'text.secondary',
-              whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              p: 0.25,
+              borderRadius: 1.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
             }}
           >
-            {t('connections.components.actions.active')}{' '}
-            {connections?.activeConnections.length ?? 0}
+            {(
+              [
+                {
+                  type: 'active' as const,
+                  label: t('connections.components.actions.active'),
+                  count: activeCount,
+                },
+                {
+                  type: 'closed' as const,
+                  label: t('connections.components.actions.closed'),
+                  count: closedCount,
+                },
+              ] as const
+            ).map((item) => {
+              const selected = connectionsType === item.type
+              return (
+                <Chip
+                  key={item.type}
+                  size="small"
+                  clickable
+                  label={`${item.label} ${item.count}`}
+                  onClick={() => selectConnectionsType(item.type)}
+                  variant={selected ? 'filled' : 'outlined'}
+                  color={selected ? 'primary' : 'default'}
+                  sx={{
+                    height: 26,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    border: 'none',
+                    bgcolor: selected ? undefined : 'transparent',
+                  }}
+                />
+              )
+            })}
           </Box>
+        ) : (
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`${t('connections.components.actions.active')} ${activeCount}`}
+            sx={{
+              height: 28,
+              fontSize: 12,
+              fontWeight: 500,
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              color: 'text.secondary',
+            }}
+          />
         )}
+
         {!isTableLayout && (
           <BaseStyledSelect
             value={curOrderOpt}
             onChange={(e) => setCurOrderOpt(e.target.value as OrderKey)}
+            sx={{
+              ...controlSx,
+              width: 132,
+              height: 34,
+              mr: 0,
+              fontSize: 13,
+              '& .MuiSelect-select': {
+                py: '7px',
+                display: 'flex',
+                alignItems: 'center',
+              },
+            }}
           >
             {ORDER_OPTIONS.map((option) => (
-              <MenuItem key={option.id} value={option.id}>
-                <span style={{ fontSize: 14 }}>{t(option.labelKey)}</span>
+              <MenuItem key={option.id} value={option.id} sx={{ fontSize: 13 }}>
+                {t(option.labelKey)}
               </MenuItem>
             ))}
           </BaseStyledSelect>
         )}
+
         <Box
           sx={{
             flex: 1,
+            minWidth: 160,
             display: 'flex',
             alignItems: 'center',
-            '& > *': {
-              flex: 1,
+            '& .MuiInputBase-root': {
+              ...controlSx,
+              fontSize: 13,
+              pr: 0.5,
             },
+            '& .MuiInputBase-input': {
+              py: '7px',
+              fontSize: 13,
+            },
+            '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+              {
+                borderWidth: '1px !important',
+                borderColor: 'divider !important',
+              },
           }}
         >
           <BaseSearchBox onSearch={handleSearch} />
         </Box>
-        {isTableLayout && hasTableData && (
+
+        {isTableLayout && (
           <Tooltip title={t('connections.components.columnManager.title')}>
             <IconButton
               size="small"
               aria-label={t('connections.components.columnManager.title')}
               onClick={() => setIsColumnManagerOpen(true)}
-              sx={{ flex: '0 0 auto' }}
+              disabled={!hasTableData}
+              sx={{
+                width: 34,
+                height: 34,
+                flex: '0 0 auto',
+                borderRadius: 1.5,
+                border: '1px solid',
+                borderColor: isColumnManagerOpen ? 'primary.main' : 'divider',
+                bgcolor: (theme) =>
+                  isColumnManagerOpen
+                    ? alpha(theme.palette.primary.main, 0.08)
+                    : 'background.paper',
+                color: isColumnManagerOpen ? 'primary.main' : 'text.secondary',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
+                },
+              }}
             >
               <ViewColumnRounded fontSize="small" />
             </IconButton>
@@ -344,24 +510,73 @@ const ConnectionsPage = () => {
           onCloseColumnManager={() => setIsColumnManagerOpen(false)}
         />
       ) : (
-        <VirtualList
-          key={connectionsType}
-          count={displayRows.length}
-          estimateSize={56}
-          renderItem={(i) => (
-            <ConnectionRowItem
-              row={displayRows[i]}
-              closed={connectionsType === 'closed'}
-              onShowDetail={showDetailById}
-            />
-          )}
-          style={{
+        <Box
+          sx={{
             flex: 1,
-            borderRadius: '8px',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            px: 1.5,
+            pt: 1,
+            pb: 1.25,
           }}
-        />
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              '& > div': {
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'transparent transparent',
+                '&:hover': {
+                  scrollbarColor: 'var(--scroller-color) transparent',
+                },
+                '&::-webkit-scrollbar': {
+                  width: 6,
+                  height: 6,
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  borderRadius: 6,
+                  backgroundColor: 'transparent',
+                },
+                '&:hover::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'var(--scroller-color)',
+                },
+                '&::-webkit-scrollbar-corner': {
+                  background: 'transparent',
+                },
+              },
+            }}
+          >
+            <VirtualList
+              key={connectionsType}
+              count={displayRows.length}
+              estimateSize={56}
+              renderItem={(i) => (
+                <ConnectionRowItem
+                  row={displayRows[i]}
+                  closed={connectionsType === 'closed'}
+                  onShowDetail={showDetailById}
+                />
+              )}
+              style={{
+                flex: 1,
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+              }}
+            />
+          </Box>
+        </Box>
       )}
       <ConnectionDetail ref={detailRef} />
       <Zoom
@@ -375,6 +590,11 @@ const ConnectionsPage = () => {
             position: 'absolute',
             right: 16,
             bottom: isTableLayout ? 70 : 16,
+            borderRadius: 2,
+            boxShadow: (theme) =>
+              theme.palette.mode === 'light'
+                ? '0 4px 14px rgba(15, 23, 42, 0.12)'
+                : '0 6px 18px rgba(0, 0, 0, 0.4)',
           }}
           color="primary"
           onClick={() => clearClosedConnections()}

@@ -1,3 +1,5 @@
+import { ArrowDownwardRounded, ArrowUpwardRounded } from '@mui/icons-material'
+import { Box, alpha } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useLocalStorage } from 'foxact/use-local-storage'
 import {
@@ -31,9 +33,43 @@ import {
 } from './connection-row-view'
 
 const ROW_HEIGHT = 40
-const RESIZE_HANDLE_WIDTH = 6
+const RESIZE_HANDLE_WIDTH = 8
 const OVERSCAN_ROWS = 6
 const MAX_ROW_SNAPSHOT_CACHE_SIZE = 2_000
+
+const scrollContainerSx = {
+  flex: 1,
+  minHeight: 0,
+  overflow: 'auto',
+  WebkitOverflowScrolling: 'touch',
+  overscrollBehavior: 'contain',
+  borderRadius: 2,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'background.paper',
+  scrollbarWidth: 'thin',
+  scrollbarColor: 'transparent transparent',
+  '&:hover': {
+    scrollbarColor: 'var(--scroller-color) transparent',
+  },
+  '&::-webkit-scrollbar': {
+    width: 6,
+    height: 6,
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'transparent',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    borderRadius: 6,
+    backgroundColor: 'transparent',
+  },
+  '&:hover::-webkit-scrollbar-thumb': {
+    backgroundColor: 'var(--scroller-color)',
+  },
+  '&::-webkit-scrollbar-corner': {
+    background: 'transparent',
+  },
+} as const
 
 const reconcileColumnOrder = (
   storedOrder: string[],
@@ -250,6 +286,7 @@ interface RowComponentProps {
   onShowDetail: (id: string) => void
   getSnapshot: (row: IConnectionsItem) => TableRowSnapshot
   borderColor: string
+  hoverColor: string
   virtualTop: number
 }
 
@@ -260,6 +297,7 @@ const RowComponent = memo(
     onShowDetail,
     getSnapshot,
     borderColor,
+    hoverColor,
     virtualTop,
   }: RowComponentProps) {
     const handleClick = useCallback(
@@ -269,8 +307,9 @@ const RowComponent = memo(
     const snapshot = getSnapshot(row)
 
     return (
-      <div
-        style={{
+      <Box
+        onClick={handleClick}
+        sx={{
           display: 'flex',
           position: 'absolute',
           top: virtualTop,
@@ -279,32 +318,44 @@ const RowComponent = memo(
           height: ROW_HEIGHT,
           cursor: 'pointer',
           borderBottom: `1px solid ${borderColor}`,
+          transition: 'background-color 0.12s ease',
+          '&:hover': {
+            backgroundColor: hoverColor,
+          },
         }}
-        onClick={handleClick}
       >
-        {columns.map((column) => (
-          <div
-            key={column.field}
-            style={{
-              boxSizing: 'border-box',
-              flex: `0 0 ${column.size}px`,
-              minWidth: column.minWidth,
-              maxWidth: column.maxWidth,
-              padding: '8px',
-              fontSize: 13,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent:
-                column.align === 'right' ? 'flex-end' : 'flex-start',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {renderCell(column, row, snapshot)}
-          </div>
-        ))}
-      </div>
+        {columns.map((column) => {
+          const content = renderCell(column, row, snapshot)
+          return (
+            <Box
+              key={column.field}
+              title={typeof content === 'string' ? content : undefined}
+              sx={{
+                boxSizing: 'border-box',
+                flex: `0 0 ${column.size}px`,
+                minWidth: column.minWidth,
+                maxWidth: column.maxWidth,
+                px: 1.25,
+                py: 1,
+                fontSize: 13,
+                lineHeight: 1.35,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent:
+                  column.align === 'right' ? 'flex-end' : 'flex-start',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontVariantNumeric:
+                  column.align === 'right' ? 'tabular-nums' : undefined,
+              }}
+            >
+              {content}
+            </Box>
+          )
+        })}
+      </Box>
     )
   },
   (prev, next) =>
@@ -313,7 +364,8 @@ const RowComponent = memo(
     prev.virtualTop === next.virtualTop &&
     prev.onShowDetail === next.onShowDetail &&
     prev.getSnapshot === next.getSnapshot &&
-    prev.borderColor === next.borderColor,
+    prev.borderColor === next.borderColor &&
+    prev.hoverColor === next.hoverColor,
 )
 
 interface Props {
@@ -744,119 +796,159 @@ export const ConnectionTable = (props: Props) => {
   )
 
   const borderColor = theme.palette.divider
-  const headerBackground = theme.palette.background.paper
+  const headerBackground =
+    theme.palette.mode === 'light'
+      ? alpha(theme.palette.grey[500], 0.06)
+      : alpha(theme.palette.common.white, 0.04)
+  const rowHoverColor = alpha(
+    theme.palette.primary.main,
+    theme.palette.mode === 'light' ? 0.05 : 0.1,
+  )
   const textSecondary = theme.palette.text.secondary
 
   return (
     <>
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
           minHeight: 0,
           position: 'relative',
           fontFamily: theme.typography.fontFamily,
+          px: 1.5,
+          pt: 1,
+          pb: 1.25,
         }}
       >
-        <div
+        <Box
           ref={setScrollContainer}
           onScroll={handleScroll}
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflow: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            borderRadius: 8,
-          }}
+          sx={scrollContainerSx}
         >
-          <div
-            style={{
+          <Box
+            sx={{
               minWidth: '100%',
               width: tableWidth,
             }}
           >
-            <div
-              style={{
+            <Box
+              sx={{
                 position: 'sticky',
                 top: 0,
                 zIndex: 2,
               }}
             >
-              <div
-                style={{
+              <Box
+                sx={{
                   display: 'flex',
                   borderBottom: `1px solid ${borderColor}`,
                   backgroundColor: headerBackground,
+                  backdropFilter: 'blur(8px)',
                 }}
               >
-                {visibleColumns.map((column) => (
-                  <div
-                    key={column.field}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      position: 'relative',
-                      boxSizing: 'border-box',
-                      flex: `0 0 ${column.size}px`,
-                      minWidth: column.minWidth,
-                      maxWidth: column.maxWidth,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: textSecondary,
-                      userSelect: 'none',
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggleSorting(column.field)}
-                      style={{
-                        flex: 1,
+                {visibleColumns.map((column) => {
+                  const isSorted = sorting?.id === column.field
+                  return (
+                    <Box
+                      key={column.field}
+                      sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent:
-                          column.align === 'right' ? 'flex-end' : 'flex-start',
-                        gap: 4,
-                        padding: 8,
-                        border: 0,
-                        background: 'transparent',
-                        color: 'inherit',
-                        font: 'inherit',
-                        textAlign: column.align === 'right' ? 'right' : 'left',
-                        cursor: 'pointer',
+                        position: 'relative',
+                        boxSizing: 'border-box',
+                        flex: `0 0 ${column.size}px`,
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        letterSpacing: 0.2,
+                        color: isSorted ? 'primary.main' : textSecondary,
+                        userSelect: 'none',
                       }}
                     >
-                      {column.headerName}
-                      {sorting?.id === column.field
-                        ? sorting.desc
-                          ? '▼'
-                          : '▲'
-                        : null}
-                    </button>
-                    <div
-                      onMouseDown={(event) =>
-                        handleResizeMouseDown(column, event)
-                      }
-                      onTouchStart={(event) =>
-                        handleResizeTouchStart(column, event)
-                      }
-                      style={{
-                        cursor: 'col-resize',
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        width: RESIZE_HANDLE_WIDTH,
-                        height: '100%',
-                        transform: 'translateX(50%)',
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div
-              style={{
+                      <Box
+                        component="button"
+                        type="button"
+                        onClick={() => toggleSorting(column.field)}
+                        sx={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent:
+                            column.align === 'right'
+                              ? 'flex-end'
+                              : 'flex-start',
+                          gap: 0.5,
+                          px: 1.25,
+                          py: 1.1,
+                          border: 0,
+                          background: 'transparent',
+                          color: 'inherit',
+                          font: 'inherit',
+                          textAlign:
+                            column.align === 'right' ? 'right' : 'left',
+                          cursor: 'pointer',
+                          borderRadius: 1,
+                          transition: 'background-color 0.12s ease',
+                          '&:hover': {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.06,
+                            ),
+                          },
+                        }}
+                      >
+                        {column.headerName}
+                        {isSorted ? (
+                          sorting.desc ? (
+                            <ArrowDownwardRounded sx={{ fontSize: 14 }} />
+                          ) : (
+                            <ArrowUpwardRounded sx={{ fontSize: 14 }} />
+                          )
+                        ) : null}
+                      </Box>
+                      <Box
+                        onMouseDown={(event) =>
+                          handleResizeMouseDown(column, event)
+                        }
+                        onTouchStart={(event) =>
+                          handleResizeTouchStart(column, event)
+                        }
+                        sx={{
+                          cursor: 'col-resize',
+                          position: 'absolute',
+                          right: 0,
+                          top: 6,
+                          bottom: 6,
+                          width: RESIZE_HANDLE_WIDTH,
+                          transform: 'translateX(50%)',
+                          zIndex: 1,
+                          borderRadius: 1,
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            left: '50%',
+                            top: 0,
+                            bottom: 0,
+                            width: 2,
+                            transform: 'translateX(-50%)',
+                            borderRadius: 1,
+                            backgroundColor: 'transparent',
+                            transition: 'background-color 0.12s ease',
+                          },
+                          '&:hover::after, &:active::after': {
+                            backgroundColor: 'primary.main',
+                          },
+                        }}
+                      />
+                    </Box>
+                  )
+                })}
+              </Box>
+            </Box>
+            <Box
+              sx={{
                 position: 'relative',
                 height: totalRowsHeight,
               }}
@@ -876,15 +968,16 @@ export const ConnectionTable = (props: Props) => {
                       onShowDetail={onShowDetail}
                       getSnapshot={getRowSnapshot}
                       borderColor={borderColor}
+                      hoverColor={rowHoverColor}
                       virtualTop={index * ROW_HEIGHT}
                     />
                   )
                 },
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
       <ConnectionColumnManager
         open={columnManagerOpen}
         columns={managerColumns}

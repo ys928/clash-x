@@ -8,18 +8,19 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { DragIndicatorRounded } from '@mui/icons-material'
+import { CloseRounded, DragIndicatorRounded } from '@mui/icons-material'
 import {
+  Box,
   Button,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
+  Typography,
+  alpha,
 } from '@mui/material'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -38,6 +39,89 @@ interface Props {
   onOrderChange: (order: string[]) => void
   onReset: () => void
 }
+
+const listScrollSx = {
+  maxHeight: 280,
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  pr: 0.5,
+  mr: -0.5,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 0.5,
+  scrollbarWidth: 'thin',
+  scrollbarColor: 'transparent transparent',
+  '&:hover': {
+    scrollbarColor: 'var(--scroller-color) transparent',
+  },
+  '&::-webkit-scrollbar': {
+    width: 5,
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'transparent',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    borderRadius: 5,
+    backgroundColor: 'transparent',
+  },
+  '&:hover::-webkit-scrollbar-thumb': {
+    backgroundColor: 'var(--scroller-color)',
+  },
+  '&::-webkit-scrollbar-corner': {
+    background: 'transparent',
+  },
+} as const
+
+const UncheckedIcon = () => (
+  <Box
+    component="span"
+    className="column-check-box"
+    sx={(theme) => ({
+      width: 14,
+      height: 14,
+      borderRadius: '4px',
+      boxSizing: 'border-box',
+      border: '1.5px solid',
+      borderColor: alpha(
+        theme.palette.text.primary,
+        theme.palette.mode === 'light' ? 0.28 : 0.38,
+      ),
+      bgcolor: alpha(
+        theme.palette.background.paper,
+        theme.palette.mode === 'light' ? 1 : 0.4,
+      ),
+      transition: 'border-color 0.12s ease, background-color 0.12s ease',
+    })}
+  />
+)
+
+const CheckedIcon = () => (
+  <Box
+    component="span"
+    className="column-check-box column-check-box--checked"
+    sx={{
+      width: 14,
+      height: 14,
+      borderRadius: '4px',
+      boxSizing: 'border-box',
+      bgcolor: 'primary.main',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: (theme) =>
+        `0 0 0 1px ${alpha(theme.palette.primary.main, 0.2)}`,
+      '&::after': {
+        content: '""',
+        width: 3.5,
+        height: 7,
+        border: 'solid',
+        borderColor: 'primary.contrastText',
+        borderWidth: '0 1.5px 1.5px 0',
+        transform: 'translateY(-0.5px) rotate(45deg)',
+      },
+    }}
+  />
+)
 
 export const ConnectionColumnManager = ({
   open,
@@ -75,41 +159,162 @@ export const ConnectionColumnManager = ({
   )
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={false}
+      slotProps={{
+        paper: {
+          sx: (theme) => ({
+            width: 340,
+            maxWidth: 'calc(100vw - 48px)',
+            maxHeight: 'min(420px, 72vh)',
+            borderRadius: 2.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundImage: 'none',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow:
+              theme.palette.mode === 'light'
+                ? '0 10px 32px rgba(15, 23, 42, 0.14)'
+                : '0 14px 36px rgba(0, 0, 0, 0.55)',
+          }),
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          position: 'relative',
+          px: 2,
+          pt: 1.75,
+          pb: 1.25,
+          pr: 5.5,
+          fontSize: 15,
+          fontWeight: 600,
+          lineHeight: 1.35,
+          flexShrink: 0,
+        }}
+      >
         {t('connections.components.columnManager.title')}
-      </DialogTitle>
-      <DialogContent sx={{ pt: 1 }}>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
+        <Typography
+          component="div"
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 0.35, display: 'block', fontWeight: 400, fontSize: 12 }}
         >
-          <SortableContext items={items}>
-            <List
-              dense
-              disablePadding
-              sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
-            >
-              {columns.map((column) => (
-                <SortableColumnItem
-                  key={column.id}
-                  column={column}
-                  dragHandleLabel={t(
-                    'connections.components.columnManager.dragHandle',
-                  )}
-                  disableToggle={column.visible && visibleCount <= 1}
-                />
-              ))}
-            </List>
-          </SortableContext>
-        </DndContext>
+          {t('connections.components.columnManager.hint')}
+        </Typography>
+        <IconButton
+          aria-label={t('shared.actions.close')}
+          onClick={onClose}
+          size="small"
+          sx={{
+            position: 'absolute',
+            right: 10,
+            top: 12,
+            color: 'text.secondary',
+            borderRadius: 1.25,
+            '&:hover': {
+              color: 'text.primary',
+              bgcolor: (theme) => alpha(theme.palette.action.hover, 0.08),
+            },
+          }}
+        >
+          <CloseRounded fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent
+        sx={{
+          px: 1.75,
+          pt: '4px !important',
+          pb: 1,
+          flex: '1 1 auto',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
+        <Box
+          sx={(theme) => ({
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor:
+              theme.palette.mode === 'light'
+                ? alpha(theme.palette.grey[500], 0.04)
+                : alpha(theme.palette.common.white, 0.03),
+            p: 0.75,
+            minHeight: 0,
+            overflow: 'hidden',
+          })}
+        >
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={items}>
+              <Box sx={listScrollSx}>
+                {columns.map((column) => (
+                  <SortableColumnItem
+                    key={column.id}
+                    column={column}
+                    dragHandleLabel={t(
+                      'connections.components.columnManager.dragHandle',
+                    )}
+                    disableToggle={column.visible && visibleCount <= 1}
+                  />
+                ))}
+              </Box>
+            </SortableContext>
+          </DndContext>
+        </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button variant="text" onClick={onReset}>
+
+      <Divider sx={{ opacity: 0.7 }} />
+      <DialogActions
+        sx={{
+          px: 1.75,
+          py: 1.25,
+          gap: 0.75,
+          flexShrink: 0,
+        }}
+      >
+        <Button
+          size="small"
+          variant="text"
+          color="inherit"
+          onClick={onReset}
+          sx={{
+            textTransform: 'none',
+            color: 'text.secondary',
+            fontWeight: 500,
+            fontSize: 13,
+            minWidth: 0,
+            px: 1,
+          }}
+        >
           {t('shared.actions.resetToDefault')}
         </Button>
-        <Button variant="contained" onClick={onClose}>
+        <Box sx={{ flex: 1 }} />
+        <Button
+          size="small"
+          variant="contained"
+          onClick={onClose}
+          sx={{
+            textTransform: 'none',
+            borderRadius: 1.5,
+            px: 1.75,
+            fontWeight: 600,
+            fontSize: 13,
+            boxShadow: 'none',
+            minHeight: 30,
+          }}
+        >
           {t('shared.actions.close')}
         </Button>
       </DialogActions>
@@ -146,42 +351,101 @@ const SortableColumnItem = ({
   )
 
   return (
-    <ListItem
+    <Box
       ref={setNodeRef}
-      disableGutters
-      sx={{
-        px: 1,
-        py: 0.5,
-        borderRadius: 1,
-        border: (theme) => `1px solid ${theme.palette.divider}`,
-        backgroundColor: isDragging ? 'action.hover' : 'transparent',
+      style={style}
+      sx={(theme) => ({
+        pl: 1,
+        pr: 0.5,
+        py: 0.25,
+        minHeight: 34,
+        borderRadius: 1.25,
+        border: '1px solid',
+        borderColor: isDragging ? 'primary.main' : 'transparent',
+        backgroundColor: isDragging
+          ? alpha(theme.palette.primary.main, 0.1)
+          : theme.palette.background.paper,
+        boxShadow: isDragging
+          ? theme.palette.mode === 'light'
+            ? '0 4px 12px rgba(15, 23, 42, 0.1)'
+            : '0 6px 16px rgba(0, 0, 0, 0.35)'
+          : 'none',
         display: 'flex',
         alignItems: 'center',
-        gap: 1,
-      }}
-      style={style}
+        gap: 0.75,
+        opacity: column.visible ? 1 : 0.62,
+        zIndex: isDragging ? 2 : 0,
+        transition:
+          'border-color 0.12s ease, background-color 0.12s ease, opacity 0.12s ease',
+        '&:hover': {
+          backgroundColor: isDragging
+            ? alpha(theme.palette.primary.main, 0.1)
+            : alpha(
+                theme.palette.action.hover,
+                theme.palette.mode === 'light' ? 0.5 : 0.12,
+              ),
+        },
+      })}
     >
       <Checkbox
-        edge="start"
+        size="small"
+        disableRipple
+        icon={<UncheckedIcon />}
+        checkedIcon={<CheckedIcon />}
         checked={column.visible}
         disabled={disableToggle}
         onChange={(event) => column.toggleVisibility(event.target.checked)}
+        sx={{
+          p: 0,
+          m: 0,
+          width: 18,
+          height: 18,
+          flexShrink: 0,
+          '&.Mui-disabled': {
+            opacity: 0.4,
+          },
+          '&:hover': {
+            bgcolor: 'transparent',
+          },
+          '&:hover .column-check-box:not(.column-check-box--checked)': {
+            borderColor: 'primary.main',
+          },
+        }}
       />
-      <ListItemText
-        primary={column.label}
-        slotProps={{ primary: { variant: 'body2' } }}
-        sx={{ mr: 1 }}
-      />
+      <Typography
+        variant="body2"
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          fontSize: 12.5,
+          fontWeight: 500,
+          lineHeight: 1.3,
+          color: column.visible ? 'text.primary' : 'text.secondary',
+          userSelect: 'none',
+        }}
+      >
+        {column.label}
+      </Typography>
       <IconButton
-        edge="end"
         size="small"
-        sx={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        sx={{
+          width: 26,
+          height: 26,
+          flexShrink: 0,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          color: 'text.disabled',
+          borderRadius: 1,
+          '&:hover': {
+            color: 'text.secondary',
+            bgcolor: (theme) => alpha(theme.palette.action.hover, 0.08),
+          },
+        }}
         aria-label={dragHandleLabel}
         {...attributes}
         {...listeners}
       >
-        <DragIndicatorRounded fontSize="small" />
+        <DragIndicatorRounded sx={{ fontSize: 16 }} />
       </IconButton>
-    </ListItem>
+    </Box>
   )
 }

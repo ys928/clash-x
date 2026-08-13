@@ -132,6 +132,8 @@ export const LayoutItem = (props: Props) => {
         <ListItemText
           sx={{
             textAlign: 'center',
+            // Reserve right gutter so labels align and clear the More chevron
+            pr: 3.25,
           }}
           primary={children}
         />

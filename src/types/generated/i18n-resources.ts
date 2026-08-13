@@ -14,6 +14,7 @@ export interface TranslationResources {
         }
         columnManager: {
           dragHandle: string
+          hint: string
           title: string
         }
         fields: {

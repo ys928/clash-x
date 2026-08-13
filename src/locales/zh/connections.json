@@ -33,6 +33,7 @@
     },
     "columnManager": {
       "title": "列设置",
+      "hint": "勾选显示列，拖拽可调整顺序",
       "dragHandle": "拖拽控件"
     }
   }

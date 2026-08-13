@@ -33,6 +33,7 @@
     },
     "columnManager": {
       "title": "欄位設定",
+      "hint": "勾選顯示欄，拖曳可調整順序",
       "dragHandle": "拖曳以移動"
     }
   }

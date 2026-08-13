@@ -24,6 +24,7 @@ export const translationKeys = [
   'connections.components.actions.showClosed',
   'connections.components.actions.hideClosed',
   'connections.components.columnManager.title',
+  'connections.components.columnManager.hint',
   'connections.components.columnManager.dragHandle',
   'home.page.tooltips.lightweightMode',
   'home.page.tooltips.manual',
