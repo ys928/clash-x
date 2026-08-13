@@ -8,7 +8,19 @@
         "update": "更新"
       }
     },
-    "title": "规则"
+    "title": "规则",
+    "filters": {
+      "allTypes": "全部类型",
+      "allPolicies": "全部策略"
+    },
+    "stats": {
+      "total": "{{count}} 条规则",
+      "providers": "{{count}} 个集合",
+      "showing": "显示 {{filtered}} / {{total}}"
+    },
+    "empty": {
+      "filtered": "没有符合当前筛选条件的规则"
+    }
   },
   "feedback": {
     "notifications": {

@@ -1,72 +1,129 @@
-import { styled, Box, Typography } from '@mui/material'
-import { Rule } from 'tauri-plugin-mihomo-api'
-
-const Item = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  padding: '4px 16px',
-  color: theme.palette.text.primary,
-}))
-
-const COLOR = [
-  'primary',
-  'secondary',
-  'info.main',
-  'warning.main',
-  'success.main',
-]
+import { Box, Typography, alpha, useTheme } from '@mui/material'
+import { memo } from 'react'
+import type { Rule } from 'tauri-plugin-mihomo-api'
 
 interface Props {
   value: Rule & { lineNo: number }
 }
 
-const parseColor = (text: string) => {
-  if (text === 'REJECT' || text === 'REJECT-DROP') return 'error.main'
-  if (text === 'DIRECT') return 'text.primary'
+const resolveType = (type: Rule['type']) =>
+  typeof type === 'string' ? type : type.Unknown
 
-  let sum = 0
-  for (let i = 0; i < text.length; i++) {
-    sum += text.charCodeAt(i)
-  }
-  return COLOR[sum % COLOR.length]
-}
-
-const RuleItem = (props: Props) => {
-  const { value } = props
+const RuleItem = memo(function RuleItem({ value }: Props) {
+  const theme = useTheme()
+  const typeLabel = resolveType(value.type)
+  const isReject = value.proxy === 'REJECT' || value.proxy === 'REJECT-DROP'
+  const isDirect = value.proxy === 'DIRECT'
+  const isLight = theme.palette.mode === 'light'
 
   return (
-    <Item sx={{ borderBottom: '1px solid var(--divider-color)' }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: '40px minmax(88px, 128px) minmax(0, 1fr) auto',
+        alignItems: 'center',
+        columnGap: 1.25,
+        px: 1.5,
+        py: 0.75,
+        minHeight: 40,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        transition: 'background-color 0.12s ease',
+        '&:hover': {
+          bgcolor: alpha(theme.palette.text.primary, isLight ? 0.03 : 0.06),
+        },
+      }}
+    >
       <Typography
-        color="text.secondary"
-        variant="body2"
-        sx={{ lineHeight: 2, minWidth: 30, mr: 2.25, textAlign: 'center' }}
+        variant="caption"
+        sx={{
+          color: 'text.disabled',
+          textAlign: 'right',
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 12,
+          lineHeight: 1,
+        }}
       >
         {value.lineNo}
       </Typography>
 
-      <Box sx={{ userSelect: 'text' }}>
-        <Typography component="h6" variant="subtitle1" color="text.primary">
-          {value.payload || '-'}
-        </Typography>
+      <Typography
+        component="span"
+        sx={{
+          justifySelf: 'start',
+          maxWidth: '100%',
+          px: 0.75,
+          py: 0.25,
+          borderRadius: 1,
+          fontSize: 11,
+          fontWeight: 600,
+          lineHeight: 1.35,
+          letterSpacing: 0.15,
+          color: 'text.secondary',
+          bgcolor: alpha(theme.palette.text.primary, isLight ? 0.04 : 0.08),
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {typeLabel}
+      </Typography>
 
-        <Typography
-          component="span"
-          variant="body2"
-          color="text.secondary"
-          sx={{ mr: 3, minWidth: 120, display: 'inline-block' }}
-        >
-          {typeof value.type === 'string' ? value.type : value.type.Unknown}
-        </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          justifySelf: 'start',
+          maxWidth: '100%',
+          width: 'fit-content',
+          color: 'text.primary',
+          fontSize: 13,
+          fontWeight: 500,
+          lineHeight: 1.35,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          userSelect: 'text',
+        }}
+      >
+        {value.payload || '-'}
+      </Typography>
 
-        <Typography
-          component="span"
-          variant="body2"
-          color={parseColor(value.proxy)}
-        >
-          {value.proxy}
-        </Typography>
-      </Box>
-    </Item>
+      <Typography
+        component="span"
+        sx={{
+          justifySelf: 'end',
+          maxWidth: 160,
+          px: 0.75,
+          py: 0.25,
+          borderRadius: 1,
+          fontSize: 11,
+          fontWeight: 500,
+          lineHeight: 1.35,
+          color: isReject
+            ? isLight
+              ? 'error.dark'
+              : 'error.light'
+            : 'text.secondary',
+          border: '1px solid',
+          borderColor: isReject
+            ? alpha(theme.palette.error.main, 0.35)
+            : 'divider',
+          bgcolor: isReject
+            ? alpha(theme.palette.error.main, isLight ? 0.06 : 0.14)
+            : isDirect
+              ? 'transparent'
+              : alpha(theme.palette.text.primary, isLight ? 0.03 : 0.06),
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {value.proxy}
+      </Typography>
+    </Box>
   )
-}
+})
 
 export default RuleItem

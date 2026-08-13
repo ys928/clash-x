@@ -338,6 +338,7 @@ const Layout = () => {
         onClick={() => setMoreExpanded((open) => !open)}
         sx={[
           {
+            position: 'relative',
             borderRadius: 2,
             marginLeft: 1.25,
             paddingLeft: 1,
@@ -384,11 +385,27 @@ const Layout = () => {
           sx={{ textAlign: 'center', marginLeft: '-35px' }}
           primary={t('layout.components.navigation.tabs.more')}
         />
-        {moreExpanded ? (
-          <ExpandLess fontSize="small" sx={{ color: 'text.secondary' }} />
-        ) : (
-          <ExpandMore fontSize="small" sx={{ color: 'text.secondary' }} />
-        )}
+        {/* Absolutely positioned so it does not shift the centered label */}
+        <Box
+          className="nav-more-chevron"
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            right: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            color: 'text.secondary',
+            pointerEvents: 'none',
+          }}
+        >
+          {moreExpanded ? (
+            <ExpandLess fontSize="small" />
+          ) : (
+            <ExpandMore fontSize="small" />
+          )}
+        </Box>
       </ListItemButton>
     </ListItem>
   )

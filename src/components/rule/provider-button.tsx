@@ -6,36 +6,19 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
+  LinearProgress,
   Typography,
   alpha,
-  styled,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import dayjs from 'dayjs'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { updateRuleProvider } from 'tauri-plugin-mihomo-api'
 
 import { useAppRefreshers, useRulesData } from '@/providers/app-data-context'
 import { showNotice } from '@/services/notice-service'
-
-// 辅助组件 - 类型框
-const TypeBox = styled(Box)<{ component?: React.ElementType }>(({ theme }) => ({
-  display: 'inline-block',
-  border: '1px solid #ccc',
-  borderColor: alpha(theme.palette.secondary.main, 0.5),
-  color: alpha(theme.palette.secondary.main, 0.8),
-  borderRadius: 4,
-  fontSize: 10,
-  marginRight: '4px',
-  padding: '0 2px',
-  lineHeight: 1.25,
-}))
 
 export const ProviderButton = () => {
   const { t } = useTranslation()
@@ -44,26 +27,26 @@ export const ProviderButton = () => {
   const { refreshRules, refreshRuleProviders } = useAppRefreshers()
   const [updating, setUpdating] = useState<Record<string, boolean>>({})
 
-  // 检查是否有提供者
-  const hasProviders = Object.keys(ruleProviders || {}).length > 0
+  const providers = useMemo(
+    () =>
+      Object.entries(ruleProviders || {}).sort(([a], [b]) =>
+        a.localeCompare(b),
+      ),
+    [ruleProviders],
+  )
 
-  // 更新单个规则提供者
+  const hasProviders = providers.length > 0
+  const isUpdatingAny = Object.values(updating).some(Boolean)
+
   const updateProvider = useLockFn(async (name: string) => {
     try {
-      // 设置更新状态
       setUpdating((prev) => ({ ...prev, [name]: true }))
-
       await updateRuleProvider(name)
-
-      // 刷新数据
       await refreshRules()
       await refreshRuleProviders()
-
       showNotice.success(
         'rules.feedback.notifications.provider.updateSuccess',
-        {
-          name,
-        },
+        { name },
       )
     } catch (err) {
       showNotice.error('rules.feedback.notifications.provider.updateFailed', {
@@ -71,61 +54,45 @@ export const ProviderButton = () => {
         message: String(err),
       })
     } finally {
-      // 清除更新状态
       setUpdating((prev) => ({ ...prev, [name]: false }))
     }
   })
 
-  // 更新所有规则提供者
   const updateAllProviders = useLockFn(async () => {
     try {
-      // 获取所有provider的名称
-      const allProviders = Object.keys(ruleProviders || {})
+      const allProviders = providers.map(([name]) => name)
       if (allProviders.length === 0) {
         showNotice.info('rules.feedback.notifications.provider.none')
         return
       }
 
-      // 设置所有provider为更新中状态
-      const newUpdating = allProviders.reduce(
-        (acc, key) => {
+      setUpdating(
+        allProviders.reduce<Record<string, boolean>>((acc, key) => {
           acc[key] = true
           return acc
-        },
-        {} as Record<string, boolean>,
+        }, {}),
       )
-      setUpdating(newUpdating)
 
-      // 改为串行逐个更新所有provider
       for (const name of allProviders) {
         try {
           await updateRuleProvider(name)
-          // 每个更新完成后更新状态
           setUpdating((prev) => ({ ...prev, [name]: false }))
         } catch (err) {
           console.error(`更新 ${name} 失败`, err)
-          // 继续执行下一个，不中断整体流程
         }
       }
 
-      // 刷新数据
       await refreshRules()
       await refreshRuleProviders()
-
       showNotice.success('rules.feedback.notifications.provider.allUpdated')
     } catch (err) {
       showNotice.error('rules.feedback.notifications.provider.genericError', {
         message: String(err),
       })
     } finally {
-      // 清除所有更新状态
       setUpdating({})
     }
   })
-
-  const handleClose = () => {
-    setOpen(false)
-  }
 
   if (!hasProviders) return null
 
@@ -140,21 +107,33 @@ export const ProviderButton = () => {
         {t('rules.page.provider.trigger')}
       </Button>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
           <Box
             sx={{
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
             }}
           >
-            <Typography variant="h6">
-              {t('rules.page.provider.dialogTitle')}
-            </Typography>
+            <Box>
+              <Typography variant="h6" component="div">
+                {t('rules.page.provider.dialogTitle')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {t('rules.page.stats.providers', { count: providers.length })}
+              </Typography>
+            </Box>
             <Button
               variant="contained"
               size="small"
+              disabled={isUpdatingAny}
               onClick={updateAllProviders}
             >
               {t('rules.page.provider.actions.updateAll')}
@@ -162,128 +141,116 @@ export const ProviderButton = () => {
           </Box>
         </DialogTitle>
 
-        <DialogContent>
-          <List sx={{ py: 0, minHeight: 250 }}>
-            {Object.entries(ruleProviders || {})
-              .sort()
-              .map(([key, item]) => {
-                const provider = item
-                const time = dayjs(provider.updatedAt)
-                const isUpdating = updating[key]
+        {isUpdatingAny && <LinearProgress sx={{ mx: 3 }} />}
 
-                return (
-                  <ListItem
-                    key={key}
-                    sx={[
-                      {
-                        p: 0,
-                        mb: '8px',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        transition: 'all 0.2s',
-                      },
-                      ({ palette: { mode, primary, background } }) => {
-                        const bgcolor = background.paper
-                        const hoverColor = alpha(
-                          primary.main,
-                          mode === 'light' ? 0.1 : 0.14,
-                        )
+        <DialogContent sx={{ pt: 1.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {providers.map(([key, provider]) => {
+              const time = dayjs(provider.updatedAt)
+              const isUpdating = updating[key]
+              const vehicle =
+                typeof provider.vehicleType === 'string'
+                  ? provider.vehicleType
+                  : provider.vehicleType.Unknown
+              const behavior =
+                typeof provider.behavior === 'string'
+                  ? provider.behavior
+                  : provider.behavior.Unknown
 
-                        return {
-                          backgroundColor: bgcolor,
-                          '&:hover': {
-                            backgroundColor: hoverColor,
-                            borderColor: alpha(primary.main, 0.3),
-                          },
-                        }
-                      },
-                    ]}
-                  >
-                    <ListItemText
-                      sx={{ px: 2, py: 1 }}
-                      primary={
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <Typography
-                            variant="subtitle1"
-                            component="div"
-                            noWrap
-                            title={key}
-                            sx={{ display: 'flex', alignItems: 'center' }}
-                          >
-                            <span style={{ marginRight: '8px' }}>{key}</span>
-                            <TypeBox component="span">
-                              {provider.ruleCount}
-                            </TypeBox>
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            noWrap
-                          >
-                            <small>{t('shared.labels.updateAt')}: </small>
-                            {time.fromNow()}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex' }}>
-                          <TypeBox component="span">
-                            {typeof provider.vehicleType === 'string'
-                              ? provider.vehicleType
-                              : provider.vehicleType.Unknown}
-                          </TypeBox>
-                          <TypeBox component="span">
-                            {typeof provider.behavior === 'string'
-                              ? provider.behavior
-                              : provider.behavior.Unknown}
-                          </TypeBox>
-                        </Box>
-                      }
-                    />
-                    <Divider orientation="vertical" flexItem />
+              return (
+                <Box
+                  key={key}
+                  sx={(theme) => ({
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    px: 1.5,
+                    py: 1.25,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: alpha(theme.palette.divider, 0.9),
+                    bgcolor: theme.palette.background.paper,
+                    transition:
+                      'background-color 0.15s ease, border-color 0.15s ease',
+                    '&:hover': {
+                      bgcolor: alpha(
+                        theme.palette.primary.main,
+                        theme.palette.mode === 'light' ? 0.04 : 0.1,
+                      ),
+                      borderColor: alpha(theme.palette.primary.main, 0.35),
+                    },
+                  })}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box
                       sx={{
-                        width: 40,
                         display: 'flex',
-                        justifyContent: 'center',
                         alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1,
                       }}
                     >
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => updateProvider(key)}
-                        disabled={isUpdating}
-                        aria-label={t('rules.page.provider.actions.update')}
-                        sx={{
-                          animation: isUpdating
-                            ? 'spin 1s linear infinite'
-                            : 'none',
-                          '@keyframes spin': {
-                            '0%': { transform: 'rotate(0deg)' },
-                            '100%': { transform: 'rotate(360deg)' },
-                          },
-                        }}
-                        title={t('rules.page.provider.actions.update')}
+                      <Typography
+                        variant="subtitle2"
+                        noWrap
+                        title={key}
+                        sx={{ fontWeight: 700 }}
                       >
-                        <RefreshRounded />
-                      </IconButton>
+                        {key}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        sx={{ flexShrink: 0 }}
+                      >
+                        {time.fromNow()}
+                      </Typography>
                     </Box>
-                  </ListItem>
-                )
-              })}
-          </List>
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: 0.75,
+                        mt: 0.75,
+                      }}
+                    >
+                      <MetaChip label={`${provider.ruleCount}`} />
+                      <MetaChip label={vehicle} />
+                      <MetaChip label={behavior} />
+                    </Box>
+                  </Box>
+
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => updateProvider(key)}
+                    disabled={isUpdating}
+                    aria-label={t('rules.page.provider.actions.update')}
+                    title={t('rules.page.provider.actions.update')}
+                    sx={{
+                      flexShrink: 0,
+                      animation: isUpdating
+                        ? 'spin 1s linear infinite'
+                        : 'none',
+                      '@keyframes spin': {
+                        '0%': { transform: 'rotate(0deg)' },
+                        '100%': { transform: 'rotate(360deg)' },
+                      },
+                    }}
+                  >
+                    <RefreshRounded />
+                  </IconButton>
+                </Box>
+              )
+            })}
+          </Box>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleClose} variant="outlined">
+          <Button onClick={() => setOpen(false)} variant="outlined">
             {t('shared.actions.close')}
           </Button>
         </DialogActions>
@@ -291,3 +258,28 @@ export const ProviderButton = () => {
     </>
   )
 }
+
+const MetaChip = ({ label }: { label: string }) => (
+  <Box
+    component="span"
+    sx={(theme) => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      px: 0.75,
+      py: 0.125,
+      borderRadius: 1,
+      fontSize: 11,
+      fontWeight: 600,
+      lineHeight: 1.4,
+      border: '1px solid',
+      borderColor: alpha(theme.palette.secondary.main, 0.4),
+      color: alpha(theme.palette.secondary.main, 0.95),
+      bgcolor: alpha(
+        theme.palette.secondary.main,
+        theme.palette.mode === 'light' ? 0.06 : 0.12,
+      ),
+    })}
+  >
+    {label}
+  </Box>
+)

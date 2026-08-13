@@ -8,7 +8,19 @@
         "update": "更新"
       }
     },
-    "title": "規則"
+    "title": "規則",
+    "filters": {
+      "allTypes": "全部類型",
+      "allPolicies": "全部策略"
+    },
+    "stats": {
+      "total": "{{count}} 條規則",
+      "providers": "{{count}} 個集合",
+      "showing": "顯示 {{filtered}} / {{total}}"
+    },
+    "empty": {
+      "filtered": "沒有符合目前篩選條件的規則"
+    }
   },
   "feedback": {
     "notifications": {

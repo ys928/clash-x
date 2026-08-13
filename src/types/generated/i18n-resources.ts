@@ -682,6 +682,13 @@ export interface TranslationResources {
         }
       }
       page: {
+        empty: {
+          filtered: string
+        }
+        filters: {
+          allPolicies: string
+          allTypes: string
+        }
         provider: {
           actions: {
             update: string
@@ -689,6 +696,11 @@ export interface TranslationResources {
           }
           dialogTitle: string
           trigger: string
+        }
+        stats: {
+          providers: string
+          showing: string
+          total: string
         }
         title: string
       }

@@ -8,7 +8,19 @@
         "update": "업데이트"
       }
     },
-    "title": "규칙"
+    "title": "규칙",
+    "filters": {
+      "allTypes": "All types",
+      "allPolicies": "All policies"
+    },
+    "stats": {
+      "total": "{{count}} rules",
+      "providers": "{{count}} providers",
+      "showing": "Showing {{filtered}} of {{total}}"
+    },
+    "empty": {
+      "filtered": "No rules match the current filters"
+    }
   },
   "feedback": {
     "notifications": {
