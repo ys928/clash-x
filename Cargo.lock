@@ -1180,7 +1180,6 @@ dependencies = [
  "clash_verge_service_ipc",
  "compact_str",
  "console-subscriber",
- "criterion",
  "dark-light",
  "deelevate",
  "dunce",
