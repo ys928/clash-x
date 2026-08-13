@@ -42,7 +42,7 @@ jobs:
 
       - name: run cargo fmt
         if: github.event_name == 'push' || steps.check_rust.outputs.rust == 'true'
-        run: cargo fmt --manifest-path ./src-tauri/Cargo.toml --all -- --check
+        run: cargo fmt --manifest-path ./src-tauri/Cargo.toml --all -- --check --config max_width=120
 
   # taplo:
   #   name: taplo (.toml files)

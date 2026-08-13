@@ -9,7 +9,7 @@ pre-commit:
         - "**/*.rs"
         - "**/Cargo.toml"
         - "**/Cargo.lock"
-      run: cargo fmt -- --emit=files
+      run: cargo fmt -- --emit=files --config max_width=120
     
     - name: format
       run: pnpm format:check
