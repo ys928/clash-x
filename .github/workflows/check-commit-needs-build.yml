@@ -88,10 +88,10 @@ jobs:
           echo "🔍 Finding last commit with Tauri-related changes using script..."
 
           # Make script executable
-          chmod +x scripts-workflow/get_latest_tauri_commit.bash
+          chmod +x scripts/get_latest_tauri_commit.bash
 
           # Get the latest Tauri-related commit hash (full hash)
-          LAST_TAURI_COMMIT_FULL=$(./scripts-workflow/get_latest_tauri_commit.bash)
+          LAST_TAURI_COMMIT_FULL=$(./scripts/get_latest_tauri_commit.bash)
           if [[ $? -ne 0 ]] || [[ -z "$LAST_TAURI_COMMIT_FULL" ]]; then
             echo "❌ Failed to get Tauri-related commit, using current commit"
             LAST_TAURI_COMMIT_FULL=$(git rev-parse HEAD)
