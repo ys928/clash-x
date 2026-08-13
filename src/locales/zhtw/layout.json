@@ -21,6 +21,10 @@
         "expandNavBar": "展開導覽列"
       }
     },
+    "titlebar": {
+      "newVersion": "新版本",
+      "newVersionTooltip": "新版本 v{{version}} 可用"
+    },
     "serviceMigration": {
       "title": "需要更新系統服務",
       "message": "偵測到舊版 Clash Verge 系統服務。重新安裝後可使用目前的安全 IPC 協定，也可以僅在本次工作階段繼續使用 Sidecar。",

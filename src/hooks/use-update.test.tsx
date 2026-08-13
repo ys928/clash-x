@@ -2,8 +2,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 
-import { setPreloadConfig } from '@/services/preload'
-
 import { useUpdate } from './use-update'
 
 const check = vi.hoisted(() => vi.fn())
@@ -12,7 +10,6 @@ vi.mock('@tauri-apps/plugin-updater', () => ({ check }))
 
 beforeEach(() => {
   localStorage.clear()
-  setPreloadConfig({ auto_check_update: false } as IVergeConfig)
   check.mockReset()
 })
 

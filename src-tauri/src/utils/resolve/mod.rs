@@ -142,16 +142,10 @@ async fn init_silent_updater() {
 
     let app_handle = Handle::app_handle();
 
-    // Check for cached update and attempt install before main app initialization.
-    // If install succeeds:
-    //   - Windows: NSIS takes over and the process exits automatically
-    //   - macOS/Linux: binary is replaced, we restart the app
-    if SilentUpdater::global().try_install_on_startup(app_handle).await {
-        logging!(info, Type::Setup, "Update installed at startup, restarting...");
-        feat::restart_app().await;
-    }
+    // Restore badge state from a previously downloaded package; install happens
+    // when the user clicks the titlebar button.
+    SilentUpdater::global().restore_cached_update();
 
-    // No pending install — start background check/download loop
     let app_handle = app_handle.clone();
     tokio::spawn(async move {
         SilentUpdater::global().start_background_check(app_handle).await;

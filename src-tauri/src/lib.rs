@@ -208,6 +208,8 @@ mod app_init {
             cmd::restore_webdav_backup,
             cmd::get_unlock_items,
             cmd::check_media_unlock,
+            cmd::get_update_status,
+            cmd::install_downloaded_update,
         ]
     }
 }

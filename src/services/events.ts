@@ -1,6 +1,6 @@
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 
-import type { RunState } from './cmds'
+import type { RunState, UpdateStatus } from './cmds'
 
 /**
  * Every event pushed to the frontend, and what it carries.
@@ -25,6 +25,8 @@ interface VergeEvents {
   'verge://timer-updated': string
   /** How the core is running changed; carries the whole snapshot. */
   'verge://run-state-changed': RunState
+  /** Silent updater badge: new version available / downloaded. */
+  'verge://update-status': UpdateStatus
   /** Which profile is active changed. */
   'profile-changed': string
   'profile-update-started': { uid?: string }

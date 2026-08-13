@@ -32,8 +32,8 @@ export const SystemInfoCard = () => {
   const { isAdminMode, isSidecarMode, mutateSystemState } = useSystemState()
   const { installServiceAndRestartCore } = useServiceInstaller()
 
-  // 自动检查更新逻辑（lastCheckUpdate 由 useUpdate 统一管理）
-  const { checkUpdate: triggerCheckUpdate, lastCheckUpdate } = useUpdate(true)
+  // lastCheckUpdate is shared; silent updater + manual checks write it
+  const { checkUpdate: triggerCheckUpdate, lastCheckUpdate } = useUpdate()
 
   const [osInfo, setOsInfo] = useState('')
 
@@ -61,17 +61,12 @@ export const SystemInfoCard = () => {
       .catch(console.error)
   }, [])
 
-  // 如果启用了自动检查更新但没有记录，设置当前时间并延迟检查
+  // Seed last-check timestamp if auto-check is on but nothing has been recorded yet
   useEffect(() => {
     if (!verge?.auto_check_update) return
     if (readLastCheckTime() !== null) return
-
     updateLastCheckTime()
-    const timeoutId = window.setTimeout(() => {
-      triggerCheckUpdate().catch(console.error)
-    }, 5000)
-    return () => window.clearTimeout(timeoutId)
-  }, [verge?.auto_check_update, triggerCheckUpdate])
+  }, [verge?.auto_check_update])
 
   // 导航到设置页面
   const goToSettings = useCallback(() => {

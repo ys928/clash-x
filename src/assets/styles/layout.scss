@@ -225,6 +225,38 @@
 
     &--trailing {
       margin-left: auto;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  &__update-btn {
+    height: 24px;
+    margin: 0 8px;
+    padding: 0 10px;
+    border: 1px solid color-mix(in srgb, var(--primary-main, #1976d2) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--primary-main, #1976d2) 12%, transparent);
+    color: var(--primary-main, #1976d2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--primary-main, #1976d2) 20%, transparent);
+      border-color: color-mix(in srgb, var(--primary-main, #1976d2) 70%, transparent);
+    }
+
+    &:active {
+      background: color-mix(in srgb, var(--primary-main, #1976d2) 28%, transparent);
     }
   }
 }

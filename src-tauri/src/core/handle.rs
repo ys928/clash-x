@@ -90,6 +90,13 @@ impl Handle {
         });
     }
 
+    pub fn notify_update_status(status: &crate::core::updater::UpdateStatus) {
+        let Ok(status) = serde_json::to_value(status) else {
+            return;
+        };
+        Self::send_event(FrontendEvent::UpdateStatus { status });
+    }
+
     pub fn set_is_exiting(&self) {
         self.is_exiting.store(true, Ordering::Release);
     }

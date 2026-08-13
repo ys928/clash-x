@@ -216,6 +216,20 @@ export async function restartApp() {
   return invoke<void>('restart_app')
 }
 
+export interface UpdateStatus {
+  available: boolean
+  version: string | null
+  downloaded: boolean
+}
+
+export async function getUpdateStatus() {
+  return invoke<UpdateStatus>('get_update_status')
+}
+
+export async function installDownloadedUpdate() {
+  return invoke<void>('install_downloaded_update')
+}
+
 export async function getAppDir() {
   return invoke<string>('get_app_dir')
 }

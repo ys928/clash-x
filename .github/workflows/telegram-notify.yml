@@ -66,24 +66,20 @@ jobs:
           cat > release.txt << EOF
           $UPDATE_LOGS
 
-          ## 下载地址
+          ---
 
-          ### Windows (不再支持Win7)
-          #### 正常版本(推荐)
-          - [64位(常用)](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_x64-setup.exe) | [ARM64(不常用)](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_arm64-setup.exe)
+          **下载**
 
-          #### 内置Webview2版(体积较大，仅在企业版系统或无法安装webview2时使用)
-          - [64位](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_x64_fixed_webview2-setup.exe) | [ARM64](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_arm64_fixed_webview2-setup.exe)
+          **Windows**（不支持 Win7）
+          - 标准安装包（推荐）：[x64](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_x64-setup.exe) · [ARM64](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_arm64-setup.exe)
+          - 内置 WebView2（体积较大，仅在无法安装系统 WebView2 时使用）：[x64](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_x64_fixed_webview2-setup.exe) · [ARM64](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_arm64_fixed_webview2-setup.exe)
 
-          ### macOS
-          - [Apple M芯片](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_aarch64.dmg) | [Intel芯片](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_x64.dmg)
+          **macOS**
+          - [Apple Silicon](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_aarch64.dmg) · [Intel](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_x64.dmg)
 
-          ### Linux
-          #### DEB包(Debian系) 使用 apt ./路径 安装
-          - [64位](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_amd64.deb) | [ARM64](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_arm64.deb) | [ARMv7](${{ env.DOWNLOAD_URL }}/Clash.Verge_${{ env.VERSION }}_armhf.deb)
-
-          #### RPM包(Redhat系) 使用 dnf ./路径 安装
-          - [64位](${{ env.DOWNLOAD_URL }}/Clash.Verge-${{ env.VERSION }}-1.x86_64.rpm) | [ARM64](${{ env.DOWNLOAD_URL }}/Clash.Verge-${{ env.VERSION }}-1.aarch64.rpm) | [ARMv7](${{ env.DOWNLOAD_URL }}/Clash.Verge-${{ env.VERSION }}-1.armhfp.rpm)
+          **Linux**
+          - DEB（Debian / Ubuntu 等）：[x64](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_amd64.deb) · [ARM64](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_arm64.deb) · [ARMv7](${{ env.DOWNLOAD_URL }}/clash-x_${{ env.VERSION }}_armhf.deb)
+          - RPM（Fedora / RHEL 等）：[x64](${{ env.DOWNLOAD_URL }}/clash-x-${{ env.VERSION }}-1.x86_64.rpm) · [ARM64](${{ env.DOWNLOAD_URL }}/clash-x-${{ env.VERSION }}-1.aarch64.rpm) · [ARMv7](${{ env.DOWNLOAD_URL }}/clash-x-${{ env.VERSION }}-1.armhfp.rpm)
           EOF
 
       - name: Send Telegram Notification

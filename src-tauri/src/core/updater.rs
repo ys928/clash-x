@@ -1,20 +1,43 @@
 use crate::{config::Config, singleton, utils::dirs};
-use anyhow::Result;
+use anyhow::{Result, bail};
 use chrono::Utc;
 use clash_verge_logging::{Type, logging};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::{
-    path::PathBuf,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::path::PathBuf;
 use tauri_plugin_updater::{Update, UpdaterExt as _};
 
+/// Frontend-facing update badge state.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateStatus {
+    pub available: bool,
+    pub version: Option<String>,
+    pub downloaded: bool,
+}
+
+impl UpdateStatus {
+    pub const fn none() -> Self {
+        Self {
+            available: false,
+            version: None,
+            downloaded: false,
+        }
+    }
+
+    fn available(version: impl Into<String>, downloaded: bool) -> Self {
+        Self {
+            available: true,
+            version: Some(version.into()),
+            downloaded,
+        }
+    }
+}
+
 pub struct SilentUpdater {
-    update_ready: AtomicBool,
+    status: RwLock<UpdateStatus>,
     pending_bytes: RwLock<Option<Vec<u8>>>,
     pending_update: RwLock<Option<Update>>,
-    pending_version: RwLock<Option<String>>,
 }
 
 singleton!(SilentUpdater, SILENT_UPDATER);
@@ -22,15 +45,34 @@ singleton!(SilentUpdater, SILENT_UPDATER);
 impl SilentUpdater {
     const fn new() -> Self {
         Self {
-            update_ready: AtomicBool::new(false),
+            status: RwLock::new(UpdateStatus::none()),
             pending_bytes: RwLock::new(None),
             pending_update: RwLock::new(None),
-            pending_version: RwLock::new(None),
         }
     }
 
+    pub fn status(&self) -> UpdateStatus {
+        self.status.read().clone()
+    }
+
     pub fn is_update_ready(&self) -> bool {
-        self.update_ready.load(Ordering::Acquire)
+        let status = self.status.read();
+        status.available && status.downloaded
+    }
+
+    fn set_status(&self, status: UpdateStatus) {
+        *self.status.write() = status.clone();
+        Self::notify_frontend(&status);
+    }
+
+    fn notify_frontend(status: &UpdateStatus) {
+        super::handle::Handle::notify_update_status(status);
+    }
+
+    fn clear_pending(&self) {
+        *self.pending_bytes.write() = None;
+        *self.pending_update.write() = None;
+        self.set_status(UpdateStatus::none());
     }
 }
 
@@ -142,18 +184,17 @@ fn nsis_language_id(app_language: &str) -> &'static str {
     }
 }
 
-// ─── Startup Install & Cache Management ─────────────────────────────────────
+// ─── Startup Cache Restore & Install ─────────────────────────────────────────
 
 impl SilentUpdater {
     /// Called at app startup. If a cached update exists and is newer than the current version,
-    /// attempt to install it immediately (before the main app initializes).
-    /// Returns true if install was triggered (app should relaunch), false otherwise.
-    pub async fn try_install_on_startup(&self, app_handle: &tauri::AppHandle) -> bool {
+    /// restore badge state so the titlebar can offer install — do not install automatically.
+    pub fn restore_cached_update(&self) {
         let current_version = env!("CARGO_PKG_VERSION");
 
         let meta = match Self::read_cache_meta() {
             Ok(meta) => meta,
-            Err(_) => return false, // No cache, nothing to do
+            Err(_) => return,
         };
 
         let cached_version = &meta.version;
@@ -167,46 +208,111 @@ impl SilentUpdater {
                 current_version
             );
             Self::delete_cache();
-            return false;
+            return;
         }
 
         logging!(
             info,
             Type::System,
-            "Update cache version ({}) > current ({}), asking user to install",
+            "Update cache version ({}) > current ({}), restoring ready badge",
             cached_version,
             current_version
         );
 
-        // Ask user for confirmation — they can skip and use the app normally.
-        // The cache is preserved so next launch will ask again.
-        if !Self::ask_user_to_install(app_handle, cached_version).await {
-            logging!(info, Type::System, "User skipped update install, starting normally");
-            return false;
-        }
+        self.set_status(UpdateStatus::available(cached_version.clone(), true));
+    }
 
-        // Read cached bytes
-        let bytes = match Self::read_cache_bytes() {
-            Ok(b) => b,
-            Err(e) => {
-                logging!(
-                    warn,
-                    Type::System,
-                    "Failed to read cached update bytes: {e}, cleaning up"
-                );
-                Self::delete_cache();
-                return false;
+    /// Install a previously downloaded update (from memory or disk cache).
+    /// Returns true when install was triggered (caller should restart / expect process takeover).
+    pub async fn install_pending(&self, app_handle: &tauri::AppHandle) -> Result<bool> {
+        let status = self.status();
+        if !status.available || !status.downloaded {
+            bail!("no downloaded update ready to install");
+        }
+        let expected_version = status
+            .version
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("missing pending update version"))?;
+
+        let bytes = {
+            let pending = self.pending_bytes.read().clone();
+            match pending {
+                Some(bytes) => bytes,
+                None => match Self::read_cache_bytes() {
+                    Ok(bytes) => bytes,
+                    Err(e) => {
+                        logging!(
+                            warn,
+                            Type::System,
+                            "Failed to read cached update bytes: {e}, cleaning up"
+                        );
+                        Self::delete_cache();
+                        self.clear_pending();
+                        return Err(e);
+                    }
+                },
             }
         };
 
-        // Need a fresh Update object from the server to call install().
-        // This is a lightweight HTTP request (< 1s), not a re-download.
-        //
-        // The updater is built with the app's current language forwarded as
-        // `/LANG=<NSIS-lang-id>`. On Windows the NSIS installer parses this in
-        // `.onInit` (see `packages/windows/installer.nsi`) and sets `$LANGUAGE`
-        // directly, skipping its language-selection dialog so the update starts
-        // without prompting. Other platforms don't run an installer.
+        let update = {
+            let pending = self.pending_update.read().clone();
+            match pending {
+                Some(update) => update,
+                None => match Self::fetch_matching_update(app_handle, &expected_version).await {
+                    Ok(update) => update,
+                    Err(e) => {
+                        self.clear_pending();
+                        return Err(e);
+                    }
+                },
+            }
+        };
+
+        let version = update.version.clone();
+        logging!(info, Type::System, "Installing cached update v{version}...");
+
+        Self::show_update_splash(app_handle, &version);
+
+        let install_result = tokio::task::spawn_blocking({
+            let bytes = bytes.clone();
+            let update = update.clone();
+            move || update.install(&bytes)
+        });
+
+        let success = match tokio::time::timeout(std::time::Duration::from_secs(30), install_result).await {
+            Ok(Ok(Ok(()))) => {
+                logging!(info, Type::System, "Update v{version} install triggered");
+                Self::delete_cache();
+                *self.pending_bytes.write() = None;
+                *self.pending_update.write() = None;
+                *self.status.write() = UpdateStatus::none();
+                true
+            }
+            Ok(Ok(Err(e))) => {
+                logging!(warn, Type::System, "Pending install failed: {e}");
+                Self::close_update_splash(app_handle);
+                return Err(e.into());
+            }
+            Ok(Err(e)) => {
+                logging!(warn, Type::System, "Pending install task panicked: {e}");
+                Self::close_update_splash(app_handle);
+                bail!("install task panicked: {e}");
+            }
+            Err(_) => {
+                logging!(
+                    warn,
+                    Type::System,
+                    "Pending install timed out (30s); installer may still be running"
+                );
+                // On Windows NSIS may keep running after timeout — treat as triggered.
+                true
+            }
+        };
+
+        Ok(success)
+    }
+
+    async fn fetch_matching_update(app_handle: &tauri::AppHandle, expected_version: &str) -> Result<Update> {
         let updater_builder = app_handle.updater_builder();
         #[cfg(target_os = "windows")]
         let updater_builder = {
@@ -214,6 +320,7 @@ impl SilentUpdater {
             let lang_id = nsis_language_id(&clash_verge_i18n::current_language(verge_lang.as_deref()));
             updater_builder.installer_arg(format!("/LANG={lang_id}"))
         };
+
         let update = match updater_builder.build() {
             Ok(updater) => match updater.check().await {
                 Ok(Some(u)) => u,
@@ -224,122 +331,36 @@ impl SilentUpdater {
                         "No update available from server, cache may be stale, cleaning up"
                     );
                     Self::delete_cache();
-                    return false;
+                    bail!("no update available from server");
                 }
                 Err(e) => {
-                    logging!(
-                        warn,
-                        Type::System,
-                        "Failed to check for update at startup: {e}, will retry next launch"
-                    );
-                    return false; // Keep cache for next attempt
+                    logging!(warn, Type::System, "Failed to check for update before install: {e}");
+                    return Err(e.into());
                 }
             },
             Err(e) => {
-                logging!(
-                    warn,
-                    Type::System,
-                    "Failed to create updater: {e}, will retry next launch"
-                );
-                return false;
+                logging!(warn, Type::System, "Failed to create updater: {e}");
+                return Err(e.into());
             }
         };
 
-        // Verify the server's version matches the cached version.
-        // If server now has a newer version, our cached bytes are stale.
-        if update.version != *cached_version {
+        if update.version != expected_version {
             logging!(
                 info,
                 Type::System,
                 "Server version ({}) != cached version ({}), cache is stale, cleaning up",
                 update.version,
-                cached_version
+                expected_version
             );
             Self::delete_cache();
-            return false;
+            bail!(
+                "cached update version mismatch: server={}, cache={}",
+                update.version,
+                expected_version
+            );
         }
 
-        let version = update.version.clone();
-        logging!(info, Type::System, "Installing cached update v{version} at startup...");
-
-        // Show splash window so user knows the app is updating, not frozen
-        Self::show_update_splash(app_handle, &version);
-
-        // install() is sync and may hang (known bug #2558), so run with a timeout.
-        // On Windows, NSIS takes over the process so install() may never return — that's OK.
-        let install_result = tokio::task::spawn_blocking({
-            let bytes = bytes.clone();
-            let update = update.clone();
-            move || update.install(&bytes)
-        });
-
-        let success = match tokio::time::timeout(std::time::Duration::from_secs(30), install_result).await {
-            Ok(Ok(Ok(()))) => {
-                logging!(info, Type::System, "Update v{version} install triggered at startup");
-                Self::delete_cache();
-                true
-            }
-            Ok(Ok(Err(e))) => {
-                logging!(
-                    warn,
-                    Type::System,
-                    "Startup install failed: {e}, will retry next launch"
-                );
-                false
-            }
-            Ok(Err(e)) => {
-                logging!(
-                    warn,
-                    Type::System,
-                    "Startup install task panicked: {e}, will retry next launch"
-                );
-                false
-            }
-            Err(_) => {
-                logging!(
-                    warn,
-                    Type::System,
-                    "Startup install timed out (30s), will retry next launch"
-                );
-                false
-            }
-        };
-
-        // Close splash window if install failed and app continues normally
-        if !success {
-            Self::close_update_splash(app_handle);
-        }
-
-        success
-    }
-}
-
-// ─── User Confirmation Dialog ────────────────────────────────────────────────
-
-impl SilentUpdater {
-    /// Show a native dialog asking the user to install or skip the update.
-    /// Returns true if user chose to install, false if they chose to skip.
-    async fn ask_user_to_install(app_handle: &tauri::AppHandle, version: &str) -> bool {
-        use tauri_plugin_dialog::{DialogExt as _, MessageDialogButtons, MessageDialogKind};
-
-        let title = clash_verge_i18n::t!("notifications.updateReady.title");
-        let body = clash_verge_i18n::t!("notifications.updateReady.body").replace("{version}", version);
-        let install_now = clash_verge_i18n::t!("notifications.updateReady.installNow").into_owned();
-        let later = clash_verge_i18n::t!("notifications.updateReady.later").into_owned();
-
-        let (tx, rx) = tokio::sync::oneshot::channel();
-
-        app_handle
-            .dialog()
-            .message(body)
-            .title(title)
-            .buttons(MessageDialogButtons::OkCancelCustom(install_now, later))
-            .kind(MessageDialogKind::Info)
-            .show(move |confirmed| {
-                let _ = tx.send(confirmed);
-            });
-
-        rx.await.unwrap_or(false)
+        Ok(update)
     }
 }
 
@@ -446,6 +467,8 @@ impl SilentUpdater {
 
         if self.is_update_ready() {
             logging!(debug, Type::System, "Silent update skipped: update already pending");
+            // Keep the titlebar badge visible across sessions / late UI mounts.
+            Self::notify_frontend(&self.status());
             return Ok(());
         }
 
@@ -456,6 +479,8 @@ impl SilentUpdater {
             Ok(Some(update)) => update,
             Ok(None) => {
                 logging!(info, Type::System, "Silent updater: no update available");
+                Self::delete_cache();
+                self.clear_pending();
                 return Ok(());
             }
             Err(e) => {
@@ -473,17 +498,16 @@ impl SilentUpdater {
             logging!(
                 info,
                 Type::System,
-                "Silent updater: breaking change detected in v{version}, notifying frontend"
+                "Silent updater: breaking change detected in v{version}, skipping auto-download"
             );
-            super::handle::Handle::notice_message(
-                "info",
-                format!("New version v{version} contains breaking changes. Please update manually."),
-            );
+            *self.pending_bytes.write() = None;
+            *self.pending_update.write() = None;
+            self.set_status(UpdateStatus::available(version, false));
             return Ok(());
         }
 
         logging!(info, Type::System, "Silent updater: downloading v{version}...");
-        let bytes = update
+        match update
             .download(
                 |chunk_len, content_len| {
                     logging!(
@@ -496,29 +520,47 @@ impl SilentUpdater {
                     logging!(info, Type::System, "Silent updater: download complete");
                 },
             )
-            .await?;
+            .await
+        {
+            Ok(bytes) => {
+                if let Err(e) = Self::write_cache(&bytes, &version) {
+                    logging!(warn, Type::System, "Silent updater: failed to write cache: {e}");
+                }
 
-        if let Err(e) = Self::write_cache(&bytes, &version) {
-            logging!(warn, Type::System, "Silent updater: failed to write cache: {e}");
+                *self.pending_bytes.write() = Some(bytes);
+                *self.pending_update.write() = Some(update);
+                self.set_status(UpdateStatus::available(version.clone(), true));
+
+                logging!(
+                    info,
+                    Type::System,
+                    "Silent updater: v{version} ready — titlebar install button enabled"
+                );
+            }
+            Err(e) => {
+                logging!(warn, Type::System, "Silent updater: download failed: {e}");
+                *self.pending_bytes.write() = None;
+                *self.pending_update.write() = None;
+                self.set_status(UpdateStatus::available(version, false));
+            }
         }
 
-        *self.pending_bytes.write() = Some(bytes);
-        *self.pending_update.write() = Some(update);
-        *self.pending_version.write() = Some(version.clone());
-        self.update_ready.store(true, Ordering::Release);
-
-        logging!(
-            info,
-            Type::System,
-            "Silent updater: v{version} ready for startup install on next launch"
-        );
         Ok(())
     }
 
     pub async fn start_background_check(&self, app_handle: tauri::AppHandle) {
         logging!(info, Type::System, "Silent updater: background task started");
 
+        // Give the UI a moment to mount listeners, then check once on startup.
         tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+
+        // Re-emit restored cache status in case the frontend subscribed late.
+        {
+            let status = self.status();
+            if status.available {
+                Self::notify_frontend(&status);
+            }
+        }
 
         loop {
             if let Err(e) = self.check_and_download(&app_handle).await {

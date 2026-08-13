@@ -246,6 +246,10 @@ export interface TranslationResources {
           title: string
           unavailableMessage: string
         }
+        titlebar: {
+          newVersion: string
+          newVersionTooltip: string
+        }
       }
       feedback: {
         errors: {

@@ -21,6 +21,10 @@
         "expandNavBar": "Развернуть панель навигации"
       }
     },
+    "titlebar": {
+      "newVersion": "New version",
+      "newVersionTooltip": "New version v{{version}} is available"
+    },
     "serviceMigration": {
       "title": "Service update required",
       "message": "An older Clash Verge service installation was detected. Reinstall it to use the current secure IPC protocol, or continue with Sidecar for this session.",
