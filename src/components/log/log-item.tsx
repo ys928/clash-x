@@ -1,53 +1,38 @@
-import { styled, Box } from '@mui/material'
-import type { ReactNode } from 'react'
+import { Box, Typography, alpha, useTheme } from '@mui/material'
+import { memo, type ReactNode } from 'react'
 
 import type { SearchState } from '@/components/base'
-
-const Item = styled(Box)(({ theme: { palette, typography } }) => ({
-  padding: '8px 0',
-  margin: '0 12px',
-  lineHeight: 1.35,
-  borderBottom: `1px solid ${palette.divider}`,
-  fontSize: '0.875rem',
-  fontFamily: typography.fontFamily,
-  userSelect: 'text',
-  '& .time': {
-    color: palette.text.secondary,
-  },
-  '& .type': {
-    display: 'inline-block',
-    marginLeft: 8,
-    textAlign: 'center',
-    borderRadius: 2,
-    textTransform: 'uppercase',
-    fontWeight: '600',
-  },
-  '& .type[data-type="error"], & .type[data-type="err"]': {
-    color: palette.error.main,
-  },
-  '& .type[data-type="warning"], & .type[data-type="warn"]': {
-    color: palette.warning.main,
-  },
-  '& .type[data-type="info"], & .type[data-type="inf"]': {
-    color: palette.info.main,
-  },
-  '& .data': {
-    color: palette.text.primary,
-    overflowWrap: 'anywhere',
-  },
-  '& .highlight': {
-    backgroundColor: palette.mode === 'dark' ? '#ffeb3b40' : '#ffeb3b90',
-    borderRadius: 2,
-    padding: '0 2px',
-  },
-}))
 
 interface Props {
   value: ILogItem
   searchState?: SearchState
 }
 
-const LogItem = ({ value, searchState }: Props) => {
+type LevelTone = 'error' | 'warning' | 'info' | 'debug' | 'default'
+
+const resolveLevelTone = (type: string): LevelTone => {
+  const key = type.toLowerCase()
+  if (key === 'error' || key === 'err') return 'error'
+  if (key === 'warning' || key === 'warn') return 'warning'
+  if (key === 'info' || key === 'inf') return 'info'
+  if (key === 'debug' || key === 'dbg') return 'debug'
+  return 'default'
+}
+
+const LogItem = memo(function LogItem({ value, searchState }: Props) {
+  const theme = useTheme()
+  const isLight = theme.palette.mode === 'light'
+  const tone = resolveLevelTone(value.type)
+
+  const levelColor =
+    tone === 'error'
+      ? theme.palette.error.main
+      : tone === 'warning'
+        ? theme.palette.warning.main
+        : tone === 'info'
+          ? theme.palette.info.main
+          : theme.palette.text.secondary
+
   const renderHighlightText = (text: string) => {
     if (!searchState?.text.trim()) return text
 
@@ -87,9 +72,20 @@ const LogItem = ({ value, searchState }: Props) => {
         }
 
         elements.push(
-          <span key={`highlight-${start}`} className="highlight">
+          <Box
+            component="span"
+            key={`highlight-${start}`}
+            sx={{
+              bgcolor:
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.warning.main, 0.28)
+                  : alpha(theme.palette.warning.light, 0.55),
+              borderRadius: 0.5,
+              px: 0.25,
+            }}
+          >
             {matchText}
-          </span>,
+          </Box>,
         )
 
         lastIndex = start + matchText.length
@@ -106,18 +102,81 @@ const LogItem = ({ value, searchState }: Props) => {
   }
 
   return (
-    <Item>
-      <div>
-        <span className="time">{renderHighlightText(value.time || '')}</span>
-        <span className="type" data-type={value.type.toLowerCase()}>
-          {renderHighlightText(value.type)}
-        </span>
-      </div>
-      <div>
-        <span className="data">{renderHighlightText(value.payload)}</span>
-      </div>
-    </Item>
+    <Box
+      sx={{
+        boxSizing: 'border-box',
+        display: 'grid',
+        gridTemplateColumns: 'auto auto minmax(0, 1fr)',
+        alignItems: 'start',
+        columnGap: 1,
+        rowGap: 0.25,
+        px: 1.5,
+        py: 0.9,
+        minHeight: 44,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        transition: 'background-color 0.12s ease',
+        userSelect: 'text',
+        '&:hover': {
+          bgcolor: alpha(theme.palette.text.primary, isLight ? 0.03 : 0.06),
+        },
+      }}
+    >
+      <Typography
+        component="span"
+        sx={{
+          mt: '2px',
+          color: 'text.disabled',
+          fontSize: 12,
+          lineHeight: 1.45,
+          fontVariantNumeric: 'tabular-nums',
+          fontFamily:
+            'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {renderHighlightText(value.time || '')}
+      </Typography>
+
+      <Typography
+        component="span"
+        sx={{
+          mt: '1px',
+          justifySelf: 'start',
+          px: 0.75,
+          py: 0.15,
+          borderRadius: 1,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: 0.4,
+          lineHeight: 1.5,
+          textTransform: 'uppercase',
+          color: levelColor,
+          border: '1px solid',
+          borderColor: alpha(levelColor, isLight ? 0.28 : 0.4),
+          bgcolor: alpha(levelColor, isLight ? 0.08 : 0.16),
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {renderHighlightText(value.type)}
+      </Typography>
+
+      <Typography
+        component="span"
+        sx={{
+          minWidth: 0,
+          color: 'text.primary',
+          fontSize: 13,
+          fontWeight: 450,
+          lineHeight: 1.5,
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word',
+        }}
+      >
+        {renderHighlightText(value.payload)}
+      </Typography>
+    </Box>
   )
-}
+})
 
 export default LogItem

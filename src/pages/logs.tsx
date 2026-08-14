@@ -1,11 +1,19 @@
 import {
-  MoreVert,
+  DeleteOutlineRounded,
   PauseCircleOutlineRounded,
   PlayCircleOutlineRounded,
   SwapVertRounded,
 } from '@mui/icons-material'
-import { Box, Button, IconButton, Menu, MenuItem } from '@mui/material'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  MenuItem,
+  Tooltip,
+  alpha,
+} from '@mui/material'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -21,6 +29,47 @@ import LogItem from '@/components/log/log-item'
 import { useClashLog } from '@/hooks/use-clash-log'
 import { useLogData } from '@/hooks/use-log-data'
 
+const LOG_LEVELS = ['all', 'debug', 'info', 'warn', 'err'] as const
+
+const controlSx = {
+  height: 34,
+  borderRadius: 1.5,
+  bgcolor: 'background.paper',
+  outline: 'none',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'divider',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'divider',
+  },
+  '&.Mui-focused': {
+    outline: 'none',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderWidth: 1,
+    borderColor: 'divider',
+  },
+  '&.Mui-focused:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'divider',
+  },
+} as const
+
+const iconBtnSx = {
+  width: 30,
+  height: 30,
+  borderRadius: 1.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'background.paper',
+  color: 'text.secondary',
+  '&:hover': {
+    borderColor: 'primary.main',
+    color: 'primary.main',
+    bgcolor: (theme: { palette: { primary: { main: string } } }) =>
+      alpha(theme.palette.primary.main, 0.06),
+  },
+} as const
+
 const LogPage = () => {
   const { t } = useTranslation()
   const [clashLog, setClashLog] = useClashLog()
@@ -31,7 +80,6 @@ const LogPage = () => {
 
   const [match, setMatch] = useState(() => (_: string) => true)
   const [searchState, setSearchState] = useState<SearchState>()
-  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
   const {
     response: { data: logData },
     refreshGetClashLog,
@@ -86,6 +134,17 @@ const LogPage = () => {
     }))
   }
 
+  const handleSearch = useCallback(
+    (matcher: (content: string) => boolean, state: SearchState) => {
+      setMatch(() => matcher)
+      setSearchState(state)
+    },
+    [],
+  )
+
+  const totalCount = logData?.length ?? 0
+  const filteredCount = filteredLogs.length
+
   return (
     <BasePage
       full
@@ -94,120 +153,276 @@ const LogPage = () => {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'auto',
+        overflow: 'hidden',
+        borderRadius: '8px',
+        minHeight: 0,
       }}
       header={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <Tooltip
             title={t(
               enableLog ? 'shared.actions.pause' : 'shared.actions.resume',
             )}
-            aria-label={t(
-              enableLog ? 'shared.actions.pause' : 'shared.actions.resume',
-            )}
-            size="small"
-            color="inherit"
-            onClick={handleToggleLog}
           >
-            {enableLog ? (
-              <PauseCircleOutlineRounded />
-            ) : (
-              <PlayCircleOutlineRounded />
-            )}
-          </IconButton>
-
-          <Button
-            size="small"
-            variant="contained"
-            onClick={() => {
-              refreshGetClashLog(true)
-            }}
-          >
-            {t('shared.actions.clear')}
-          </Button>
-
-          <IconButton
-            size="small"
-            color="inherit"
-            onClick={(event) => setOverflowAnchor(event.currentTarget)}
-            aria-label={t('logs.page.actions.more')}
-          >
-            <MoreVert fontSize="small" />
-          </IconButton>
-          <Menu
-            anchorEl={overflowAnchor}
-            open={Boolean(overflowAnchor)}
-            onClose={() => setOverflowAnchor(null)}
-          >
-            <MenuItem
-              onClick={() => {
-                handleToggleOrder()
-                setOverflowAnchor(null)
+            <IconButton
+              size="small"
+              color="inherit"
+              onClick={handleToggleLog}
+              aria-label={t(
+                enableLog ? 'shared.actions.pause' : 'shared.actions.resume',
+              )}
+              sx={{
+                ...iconBtnSx,
+                ...(enableLog
+                  ? {}
+                  : {
+                      borderColor: 'warning.main',
+                      color: 'warning.main',
+                      bgcolor: (theme) =>
+                        alpha(theme.palette.warning.main, 0.08),
+                    }),
               }}
             >
-              <SwapVertRounded
-                fontSize="small"
-                sx={{
-                  mr: 1,
-                  transform: isDescending ? 'scaleY(-1)' : 'none',
-                }}
-              />
-              {t(
+              {enableLog ? (
+                <PauseCircleOutlineRounded sx={{ fontSize: 18 }} />
+              ) : (
+                <PlayCircleOutlineRounded sx={{ fontSize: 18 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip
+            title={t(
+              isDescending
+                ? 'logs.actions.showAscending'
+                : 'logs.actions.showDescending',
+            )}
+          >
+            <IconButton
+              size="small"
+              color="inherit"
+              onClick={handleToggleOrder}
+              aria-label={t(
                 isDescending
                   ? 'logs.actions.showAscending'
                   : 'logs.actions.showDescending',
               )}
-            </MenuItem>
-          </Menu>
+              sx={iconBtnSx}
+            >
+              <SwapVertRounded
+                sx={{
+                  fontSize: 18,
+                  transform: isDescending ? 'scaleY(-1)' : 'none',
+                }}
+              />
+            </IconButton>
+          </Tooltip>
+
+          <Button
+            size="small"
+            variant="outlined"
+            color="inherit"
+            startIcon={<DeleteOutlineRounded sx={{ fontSize: 16 }} />}
+            onClick={() => refreshGetClashLog(true)}
+            sx={{
+              height: 30,
+              px: 1.25,
+              borderRadius: 1.5,
+              borderColor: 'divider',
+              color: 'text.secondary',
+              fontWeight: 500,
+              fontSize: 13,
+              textTransform: 'none',
+              bgcolor: 'background.paper',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                borderColor: 'error.main',
+                color: 'error.main',
+                bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
+              },
+            }}
+          >
+            {t('shared.actions.clear')}
+          </Button>
         </Box>
       }
     >
       <Box
         sx={{
-          pt: 1,
-          mb: 0.5,
-          mx: '10px',
-          height: '39px',
+          px: 1.5,
+          pt: 1.25,
+          pb: 1,
           display: 'flex',
           alignItems: 'center',
+          gap: 1,
+          flexWrap: 'wrap',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          userSelect: 'text',
+          position: 'sticky',
+          top: 0,
+          zIndex: 2,
         }}
       >
+        <Chip
+          size="small"
+          variant="outlined"
+          label={
+            filteredCount === totalCount
+              ? `${filteredCount}`
+              : `${filteredCount} / ${totalCount}`
+          }
+          sx={{
+            height: 28,
+            fontSize: 12,
+            fontWeight: 500,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            color: 'text.secondary',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        />
+
+        {!enableLog && (
+          <Chip
+            size="small"
+            label={t('shared.actions.pause')}
+            sx={{
+              height: 26,
+              fontSize: 12,
+              fontWeight: 500,
+              border: 'none',
+              color: 'warning.main',
+              bgcolor: (theme) => alpha(theme.palette.warning.main, 0.12),
+            }}
+          />
+        )}
+
         <BaseStyledSelect
           value={logState}
           onChange={(e) => handleLogLevelChange(e.target.value as LogFilter)}
-        >
-          <MenuItem value="all">{t('shared.filters.logLevels.all')}</MenuItem>
-          <MenuItem value="debug">
-            {t('shared.filters.logLevels.debug')}
-          </MenuItem>
-          <MenuItem value="info">{t('shared.filters.logLevels.info')}</MenuItem>
-          <MenuItem value="warn">{t('shared.filters.logLevels.warn')}</MenuItem>
-          <MenuItem value="err">{t('shared.filters.logLevels.error')}</MenuItem>
-        </BaseStyledSelect>
-        <BaseSearchBox
-          onSearch={(matcher, state) => {
-            setMatch(() => matcher)
-            setSearchState(state)
+          sx={{
+            ...controlSx,
+            width: 120,
+            height: 34,
+            mr: 0,
+            fontSize: 13,
+            '& .MuiSelect-select': {
+              py: '7px',
+              display: 'flex',
+              alignItems: 'center',
+            },
           }}
-        />
+        >
+          {LOG_LEVELS.map((level) => (
+            <MenuItem key={level} value={level} sx={{ fontSize: 13 }}>
+              {t(
+                level === 'err'
+                  ? 'shared.filters.logLevels.error'
+                  : (`shared.filters.logLevels.${level}` as const),
+              )}
+            </MenuItem>
+          ))}
+        </BaseStyledSelect>
+
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 160,
+            display: 'flex',
+            alignItems: 'center',
+            '& .MuiInputBase-root': {
+              ...controlSx,
+              fontSize: 13,
+              pr: 0.5,
+            },
+            '& .MuiInputBase-input': {
+              py: '7px',
+              fontSize: 13,
+            },
+            '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+              {
+                borderWidth: '1px !important',
+                borderColor: 'divider !important',
+              },
+          }}
+        >
+          <BaseSearchBox onSearch={handleSearch} />
+        </Box>
       </Box>
 
       {filteredLogs.length > 0 ? (
-        <VirtualList
-          ref={virtuosoRef}
-          count={filteredLogs.length}
-          estimateSize={50}
-          renderItem={(i) => (
-            <LogItem value={filteredLogs[i]} searchState={searchState} />
-          )}
-          onScroll={(event) => {
-            const element = event.currentTarget as HTMLDivElement
-            scrollRef.current.isNearBottom =
-              element.scrollHeight - element.scrollTop - element.clientHeight <=
-              20
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            px: 1.5,
+            pt: 1,
+            pb: 1.25,
           }}
-          style={{ flex: 1 }}
-        />
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              '& > div': {
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'transparent transparent',
+                '&:hover': {
+                  scrollbarColor: 'var(--scroller-color) transparent',
+                },
+                '&::-webkit-scrollbar': {
+                  width: 6,
+                  height: 6,
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  borderRadius: 6,
+                  backgroundColor: 'transparent',
+                },
+                '&:hover::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'var(--scroller-color)',
+                },
+                '&::-webkit-scrollbar-corner': {
+                  background: 'transparent',
+                },
+              },
+            }}
+          >
+            <VirtualList
+              ref={virtuosoRef}
+              count={filteredLogs.length}
+              estimateSize={48}
+              renderItem={(i) => (
+                <LogItem value={filteredLogs[i]} searchState={searchState} />
+              )}
+              onScroll={(event) => {
+                const element = event.currentTarget as HTMLDivElement
+                scrollRef.current.isNearBottom =
+                  element.scrollHeight -
+                    element.scrollTop -
+                    element.clientHeight <=
+                  20
+              }}
+              style={{
+                flex: 1,
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+              }}
+            />
+          </Box>
+        </Box>
       ) : (
         <BaseEmpty />
       )}
