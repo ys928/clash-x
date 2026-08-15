@@ -280,6 +280,7 @@ impl NotificationSystem {
             FrontendEvent::ProfileUpdateCompleted { uid } => ("profile-update-completed", Ok(json!({ "uid": uid }))),
             FrontendEvent::RunStateChanged { state } => ("verge://run-state-changed", Ok(state)),
             FrontendEvent::UpdateStatus { status } => ("verge://update-status", Ok(status)),
+            FrontendEvent::PendingFailuresChanged => ("verge://pending-failures-changed", Ok(serde_json::Value::Null)),
         }
     }
 
