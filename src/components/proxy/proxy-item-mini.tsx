@@ -1,8 +1,8 @@
-import { CheckCircleOutlineRounded } from '@mui/icons-material'
+import { CheckCircleOutlineRounded, SyncAltRounded } from '@mui/icons-material'
 import { alpha, Box, ListItemButton, styled, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-import { BaseLoading } from '@/components/base'
+import { BaseLoading, BaseTooltip } from '@/components/base'
 import { useProxyDelayState } from '@/hooks/use-proxy-delay-state'
 import delayManager from '@/services/delay'
 import {
@@ -16,13 +16,22 @@ interface Props {
   group: ProxyGroupView
   member: ResolvedProxyMember
   selected: boolean
+  /** True when this group's selection is managed by an enabled smart-switch set. */
+  autoSwitchActive?: boolean
   showType?: boolean
   onClick?: (member: ResolvedProxyMember) => void
 }
 
 // 多列布局
 export const ProxyItemMini = (props: Props) => {
-  const { group, member, selected, showType = true, onClick } = props
+  const {
+    group,
+    member,
+    selected,
+    autoSwitchActive = false,
+    showType = true,
+    onClick,
+  } = props
   const details = memberDetails(member)
   const unresolved = member.kind === 'unresolved'
   const name = member.ref.name
@@ -30,6 +39,7 @@ export const ProxyItemMini = (props: Props) => {
   const provider =
     member.kind === 'node' ? providerNameOf(member.node) : undefined
   const now = member.kind === 'group' ? member.group.now : undefined
+  const showAutoSwitch = !unresolved && selected && autoSwitchActive
 
   const { t } = useTranslation()
 
@@ -74,7 +84,21 @@ export const ProxyItemMini = (props: Props) => {
               width: `calc(100% + 3px)`,
               marginLeft: `-3px`,
               borderLeft: `3px solid ${selectColor}`,
-              bgcolor: alpha(primary.main, mode === 'light' ? 0.1 : 0.14),
+              bgcolor: alpha(
+                primary.main,
+                mode === 'light'
+                  ? showAutoSwitch
+                    ? 0.16
+                    : 0.1
+                  : showAutoSwitch
+                    ? 0.22
+                    : 0.14,
+              ),
+              ...(showAutoSwitch
+                ? {
+                    boxShadow: `inset 0 0 0 1px ${alpha(primary.main, mode === 'light' ? 0.28 : 0.4)}`,
+                  }
+                : null),
             },
             backgroundColor: bgcolor,
           }
@@ -160,8 +184,22 @@ export const ProxyItemMini = (props: Props) => {
         )}
       </Box>
       <Box
-        sx={{ ml: 0.5, color: 'primary.main', display: isPreset ? 'none' : '' }}
+        sx={{
+          ml: 0.5,
+          color: 'primary.main',
+          display: isPreset ? 'none' : 'flex',
+          alignItems: 'center',
+          gap: 0.25,
+        }}
       >
+        {showAutoSwitch && (
+          <BaseTooltip title={t('proxies.page.autoSwitch.nodeManaged')}>
+            <SyncAltRounded
+              className="the-icon"
+              sx={{ fontSize: 15, mr: 0.25, display: 'block', opacity: 0.9 }}
+            />
+          </BaseTooltip>
+        )}
         {!unresolved && delayValue === -2 && (
           <Widget>
             <BaseLoading />
@@ -205,7 +243,8 @@ export const ProxyItemMini = (props: Props) => {
           type !== 'Direct' &&
           delayValue !== -2 &&
           delayValue < 0 &&
-          selected && (
+          selected &&
+          !showAutoSwitch && (
             // 展示已选择的 icon
             <CheckCircleOutlineRounded
               className="the-icon"

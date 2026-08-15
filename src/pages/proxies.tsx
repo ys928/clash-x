@@ -5,7 +5,7 @@ import {
   SyncAltRounded,
   WarningRounded,
 } from '@mui/icons-material'
-import { Badge, Box, Divider, IconButton, Menu, MenuItem } from '@mui/material'
+import { Box, Divider, IconButton, Menu, MenuItem } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -166,20 +166,22 @@ const ProxyPage = () => {
       }
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <BaseTooltip title={t('proxies.page.autoSwitch.title')}>
+          <BaseTooltip
+            title={
+              autoSwitchEnabledCount > 0
+                ? t('proxies.page.autoSwitch.activeTooltip', {
+                    count: autoSwitchEnabledCount,
+                  })
+                : t('proxies.page.autoSwitch.title')
+            }
+          >
             <IconButton
               size="small"
               color={autoSwitchEnabledCount > 0 ? 'primary' : 'inherit'}
               onClick={() => setAutoSwitchOpen(true)}
               aria-label={t('proxies.page.autoSwitch.title')}
             >
-              <Badge
-                color="primary"
-                badgeContent={autoSwitchEnabledCount || undefined}
-                overlap="circular"
-              >
-                <SyncAltRounded fontSize="small" />
-              </Badge>
+              <SyncAltRounded fontSize="small" />
             </IconButton>
           </BaseTooltip>
           <IconButton

@@ -16,6 +16,7 @@ import {
 import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
 import { useIconCache } from '@/hooks/use-icon-cache'
 import { useVerge } from '@/hooks/use-verge'
 import { useThemeMode } from '@/services/states'
@@ -56,6 +57,8 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
   } = props
   const { type, group, headState, member, memberCol } = item
   const { verge } = useVerge()
+  const { enabledTargetGroups } = useAutoSwitchGroups()
+  const autoSwitchActive = enabledTargetGroups.has(group.name)
   const enable_group_icon = verge?.enable_group_icon ?? true
   const mode = useThemeMode()
   const itembackgroundcolor =
@@ -78,11 +81,20 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
         group={group}
         member={occurrence.member}
         selected={group.now === occurrence.member.ref.name}
+        autoSwitchActive={autoSwitchActive}
         showType={showType}
         onClick={(nextMember) => onChangeProxy(group, nextMember)}
       />
     ))
-  }, [type, memberCol, item.key, group, showType, onChangeProxy])
+  }, [
+    type,
+    memberCol,
+    item.key,
+    group,
+    showType,
+    onChangeProxy,
+    autoSwitchActive,
+  ])
 
   if (type === 0) {
     return (
@@ -242,6 +254,7 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
         group={group}
         member={member!.member}
         selected={group.now === member?.member.ref.name}
+        autoSwitchActive={autoSwitchActive}
         showType={headState?.showType}
         sx={{ py: 0, pl: 2 }}
         onClick={(nextMember) => onChangeProxy(group, nextMember)}

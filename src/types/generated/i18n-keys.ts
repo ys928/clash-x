@@ -338,6 +338,8 @@ export const translationKeys = [
   'proxies.page.chain.exitNode',
   'proxies.page.autoSwitch.title',
   'proxies.page.autoSwitch.subtitle',
+  'proxies.page.autoSwitch.activeTooltip',
+  'proxies.page.autoSwitch.nodeManaged',
   'proxies.page.autoSwitch.create',
   'proxies.page.autoSwitch.createTitle',
   'proxies.page.autoSwitch.editTitle',

@@ -25,6 +25,17 @@ export function useAutoSwitchGroups() {
     [groups],
   )
 
+  /** Proxy group names that currently have at least one enabled smart-switch set. */
+  const enabledTargetGroups = useMemo(() => {
+    const names = new Set<string>()
+    for (const group of groups) {
+      if (group.enabled && group.targetGroupName) {
+        names.add(group.targetGroupName)
+      }
+    }
+    return names
+  }, [groups])
+
   const createGroup = useCallback((partial?: Partial<AutoSwitchGroup>) => {
     const group = createEmptyAutoSwitchGroup(partial)
     upsertAutoSwitchGroup(group)
@@ -53,6 +64,7 @@ export function useAutoSwitchGroups() {
   return {
     groups,
     enabledCount,
+    enabledTargetGroups,
     createGroup,
     saveGroup,
     patchGroup,

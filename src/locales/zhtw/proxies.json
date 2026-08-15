@@ -98,6 +98,8 @@
     "autoSwitch": {
       "title": "智慧切換",
       "subtitle": "自選節點組，依延遲定時自動切換",
+      "activeTooltip": "已啟用 {{count}} 個智慧切換組",
+      "nodeManaged": "由智慧切換管理",
       "create": "新建節點組",
       "createTitle": "新建智慧切換組",
       "editTitle": "編輯智慧切換組",

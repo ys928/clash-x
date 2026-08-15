@@ -521,6 +521,7 @@ export interface TranslationResources {
           toggleChain: string
         }
         autoSwitch: {
+          activeTooltip: string
           clearNodes: string
           create: string
           createTitle: string
@@ -552,6 +553,7 @@ export interface TranslationResources {
           intervalMinutes: string
           intervalSeconds: string
           listMeta: string
+          nodeManaged: string
           noMatchingNodes: string
           pickTargetFirst: string
           saved: string

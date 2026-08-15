@@ -1,4 +1,4 @@
-import { CheckCircleOutlineRounded } from '@mui/icons-material'
+import { CheckCircleOutlineRounded, SyncAltRounded } from '@mui/icons-material'
 import {
   alpha,
   Box,
@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-import { BaseLoading } from '@/components/base'
+import { BaseLoading, BaseTooltip } from '@/components/base'
 import { useProxyDelayState } from '@/hooks/use-proxy-delay-state'
 import delayManager from '@/services/delay'
 import {
@@ -26,6 +26,8 @@ interface Props {
   group: ProxyGroupView
   member: ResolvedProxyMember
   selected: boolean
+  /** True when this group's selection is managed by an enabled smart-switch set. */
+  autoSwitchActive?: boolean
   showType?: boolean
   sx?: SxProps<Theme>
   onClick?: (member: ResolvedProxyMember) => void
@@ -51,7 +53,15 @@ const TypeBox = styled('span')(({ theme }) => ({
 
 export const ProxyItem = (props: Props) => {
   const { t } = useTranslation()
-  const { group, member, selected, showType = true, sx, onClick } = props
+  const {
+    group,
+    member,
+    selected,
+    autoSwitchActive = false,
+    showType = true,
+    sx,
+    onClick,
+  } = props
   const details = memberDetails(member)
   const unresolved = member.kind === 'unresolved'
   const name = member.ref.name
@@ -59,6 +69,7 @@ export const ProxyItem = (props: Props) => {
   const provider =
     member.kind === 'node' ? providerNameOf(member.node) : undefined
   const now = member.kind === 'group' ? member.group.now : undefined
+  const showAutoSwitch = !unresolved && selected && autoSwitchActive
 
   // -1/<=0 为不显示，-2 为 loading
   const { delayValue, isPreset, timeout, onDelay } = useProxyDelayState(
@@ -88,7 +99,21 @@ export const ProxyItem = (props: Props) => {
                 width: `calc(100% + 3px)`,
                 marginLeft: `-3px`,
                 borderLeft: `3px solid ${selectColor}`,
-                bgcolor: alpha(primary.main, mode === 'light' ? 0.1 : 0.14),
+                bgcolor: alpha(
+                  primary.main,
+                  mode === 'light'
+                    ? showAutoSwitch
+                      ? 0.16
+                      : 0.1
+                    : showAutoSwitch
+                      ? 0.22
+                      : 0.14,
+                ),
+                ...(showAutoSwitch
+                  ? {
+                      boxShadow: `inset 0 0 0 1px ${alpha(primary.main, mode === 'light' ? 0.28 : 0.4)}`,
+                    }
+                  : null),
               },
               backgroundColor: bgcolor,
               marginBottom: '8px',
@@ -138,8 +163,20 @@ export const ProxyItem = (props: Props) => {
             justifyContent: 'flex-end',
             color: 'primary.main',
             display: isPreset ? 'none' : '',
+            alignItems: 'center',
+            gap: 0.25,
+            minWidth: 'auto',
           }}
         >
+          {showAutoSwitch && (
+            <BaseTooltip title={t('proxies.page.autoSwitch.nodeManaged')}>
+              <SyncAltRounded
+                className="the-icon"
+                sx={{ fontSize: 15, opacity: 0.9 }}
+              />
+            </BaseTooltip>
+          )}
+
           {!unresolved && delayValue === -2 && (
             <Widget>
               <BaseLoading />
@@ -181,13 +218,17 @@ export const ProxyItem = (props: Props) => {
             </Widget>
           )}
 
-          {!unresolved && delayValue !== -2 && delayValue <= 0 && selected && (
-            // 展示已选择的 icon
-            <CheckCircleOutlineRounded
-              className="the-icon"
-              sx={{ fontSize: 16 }}
-            />
-          )}
+          {!unresolved &&
+            delayValue !== -2 &&
+            delayValue <= 0 &&
+            selected &&
+            !showAutoSwitch && (
+              // 展示已选择的 icon
+              <CheckCircleOutlineRounded
+                className="the-icon"
+                sx={{ fontSize: 16 }}
+              />
+            )}
         </ListItemIcon>
       </ListItemButton>
     </ListItem>

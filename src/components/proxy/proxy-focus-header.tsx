@@ -1,4 +1,8 @@
-import { ExpandMoreRounded, InfoOutlined } from '@mui/icons-material'
+import {
+  ExpandMoreRounded,
+  InfoOutlined,
+  SyncAltRounded,
+} from '@mui/icons-material'
 import {
   Box,
   Button,
@@ -13,6 +17,7 @@ import { useMemo, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BaseTooltip } from '@/components/base'
+import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
 import type { ProxyGroupView } from '@/types/proxy-view'
 
 import { pickPrimaryGroup, type ProxyPageViewMode } from './proxy-focus-model'
@@ -45,6 +50,7 @@ export function ProxyFocusHeader({
 }: ProxyFocusHeaderProps) {
   const { t } = useTranslation()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const { enabledTargetGroups } = useAutoSwitchGroups()
 
   const currentGroup = useMemo(
     () => groups.find((group) => group.name === selectedGroupName) ?? null,
@@ -53,6 +59,9 @@ export function ProxyFocusHeader({
   const primaryGroupName = useMemo(
     () => pickPrimaryGroup(groups)?.name ?? null,
     [groups],
+  )
+  const currentAutoSwitchActive = Boolean(
+    currentGroup && enabledTargetGroups.has(currentGroup.name),
   )
 
   const showGroupHint = viewMode === 'focus' && groups.length > 1
@@ -141,15 +150,34 @@ export function ProxyFocusHeader({
           )}
 
           {!toolsExpanded && currentGroup?.now && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              noWrap
-              title={currentGroup.now}
-              sx={{ maxWidth: 180, display: { xs: 'none', sm: 'block' } }}
+            <Box
+              sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
+                alignItems: 'center',
+                gap: 0.5,
+                minWidth: 0,
+                maxWidth: 200,
+              }}
             >
-              {currentGroup.now}
-            </Typography>
+              {currentAutoSwitchActive && (
+                <BaseTooltip title={t('proxies.page.autoSwitch.nodeManaged')}>
+                  <SyncAltRounded
+                    sx={{ fontSize: 14, color: 'primary.main', flexShrink: 0 }}
+                  />
+                </BaseTooltip>
+              )}
+              <Typography
+                variant="caption"
+                color={
+                  currentAutoSwitchActive ? 'primary.main' : 'text.secondary'
+                }
+                noWrap
+                title={currentGroup.now}
+                sx={{ fontWeight: currentAutoSwitchActive ? 600 : 400 }}
+              >
+                {currentGroup.now}
+              </Typography>
+            </Box>
           )}
         </Box>
       ) : (

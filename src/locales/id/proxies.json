@@ -98,6 +98,8 @@
     "autoSwitch": {
       "title": "Smart Switch",
       "subtitle": "Curated node sets with latency-based auto switching",
+      "activeTooltip": "{{count}} set smart switch aktif",
+      "nodeManaged": "Dikelola oleh smart switch",
       "create": "New node set",
       "createTitle": "Create smart switch set",
       "editTitle": "Edit smart switch set",

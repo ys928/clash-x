@@ -98,6 +98,8 @@
     "autoSwitch": {
       "title": "智能切换",
       "subtitle": "自选节点组，按延迟定时自动切换",
+      "activeTooltip": "已启用 {{count}} 个智能切换组",
+      "nodeManaged": "由智能切换管理",
       "create": "新建节点组",
       "createTitle": "新建智能切换组",
       "editTitle": "编辑智能切换组",
