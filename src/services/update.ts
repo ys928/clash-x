@@ -4,6 +4,7 @@ import {
   type Update,
 } from '@tauri-apps/plugin-updater'
 
+import { getUpdaterClashProxy } from '@/services/cmds'
 import { version as appVersion } from '@root/package.json'
 
 type VersionParts = {
@@ -122,6 +123,47 @@ const resolveRemoteVersion = (update: Update): string | null => {
 
 const localVersionNormalized = normalizeVersion(appVersion)
 
+const resolveClashProxy = async (
+  options?: CheckOptions,
+): Promise<string | undefined> => {
+  if (options?.proxy) return options.proxy
+  try {
+    return (await getUpdaterClashProxy()) ?? undefined
+  } catch (err) {
+    console.warn('[updater] failed to resolve Clash proxy', err)
+    return undefined
+  }
+}
+
+const interpretCheckResult = async (
+  result: Update | null,
+): Promise<Update | null> => {
+  if (!result) {
+    console.info('[updater] no update available')
+    return null
+  }
+
+  const remoteVersion = resolveRemoteVersion(result)
+  const comparison = compareVersions(remoteVersion, localVersionNormalized)
+
+  if (comparison !== null && comparison <= 0) {
+    console.info(
+      `[updater] remote version not newer (remote=${remoteVersion ?? result.version}, local=${localVersionNormalized ?? appVersion})`,
+    )
+    try {
+      await result.close()
+    } catch (err) {
+      console.warn('[updater] failed to close stale update resource', err)
+    }
+    return null
+  }
+
+  console.info(
+    `[updater] update available: v${remoteVersion ?? result.version}`,
+  )
+  return result
+}
+
 export const checkUpdateSafe = async (
   options?: CheckOptions,
 ): Promise<Update | null> => {
@@ -129,36 +171,33 @@ export const checkUpdateSafe = async (
     `[updater] checking for updates (local=v${localVersionNormalized ?? appVersion})`,
   )
 
-  try {
-    const result = await check({ ...(options ?? {}), allowDowngrades: false })
-    if (!result) {
-      console.info('[updater] no update available')
-      return null
+  const clashProxy = await resolveClashProxy(options)
+  const attempts: Array<string | undefined> = clashProxy
+    ? [clashProxy, undefined]
+    : [undefined]
+
+  let lastError: unknown
+  for (const [index, proxy] of attempts.entries()) {
+    if (proxy) {
+      console.info(`[updater] using Clash proxy ${proxy}`)
+    } else if (index > 0) {
+      console.info('[updater] Clash proxy failed, retrying direct')
     }
 
-    const remoteVersion = resolveRemoteVersion(result)
-    const comparison = compareVersions(remoteVersion, localVersionNormalized)
-
-    if (comparison !== null && comparison <= 0) {
-      console.info(
-        `[updater] remote version not newer (remote=${remoteVersion ?? result.version}, local=${localVersionNormalized ?? appVersion})`,
-      )
-      try {
-        await result.close()
-      } catch (err) {
-        console.warn('[updater] failed to close stale update resource', err)
-      }
-      return null
+    try {
+      const result = await check({
+        ...(options ?? {}),
+        proxy,
+        allowDowngrades: false,
+      })
+      return await interpretCheckResult(result)
+    } catch (err) {
+      console.warn('[updater] check failed:', err)
+      lastError = err
     }
-
-    console.info(
-      `[updater] update available: v${remoteVersion ?? result.version}`,
-    )
-    return result
-  } catch (err) {
-    console.warn('[updater] check failed:', err)
-    throw err
   }
+
+  throw lastError
 }
 
 export type { CheckOptions }

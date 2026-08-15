@@ -1,9 +1,15 @@
-use crate::{singleton, utils::dirs};
+use crate::{
+    config::MixedPort,
+    core::{CoreManager, manager::RunningMode},
+    singleton,
+    utils::dirs,
+};
 use anyhow::Result;
 use clash_verge_logging::{Type, logging};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tauri_plugin_updater::UpdaterExt as _;
+use tauri::Url;
+use tauri_plugin_updater::{Updater, UpdaterExt as _};
 
 /// Frontend-facing update badge / dialog metadata (detection only, no download).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -59,6 +65,37 @@ impl UpdateChecker {
         super::handle::Handle::notify_update_status(status);
     }
 
+    /// Local Clash mixed-port URL when the core is running; otherwise `None`.
+    pub async fn clash_proxy_url() -> Option<Url> {
+        if matches!(*CoreManager::global().get_running_mode(), RunningMode::NotRunning) {
+            return None;
+        }
+
+        let port = MixedPort::desired().await;
+        if port == 0 {
+            return None;
+        }
+
+        Url::parse(&format!("http://127.0.0.1:{port}")).ok()
+    }
+
+    fn build_updater(app_handle: &tauri::AppHandle, proxy: Option<&Url>) -> Result<Updater> {
+        let builder = app_handle.updater_builder();
+        let builder = match proxy {
+            Some(proxy) => builder.proxy(proxy.clone()),
+            None => builder,
+        };
+        Ok(builder.build()?)
+    }
+
+    async fn check_with_proxy(
+        app_handle: &tauri::AppHandle,
+        proxy: Option<&Url>,
+    ) -> Result<Option<tauri_plugin_updater::Update>> {
+        let updater = Self::build_updater(app_handle, proxy)?;
+        Ok(updater.check().await?)
+    }
+
     async fn check_once(&self, app_handle: &tauri::AppHandle) -> Result<()> {
         let is_portable = *dirs::PORTABLE_FLAG.get().unwrap_or(&false);
         if is_portable {
@@ -73,25 +110,45 @@ impl UpdateChecker {
             "Update check: checking for updates (local=v{current_version})"
         );
 
-        let updater = app_handle.updater()?;
-        let update = match updater.check().await {
-            Ok(Some(update)) => update,
-            Ok(None) => {
-                logging!(info, Type::System, "Update check: no update available");
-                self.set_status(UpdateStatus::none());
-                return Ok(());
-            }
-            Err(e) => {
-                logging!(warn, Type::System, "Update check failed: {e}");
-                return Err(e.into());
-            }
-        };
+        let clash_proxy = Self::clash_proxy_url().await;
+        // Prefer Clash when available (GitHub is often unreachable without it),
+        // then fall back to a direct request.
+        let attempts: [Option<&Url>; 2] = [clash_proxy.as_ref(), None];
+        let mut last_error: Option<anyhow::Error> = None;
 
-        let version = update.version.clone();
-        let body = update.body.clone();
-        logging!(info, Type::System, "Update check: update available v{version}");
-        self.set_status(UpdateStatus::available(version, body));
-        Ok(())
+        for (index, proxy) in attempts.into_iter().enumerate() {
+            // Skip duplicate direct attempt when Clash proxy was unavailable.
+            if index == 1 && clash_proxy.is_none() {
+                break;
+            }
+
+            if let Some(proxy) = proxy {
+                logging!(info, Type::System, "Update check: using Clash proxy {proxy}");
+            } else if clash_proxy.is_some() {
+                logging!(info, Type::System, "Update check: Clash proxy failed, retrying direct");
+            }
+
+            match Self::check_with_proxy(app_handle, proxy).await {
+                Ok(Some(update)) => {
+                    let version = update.version.clone();
+                    let body = update.body.clone();
+                    logging!(info, Type::System, "Update check: update available v{version}");
+                    self.set_status(UpdateStatus::available(version, body));
+                    return Ok(());
+                }
+                Ok(None) => {
+                    logging!(info, Type::System, "Update check: no update available");
+                    self.set_status(UpdateStatus::none());
+                    return Ok(());
+                }
+                Err(e) => {
+                    logging!(warn, Type::System, "Update check failed: {e}");
+                    last_error = Some(e);
+                }
+            }
+        }
+
+        Err(last_error.unwrap_or_else(|| anyhow::anyhow!("Update check failed")))
     }
 
     /// Start shortly after launch, then check once every hour.

@@ -227,6 +227,10 @@ export async function getUpdateStatus() {
   return invoke<UpdateStatus>('get_update_status')
 }
 
+export async function getUpdaterClashProxy() {
+  return invoke<string | null>('get_updater_clash_proxy')
+}
+
 export async function getAppDir() {
   return invoke<string>('get_app_dir')
 }
