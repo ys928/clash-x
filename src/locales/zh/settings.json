@@ -17,7 +17,7 @@
     "system": {
       "title": "系统设置",
       "toggles": {
-        "tunMode": "虚拟网卡模式",
+        "tunMode": "增强模式",
         "systemProxy": "系统代理"
       },
       "tooltips": {
@@ -36,9 +36,9 @@
     },
     "proxyControl": {
       "tooltips": {
-        "systemProxy": "修改操作系统的代理设置，如果开启失败，可手动修改操作系统的代理设置",
-        "tunMode": "TUN（虚拟网卡）模式接管系统所有流量，启用时无须打开系统代理",
-        "tunUnavailable": "TUN 模式需要安装服务模式或管理员模式"
+        "systemProxy": "修改操作系统的代理设置，适合大多数应用。推荐优先使用。",
+        "tunMode": "当个别应用无视系统代理时使用。开启前需管理员授权安装系统服务；启用后无须再开系统代理。",
+        "tunUnavailable": "开启增强模式前，需要一次管理员授权以安装系统服务（或以管理员运行）"
       },
       "actions": {
         "installService": "安装服务",
@@ -47,7 +47,7 @@
       },
       "fields": {
         "systemProxy": "系统代理",
-        "tunMode": "虚拟网卡模式"
+        "tunMode": "增强模式"
       },
       "messages": {
         "installedCheckProxy": "服务已安装，内核已通过服务运行。请检查系统代理开关，若刚才的改动未生效请重新操作一次。",

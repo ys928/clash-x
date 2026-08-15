@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "System Proxy",
+        "tunMode": "Enhanced Mode"
+      },
+      "badges": {
+        "recommended": "Recommended",
+        "advanced": "Advanced"
+      },
+      "actions": {
+        "showAdvanced": "Some apps ignore the system proxy? Use Enhanced Mode",
+        "hideAdvanced": "Hide enhanced options"
+      },
       "status": {
-        "systemProxyEnabled": "システムプロキシが有効になっています。アプリケーションはプロキシを通じてネットワークにアクセスします。",
-        "systemProxyDisabled": "システムプロキシが無効になっています。ほとんどのユーザーはこのオプションをオンにすることをお勧めします。",
-        "tunModeServiceRequired": "TUNモードはサービスモードが必要です。まずサービスをインストールしてください。",
-        "tunModeEnabled": "TUNモードが有効になっています。アプリケーションは仮想ネットワークカードを通じてネットワークにアクセスします。",
-        "tunModeDisabled": "TUNモードが無効になっています。特殊なアプリケーションに適しています。"
+        "inactive": "Proxy is off — most apps will go online directly. Turn on System Proxy to start.",
+        "systemProxy": "System Proxy is on. Most apps will use the proxy.",
+        "tun": "Enhanced Mode is on and is taking over all app traffic.",
+        "both": "Enhanced Mode is taking over all traffic. You can turn System Proxy off."
       },
       "tooltips": {
         "systemProxy": "オペレーティングシステムのプロキシ設定を変更します。有効にできない場合は、手動でオペレーティングシステムのプロキシ設定を変更してください。",
-        "tunMode": "TUNモードは全てのアプリケーションのトラフィックを制御できます。システムプロキシ設定に従わない特殊なアプリケーションに適しています。"
+        "tunMode": "TUNモードは全てのアプリケーションのトラフィックを制御できます。システムプロキシ設定に従わない特殊なアプリケーションに適しています。",
+        "tunNeedsSetup": "Enhanced Mode needs one admin approval to install the system service"
       }
     },
     "clashInfo": {

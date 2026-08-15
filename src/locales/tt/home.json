@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "System Proxy",
+        "tunMode": "Enhanced Mode"
+      },
+      "badges": {
+        "recommended": "Recommended",
+        "advanced": "Advanced"
+      },
+      "actions": {
+        "showAdvanced": "Some apps ignore the system proxy? Use Enhanced Mode",
+        "hideAdvanced": "Hide enhanced options"
+      },
       "status": {
-        "systemProxyEnabled": "System proxy is enabled, your applications will access the network through the proxy",
-        "systemProxyDisabled": "System proxy is disabled, it is recommended for most users to turn on this option",
-        "tunModeServiceRequired": "TUN mode requires service mode, please install the service first",
-        "tunModeEnabled": "TUN mode is enabled, applications will access the network through the virtual network card",
-        "tunModeDisabled": "TUN mode is disabled, suitable for special applications"
+        "inactive": "Proxy is off — most apps will go online directly. Turn on System Proxy to start.",
+        "systemProxy": "System Proxy is on. Most apps will use the proxy.",
+        "tun": "Enhanced Mode is on and is taking over all app traffic.",
+        "both": "Enhanced Mode is taking over all traffic. You can turn System Proxy off."
       },
       "tooltips": {
         "systemProxy": "Системалы прокси көйләүләрен үзгәртү рөхсәтен бирегез. Әгәр рөхсәт алу мөмкин түгел икән, прокси көйләүләрен кулдан үзгәртегез",
-        "tunMode": "TUN mode can take over all application traffic, suitable for special applications that do not follow the system proxy settings"
+        "tunMode": "TUN mode can take over all application traffic, suitable for special applications that do not follow the system proxy settings",
+        "tunNeedsSetup": "Enhanced Mode needs one admin approval to install the system service"
       }
     },
     "clashInfo": {

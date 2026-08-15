@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "System Proxy",
+        "tunMode": "Enhanced Mode"
+      },
+      "badges": {
+        "recommended": "Recommended",
+        "advanced": "Advanced"
+      },
+      "actions": {
+        "showAdvanced": "Some apps ignore the system proxy? Use Enhanced Mode",
+        "hideAdvanced": "Hide enhanced options"
+      },
       "status": {
-        "systemProxyEnabled": "El proxy del sistema está habilitado. Sus aplicaciones accederán a Internet a través del proxy.",
-        "systemProxyDisabled": "El proxy del sistema está deshabilitado. Se recomienda a la mayoría de los usuarios habilitar esta opción.",
-        "tunModeServiceRequired": "El modo TUN requiere el modo de servicio. Instale el servicio primero.",
-        "tunModeEnabled": "El modo TUN está habilitado. Las aplicaciones accederán a Internet a través de la interfaz virtual.",
-        "tunModeDisabled": "El modo TUN está deshabilitado. Este modo es adecuado para aplicaciones especiales."
+        "inactive": "Proxy is off — most apps will go online directly. Turn on System Proxy to start.",
+        "systemProxy": "System Proxy is on. Most apps will use the proxy.",
+        "tun": "Enhanced Mode is on and is taking over all app traffic.",
+        "both": "Enhanced Mode is taking over all traffic. You can turn System Proxy off."
       },
       "tooltips": {
         "systemProxy": "Modifica la configuración del proxy del sistema operativo. Si no se puede habilitar, puede modificar manualmente la configuración del proxy del sistema operativo.",
-        "tunMode": "El modo TUN puede gestionar todo el tráfico de las aplicaciones. Es adecuado para aplicaciones que no siguen la configuración del proxy del sistema."
+        "tunMode": "El modo TUN puede gestionar todo el tráfico de las aplicaciones. Es adecuado para aplicaciones que no siguen la configuración del proxy del sistema.",
+        "tunNeedsSetup": "Enhanced Mode needs one admin approval to install the system service"
       }
     },
     "clashInfo": {

@@ -17,7 +17,7 @@
     "system": {
       "title": "系統設定",
       "toggles": {
-        "tunMode": "虛擬網路介面卡模式",
+        "tunMode": "增強模式",
         "systemProxy": "系統代理"
       },
       "tooltips": {
@@ -36,9 +36,9 @@
     },
     "proxyControl": {
       "tooltips": {
-        "systemProxy": "修改作業系統的代理設定，如果開啟失敗，可手動修改作業系統的代理設定",
-        "tunMode": "TUN（虛擬網路介面卡）模式接管系統所有流量，啟用時無需開啟系統代理",
-        "tunUnavailable": "虛擬網路介面卡模式需要安裝服務模式或以系統管理員身分執行"
+        "systemProxy": "修改作業系統的代理設定，適合大多數應用程式。建議優先使用。",
+        "tunMode": "當個別應用程式無視系統代理時使用。開啟前需管理員授權安裝系統服務；啟用後無須再開系統代理。",
+        "tunUnavailable": "開啟增強模式前，需要一次管理員授權以安裝系統服務（或以系統管理員身分執行）"
       },
       "actions": {
         "installService": "安裝服務",
@@ -47,7 +47,7 @@
       },
       "fields": {
         "systemProxy": "系統代理",
-        "tunMode": "虛擬網路介面卡模式"
+        "tunMode": "增強模式"
       },
       "messages": {
         "installedCheckProxy": "服務已安裝，內核已透過服務執行。請檢查系統代理開關，若剛才的變更未生效請重新操作一次。",

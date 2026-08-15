@@ -17,9 +17,9 @@ notifications:
     title: 系統代理守衛
     body: 連續多次失敗後已停止守衛。開啟 Clash Verge 查看原因。
   tunModeToggled:
-    title: 虛擬網路介面卡模式
-    'on': 虛擬網路介面卡模式已啟用。
-    'off': 虛擬網路介面卡模式已關閉。
+    title: 增強模式
+    'on': 增強模式已啟用。
+    'off': 增強模式已關閉。
   lightweightModeEntered:
     title: 輕量模式
     body: 已進入輕量模式。
@@ -67,7 +67,7 @@ tray:
   profiles: 訂閱
   proxies: 代理
   systemProxy: 系統代理
-  tunMode: 虛擬網路介面卡模式
+  tunMode: 增強模式
   closeAllConnections: 關閉所有連線
   lightweightMode: 輕量模式
   copyEnv: 複製環境變數
@@ -84,5 +84,5 @@ tray:
   exit: 離開
   tooltip:
     systemProxy: 系統代理
-    tun: 虛擬網路介面卡
+    tun: 增強
     profile: 訂閱

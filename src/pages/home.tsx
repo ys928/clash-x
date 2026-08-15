@@ -327,22 +327,7 @@ const HomePage = () => {
             >
               {t('home.page.cards.networkSettings')}
             </Typography>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 1,
-              }}
-            >
-              <ProxyControlSwitches
-                label={t('settings.sections.system.toggles.systemProxy')}
-                noRightPadding
-              />
-              <ProxyControlSwitches
-                label={t('settings.sections.system.toggles.tunMode')}
-                noRightPadding
-              />
-            </Box>
+            <ProxyControlSwitches noRightPadding />
           </Paper>
         )}
 

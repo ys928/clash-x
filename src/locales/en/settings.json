@@ -17,7 +17,7 @@
     "system": {
       "title": "System Setting",
       "toggles": {
-        "tunMode": "Tun Mode",
+        "tunMode": "Enhanced Mode",
         "systemProxy": "System Proxy"
       },
       "tooltips": {
@@ -36,9 +36,9 @@
     },
     "proxyControl": {
       "tooltips": {
-        "systemProxy": "Enable to modify the operating system's proxy settings. If enabling fails, modify the operating system's proxy settings manually",
-        "tunMode": "Tun (Virtual NIC) mode: Captures all system traffic, when enabled, there is no need to enable system proxy.",
-        "tunUnavailable": "TUN requires Service Mode or Admin Mode"
+        "systemProxy": "Changes the OS proxy settings. Best for most apps — recommended first.",
+        "tunMode": "Use when some apps ignore the system proxy. Needs one admin approval to install a system service; once on, System Proxy is optional.",
+        "tunUnavailable": "Enhanced Mode needs one admin approval to install the system service (or run as administrator)"
       },
       "actions": {
         "installService": "Install Service",
@@ -47,7 +47,7 @@
       },
       "fields": {
         "systemProxy": "System Proxy",
-        "tunMode": "Tun Mode"
+        "tunMode": "Enhanced Mode"
       },
       "messages": {
         "installedCheckProxy": "The service is installed and the core is running through it. Check the system proxy switch and make your change again if it did not take.",

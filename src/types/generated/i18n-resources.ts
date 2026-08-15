@@ -114,16 +114,28 @@ export interface TranslationResources {
           title: string
         }
         proxyTun: {
+          actions: {
+            hideAdvanced: string
+            showAdvanced: string
+          }
+          badges: {
+            advanced: string
+            recommended: string
+          }
+          fields: {
+            systemProxy: string
+            tunMode: string
+          }
           status: {
-            systemProxyDisabled: string
-            systemProxyEnabled: string
-            tunModeDisabled: string
-            tunModeEnabled: string
-            tunModeServiceRequired: string
+            both: string
+            inactive: string
+            systemProxy: string
+            tun: string
           }
           tooltips: {
             systemProxy: string
             tunMode: string
+            tunNeedsSetup: string
           }
         }
         systemInfo: {

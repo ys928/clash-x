@@ -7,14 +7,14 @@
     },
     "cards": {
       "trafficStats": "流量统计",
-      "networkSettings": "网络设置",
+      "networkSettings": "代理接入",
       "proxyMode": "代理模式"
     },
     "settings": {
       "cards": {
         "profile": "订阅卡",
         "currentProxy": "当前代理卡",
-        "network": "网络设置卡",
+        "network": "代理接入卡",
         "proxyMode": "代理模式卡",
         "traffic": "流量统计卡",
         "tests": "网站测试卡",
@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "系统代理",
+        "tunMode": "增强模式"
+      },
+      "badges": {
+        "recommended": "推荐",
+        "advanced": "进阶"
+      },
+      "actions": {
+        "showAdvanced": "个别应用不走代理？使用增强模式",
+        "hideAdvanced": "收起增强选项"
+      },
       "status": {
-        "systemProxyEnabled": "系统代理已启用，您的应用将通过代理访问网络",
-        "systemProxyDisabled": "系统代理已关闭，建议大多数用户打开此选项",
-        "tunModeServiceRequired": "TUN 模式需要服务模式，请先安装服务",
-        "tunModeEnabled": "TUN 模式已启用，应用将通过虚拟网卡访问网络",
-        "tunModeDisabled": "TUN 模式已关闭，适用于特殊应用"
+        "inactive": "代理未生效，多数应用将直连上网。打开系统代理即可开始。",
+        "systemProxy": "系统代理已生效，多数应用会通过代理访问网络。",
+        "tun": "增强模式已生效，已接管全部应用流量。",
+        "both": "增强模式已接管全部流量；系统代理可关，不影响上网。"
       },
       "tooltips": {
-        "systemProxy": "修改操作系统的代理设置，如果开启失败，可手动修改操作系统的代理设置",
-        "tunMode": "TUN 模式可以接管所有应用流量，适用于特殊不遵循系统代理设置的应用"
+        "systemProxy": "修改操作系统的代理设置，适合大多数应用。推荐优先使用。",
+        "tunMode": "当个别应用无视系统代理时使用。开启前需管理员授权安装系统服务；启用后无须再开系统代理。",
+        "tunNeedsSetup": "开启增强模式前，需要一次管理员授权以安装系统服务"
       }
     },
     "clashInfo": {

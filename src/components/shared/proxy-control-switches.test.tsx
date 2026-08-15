@@ -20,6 +20,7 @@ const patchVerge = vi.hoisted(() => vi.fn(() => Promise.resolve()))
 const mutateVerge = vi.hoisted(() => vi.fn())
 const isTunModeAvailable = vi.hoisted(() => ({ current: false }))
 const tunEnabled = vi.hoisted(() => ({ current: false }))
+const systemProxyOn = vi.hoisted(() => ({ current: false }))
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -39,7 +40,7 @@ vi.mock('@/hooks/use-system-state', () => ({
 }))
 vi.mock('@/hooks/use-system-proxy-state', () => ({
   useSystemProxyState: () => ({
-    indicator: false,
+    indicator: systemProxyOn.current,
     toggleSystemProxy: vi.fn(),
   }),
 }))
@@ -58,6 +59,7 @@ afterEach(() => {
   mutateVerge.mockClear()
   isTunModeAvailable.current = false
   tunEnabled.current = false
+  systemProxyOn.current = false
   clearServiceRequest()
   getSnapshotNotices().forEach((notice) => hideNotice(notice.id))
   cleanup()
@@ -142,4 +144,27 @@ it('says nothing beside the dialog it just opened', async () => {
   await waitFor(() => expect(theSwitch().checked).toBe(false))
   expect(onError).not.toHaveBeenCalled()
   expect(getSnapshotNotices()).toEqual([])
+})
+
+it('guides users with a status line and keeps enhanced mode collapsed', () => {
+  render(<ProxyControlSwitches />)
+
+  expect(
+    screen.getByText('home.components.proxyTun.status.inactive'),
+  ).toBeTruthy()
+  expect(
+    screen.getByText('home.components.proxyTun.badges.recommended'),
+  ).toBeTruthy()
+  expect(
+    screen.getByText('home.components.proxyTun.actions.showAdvanced'),
+  ).toBeTruthy()
+  expect(screen.getAllByRole('switch')).toHaveLength(1)
+})
+
+it('warns clearly when neither path is active, and softens when both are', () => {
+  systemProxyOn.current = true
+  tunEnabled.current = true
+  render(<ProxyControlSwitches />)
+
+  expect(screen.getByText('home.components.proxyTun.status.both')).toBeTruthy()
 })

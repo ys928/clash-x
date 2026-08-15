@@ -7,14 +7,14 @@
     },
     "cards": {
       "trafficStats": "流量統計",
-      "networkSettings": "網路設定",
+      "networkSettings": "代理接入",
       "proxyMode": "代理模式"
     },
     "settings": {
       "cards": {
         "profile": "訂閱卡",
         "currentProxy": "目前代理卡",
-        "network": "網路設定卡",
+        "network": "代理接入卡",
         "proxyMode": "代理模式卡",
         "traffic": "流量統計卡",
         "tests": "網站測試卡",
@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "系統代理",
+        "tunMode": "增強模式"
+      },
+      "badges": {
+        "recommended": "推薦",
+        "advanced": "進階"
+      },
+      "actions": {
+        "showAdvanced": "個別應用程式不走代理？使用增強模式",
+        "hideAdvanced": "收起增強選項"
+      },
       "status": {
-        "systemProxyEnabled": "系統代理已啟用，您的應用程式將透過代理存取網路",
-        "systemProxyDisabled": "系統代理已關閉，建議大多數使用者開啟此選項",
-        "tunModeServiceRequired": "虛擬網路介面卡模式需要服務模式，請先安裝服務",
-        "tunModeEnabled": "虛擬網路介面卡模式已啟用，應用程式將透過虛擬網路介面卡存取網路",
-        "tunModeDisabled": "虛擬網路介面卡模式已關閉，適用於特殊應用程式"
+        "inactive": "代理未生效，多數應用程式將直連上網。開啟系統代理即可開始。",
+        "systemProxy": "系統代理已生效，多數應用程式會透過代理存取網路。",
+        "tun": "增強模式已生效，已接管全部應用程式流量。",
+        "both": "增強模式已接管全部流量；系統代理可關，不影響上網。"
       },
       "tooltips": {
-        "systemProxy": "修改作業系統的代理設定，如果開啟失敗，可手動修改作業系統的代理設定",
-        "tunMode": "虛擬網路介面卡模式可以接管所有應用程式流量，適用於不遵循系統代理設定的特殊應用程式"
+        "systemProxy": "修改作業系統的代理設定，適合大多數應用程式。建議優先使用。",
+        "tunMode": "當個別應用程式無視系統代理時使用。開啟前需管理員授權安裝系統服務；啟用後無須再開系統代理。",
+        "tunNeedsSetup": "開啟增強模式前，需要一次管理員授權以安裝系統服務"
       }
     },
     "clashInfo": {

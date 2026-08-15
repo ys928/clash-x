@@ -1,11 +1,20 @@
 import {
   DeleteForeverRounded,
+  ExpandLessRounded,
+  ExpandMoreRounded,
   PauseCircleOutlineRounded,
   PlayCircleOutlineRounded,
   SettingsRounded,
   WarningRounded,
 } from '@mui/icons-material'
-import { Box, Typography, alpha, useTheme } from '@mui/material'
+import {
+  Box,
+  ButtonBase,
+  Collapse,
+  Typography,
+  alpha,
+  useTheme,
+} from '@mui/material'
 import { useLockFn } from 'ahooks'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,12 +22,14 @@ import { useTranslation } from 'react-i18next'
 import { DialogRef, Switch, TooltipIcon } from '@/components/base'
 import { SysproxyViewer } from '@/components/setting/mods/sysproxy-viewer'
 import { TunViewer } from '@/components/setting/mods/tun-viewer'
+import { AppChip } from '@/components/ui'
 import { useServiceUninstaller } from '@/hooks/use-service-uninstaller'
 import { useSystemProxyState } from '@/hooks/use-system-proxy-state'
 import { useSystemState } from '@/hooks/use-system-state'
 import { useVerge } from '@/hooks/use-verge'
 import { showNotice } from '@/services/notice-service'
 import { requestService } from '@/services/service-request'
+import type { TranslationKey } from '@/types/generated/i18n-keys'
 
 interface ProxySwitchProps {
   label?: string
@@ -33,6 +44,7 @@ interface SwitchRowProps {
   infoTitle: string
   onInfoClick?: () => void
   extraIcons?: React.ReactNode
+  badge?: React.ReactNode
   /** Return false to roll back without reporting an error. */
   onToggle: (value: boolean) => Promise<boolean | void>
   onError?: (err: Error) => void
@@ -40,8 +52,7 @@ interface SwitchRowProps {
 }
 
 /**
- * 抽取的子组件：统一的开关 UI
- * active = 真实状态OS/配置 乐观更新
+ * Shared switch row: optimistic UI over the real OS / config state.
  */
 const SwitchRow = ({
   label,
@@ -50,6 +61,7 @@ const SwitchRow = ({
   infoTitle,
   onInfoClick,
   extraIcons,
+  badge,
   onToggle,
   onError,
   highlight,
@@ -96,7 +108,7 @@ const SwitchRow = ({
         transition: 'background-color 0.3s',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, mr: 1 }}>
         {active ? (
           <PlayCircleOutlineRounded sx={{ color: 'success.main', mr: 1 }} />
         ) : (
@@ -108,6 +120,7 @@ const SwitchRow = ({
         >
           {label}
         </Typography>
+        {badge}
         <TooltipIcon
           title={infoTitle}
           icon={SettingsRounded}
@@ -127,12 +140,34 @@ const SwitchRow = ({
   )
 }
 
+type ProxyStatusTone = 'warning' | 'success' | 'info'
+
+const resolveProxyStatus = (
+  systemProxyOn: boolean,
+  tunOn: boolean,
+): { key: TranslationKey; tone: ProxyStatusTone } => {
+  if (tunOn && systemProxyOn) {
+    return { key: 'home.components.proxyTun.status.both', tone: 'info' }
+  }
+  if (tunOn) {
+    return { key: 'home.components.proxyTun.status.tun', tone: 'success' }
+  }
+  if (systemProxyOn) {
+    return {
+      key: 'home.components.proxyTun.status.systemProxy',
+      tone: 'success',
+    }
+  }
+  return { key: 'home.components.proxyTun.status.inactive', tone: 'warning' }
+}
+
 const ProxyControlSwitches = ({
   label,
   onError,
   noRightPadding = false,
 }: ProxySwitchProps) => {
   const { t } = useTranslation()
+  const theme = useTheme()
   const { verge, mutateVerge, patchVerge } = useVerge()
   const { uninstallServiceAndStartSidecar } = useServiceUninstaller()
   const { indicator: systemProxyIndicator, toggleSystemProxy } =
@@ -145,6 +180,10 @@ const ProxyControlSwitches = ({
   const tunRef = useRef<DialogRef>(null)
 
   const { enable_tun_mode } = verge ?? {}
+  const tunEnabled = enable_tun_mode || false
+
+  // Keep TUN visible when already on; otherwise start collapsed as advanced.
+  const [advancedOpen, setAdvancedOpen] = useState(tunEnabled)
 
   const handleTunToggle = async (value: boolean) => {
     if (value && !isTunModeAvailable) {
@@ -156,6 +195,7 @@ const ProxyControlSwitches = ({
     }
     mutateVerge({ ...verge, enable_tun_mode: value }, false)
     await patchVerge({ enable_tun_mode: value })
+    if (value) setAdvancedOpen(true)
   }
 
   const onUninstallService = useLockFn(async () => {
@@ -169,55 +209,142 @@ const ProxyControlSwitches = ({
   const isSystemProxyMode =
     label === t('settings.sections.system.toggles.systemProxy') || !label
   const isTunMode = label === t('settings.sections.system.toggles.tunMode')
+  const guided = !label
+
+  const status = resolveProxyStatus(systemProxyIndicator, tunEnabled)
+  const statusColor =
+    status.tone === 'warning'
+      ? theme.palette.warning.main
+      : status.tone === 'success'
+        ? theme.palette.success.main
+        : theme.palette.info.main
+
+  const systemProxyRow = (
+    <SwitchRow
+      label={t('home.components.proxyTun.fields.systemProxy')}
+      active={systemProxyIndicator}
+      infoTitle={t('home.components.proxyTun.tooltips.systemProxy')}
+      onInfoClick={() => sysproxyRef.current?.open()}
+      onToggle={(value) => toggleSystemProxy(value)}
+      onError={onError}
+      highlight={systemProxyIndicator && !tunEnabled}
+      badge={
+        guided ? (
+          <AppChip
+            label={t('home.components.proxyTun.badges.recommended')}
+            color="primary"
+            variant="outlined"
+            sx={{ ml: 1, height: 22, fontSize: 11 }}
+          />
+        ) : undefined
+      }
+    />
+  )
+
+  const tunExtraIcons = (
+    <>
+      {!isTunModeAvailable && (
+        <TooltipIcon
+          title={t('home.components.proxyTun.tooltips.tunNeedsSetup')}
+          icon={WarningRounded}
+          sx={{ color: 'warning.main', ml: 1 }}
+        />
+      )}
+      {isServiceInstallReady && (
+        <TooltipIcon
+          title={t('settings.sections.proxyControl.actions.uninstallService')}
+          icon={DeleteForeverRounded}
+          color="secondary"
+          onClick={onUninstallService}
+          sx={{ ml: 1 }}
+        />
+      )}
+    </>
+  )
+
+  const tunRow = (
+    <SwitchRow
+      label={t('home.components.proxyTun.fields.tunMode')}
+      active={tunEnabled}
+      infoTitle={t('home.components.proxyTun.tooltips.tunMode')}
+      onInfoClick={() => tunRef.current?.open()}
+      onToggle={handleTunToggle}
+      onError={onError}
+      highlight={tunEnabled}
+      badge={
+        guided ? (
+          <AppChip
+            label={t('home.components.proxyTun.badges.advanced')}
+            variant="outlined"
+            sx={{ ml: 1, height: 22, fontSize: 11 }}
+          />
+        ) : undefined
+      }
+      extraIcons={tunExtraIcons}
+    />
+  )
 
   return (
     <Box sx={{ width: '100%', pr: noRightPadding ? 1 : 2 }}>
-      {isSystemProxyMode && (
-        <SwitchRow
-          label={t('settings.sections.proxyControl.fields.systemProxy')}
-          active={systemProxyIndicator}
-          infoTitle={t('settings.sections.proxyControl.tooltips.systemProxy')}
-          onInfoClick={() => sysproxyRef.current?.open()}
-          onToggle={(value) => toggleSystemProxy(value)}
-          onError={onError}
-          highlight={systemProxyIndicator}
-        />
+      {guided && (
+        <Box
+          role="status"
+          sx={{
+            mb: 1,
+            px: 1.25,
+            py: 1,
+            borderRadius: 1.5,
+            border: '1px solid',
+            borderColor: alpha(statusColor, 0.35),
+            bgcolor: alpha(statusColor, 0.08),
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.primary', lineHeight: 1.5 }}
+          >
+            {t(status.key)}
+          </Typography>
+        </Box>
       )}
 
-      {isTunMode && (
-        <SwitchRow
-          label={t('settings.sections.proxyControl.fields.tunMode')}
-          active={enable_tun_mode || false}
-          infoTitle={t('settings.sections.proxyControl.tooltips.tunMode')}
-          onInfoClick={() => tunRef.current?.open()}
-          onToggle={handleTunToggle}
-          onError={onError}
-          highlight={enable_tun_mode || false}
-          extraIcons={
-            <>
-              {!isTunModeAvailable && (
-                <TooltipIcon
-                  title={t(
-                    'settings.sections.proxyControl.tooltips.tunUnavailable',
-                  )}
-                  icon={WarningRounded}
-                  sx={{ color: 'warning.main', ml: 1 }}
-                />
+      {isSystemProxyMode && systemProxyRow}
+
+      {guided ? (
+        <>
+          {!tunEnabled && (
+            <ButtonBase
+              onClick={() => setAdvancedOpen((open) => !open)}
+              sx={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                px: 1,
+                py: 0.75,
+                mt: 0.5,
+                borderRadius: 1,
+                color: 'text.secondary',
+                textAlign: 'left',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {advancedOpen
+                  ? t('home.components.proxyTun.actions.hideAdvanced')
+                  : t('home.components.proxyTun.actions.showAdvanced')}
+              </Typography>
+              {advancedOpen ? (
+                <ExpandLessRounded fontSize="small" />
+              ) : (
+                <ExpandMoreRounded fontSize="small" />
               )}
-              {isServiceInstallReady && (
-                <TooltipIcon
-                  title={t(
-                    'settings.sections.proxyControl.actions.uninstallService',
-                  )}
-                  icon={DeleteForeverRounded}
-                  color="secondary"
-                  onClick={onUninstallService}
-                  sx={{ ml: 1 }}
-                />
-              )}
-            </>
-          }
-        />
+            </ButtonBase>
+          )}
+          <Collapse in={advancedOpen || tunEnabled}>{tunRow}</Collapse>
+        </>
+      ) : (
+        isTunMode && tunRow
       )}
 
       <SysproxyViewer ref={sysproxyRef} />

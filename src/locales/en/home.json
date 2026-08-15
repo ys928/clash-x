@@ -7,14 +7,14 @@
     },
     "cards": {
       "trafficStats": "Traffic Stats",
-      "networkSettings": "Network Settings",
+      "networkSettings": "Proxy Access",
       "proxyMode": "Proxy Mode"
     },
     "settings": {
       "cards": {
         "profile": "Profile Card",
         "currentProxy": "Current Proxy Card",
-        "network": "Network Settings Card",
+        "network": "Proxy Access Card",
         "proxyMode": "Proxy Mode Card",
         "traffic": "Traffic Stats Card",
         "tests": "Website Tests Card",
@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "System Proxy",
+        "tunMode": "Enhanced Mode"
+      },
+      "badges": {
+        "recommended": "Recommended",
+        "advanced": "Advanced"
+      },
+      "actions": {
+        "showAdvanced": "Some apps ignore the system proxy? Use Enhanced Mode",
+        "hideAdvanced": "Hide enhanced options"
+      },
       "status": {
-        "systemProxyEnabled": "System Proxy Enabled",
-        "systemProxyDisabled": "System Proxy Disabled",
-        "tunModeServiceRequired": "TUN Mode Service Required",
-        "tunModeEnabled": "TUN Mode Enabled",
-        "tunModeDisabled": "TUN Mode Disabled"
+        "inactive": "Proxy is off — most apps will go online directly. Turn on System Proxy to start.",
+        "systemProxy": "System Proxy is on. Most apps will use the proxy.",
+        "tun": "Enhanced Mode is on and is taking over all app traffic.",
+        "both": "Enhanced Mode is taking over all traffic. You can turn System Proxy off."
       },
       "tooltips": {
-        "systemProxy": "System Proxy Info",
-        "tunMode": "TUN Mode Intercept Info"
+        "systemProxy": "Changes the OS proxy settings. Best for most apps — recommended first.",
+        "tunMode": "Use when some apps ignore the system proxy. Needs one admin approval to install a system service; once on, System Proxy is optional.",
+        "tunNeedsSetup": "Enhanced Mode needs one admin approval to install the system service"
       }
     },
     "clashInfo": {

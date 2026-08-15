@@ -17,9 +17,9 @@ notifications:
     title: System Proxy Guard
     body: The guard stopped after failing several times running. Open Clash Verge to see why.
   tunModeToggled:
-    title: TUN Mode
-    'on': TUN mode has been enabled.
-    'off': TUN mode has been disabled.
+    title: Enhanced Mode
+    'on': Enhanced mode has been enabled.
+    'off': Enhanced mode has been disabled.
   lightweightModeEntered:
     title: Lightweight Mode
     body: Entered lightweight mode.
@@ -67,7 +67,7 @@ tray:
   profiles: Profiles
   proxies: Proxies
   systemProxy: System Proxy
-  tunMode: TUN Mode
+  tunMode: Enhanced Mode
   closeAllConnections: Close All Connections
   lightweightMode: Lightweight Mode
   copyEnv: Copy Environment Variables
@@ -84,5 +84,5 @@ tray:
   exit: Exit
   tooltip:
     systemProxy: System Proxy
-    tun: TUN
+    tun: Enhanced
     profile: Profile

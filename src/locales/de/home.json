@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "System Proxy",
+        "tunMode": "Enhanced Mode"
+      },
+      "badges": {
+        "recommended": "Recommended",
+        "advanced": "Advanced"
+      },
+      "actions": {
+        "showAdvanced": "Some apps ignore the system proxy? Use Enhanced Mode",
+        "hideAdvanced": "Hide enhanced options"
+      },
       "status": {
-        "systemProxyEnabled": "Der Systemproxy ist aktiviert. Ihre Anwendungen werden über den Proxy auf das Netzwerk zugreifen.",
-        "systemProxyDisabled": "Der Systemproxy ist deaktiviert. Es wird empfohlen, diesen Eintrag für die meisten Benutzer zu aktivieren.",
-        "tunModeServiceRequired": "Der TUN-Modus erfordert den Service-Modus. Bitte installieren Sie zuerst den Service.",
-        "tunModeEnabled": "Der TUN-Modus ist aktiviert. Die Anwendungen werden über die virtuelle Netzwerkschnittstelle auf das Netzwerk zugreifen.",
-        "tunModeDisabled": "Der TUN-Modus ist deaktiviert. Dies ist für spezielle Anwendungen geeignet."
+        "inactive": "Proxy is off — most apps will go online directly. Turn on System Proxy to start.",
+        "systemProxy": "System Proxy is on. Most apps will use the proxy.",
+        "tun": "Enhanced Mode is on and is taking over all app traffic.",
+        "both": "Enhanced Mode is taking over all traffic. You can turn System Proxy off."
       },
       "tooltips": {
         "systemProxy": "Ändern Sie die Proxy-Einstellungen des Betriebssystems. Wenn die Aktivierung fehlschlägt, können Sie die Proxy-Einstellungen des Betriebssystems manuell ändern.",
-        "tunMode": "Der TUN-Modus kann den gesamten Anwendungsverkehr übernehmen und eignet sich für spezielle Anwendungen, die die Systemproxy-Einstellungen nicht befolgen."
+        "tunMode": "Der TUN-Modus kann den gesamten Anwendungsverkehr übernehmen und eignet sich für spezielle Anwendungen, die die Systemproxy-Einstellungen nicht befolgen.",
+        "tunNeedsSetup": "Enhanced Mode needs one admin approval to install the system service"
       }
     },
     "clashInfo": {

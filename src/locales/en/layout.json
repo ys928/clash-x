@@ -51,8 +51,8 @@
       "installing": "Installing the system service. This may ask for an administrator password.",
       "restarting": "Service installed. Restarting the core through it…",
       "applying": "Applying your system proxy change…",
-      "tunTitle": "TUN mode needs the system service",
-      "tunMessage": "TUN mode needs the Clash Verge system service to take over network traffic. Once it is installed, TUN mode will be turned on for you."
+      "tunTitle": "Enhanced Mode needs the system service",
+      "tunMessage": "Enhanced Mode (takes over all app traffic) needs the Clash Verge system service and one admin approval. Once installed, it will be turned on for you."
     }
   },
   "feedback": {

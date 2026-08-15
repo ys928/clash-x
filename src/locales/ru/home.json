@@ -37,16 +37,28 @@
   },
   "components": {
     "proxyTun": {
+      "fields": {
+        "systemProxy": "System Proxy",
+        "tunMode": "Enhanced Mode"
+      },
+      "badges": {
+        "recommended": "Recommended",
+        "advanced": "Advanced"
+      },
+      "actions": {
+        "showAdvanced": "Some apps ignore the system proxy? Use Enhanced Mode",
+        "hideAdvanced": "Hide enhanced options"
+      },
       "status": {
-        "systemProxyEnabled": "Системный прокси включён — приложения используют его для доступа в сеть",
-        "systemProxyDisabled": "Системный прокси отключён — большинству пользователей рекомендуется его включить",
-        "tunModeServiceRequired": "Режим TUN требует установленной службы Clash Verge",
-        "tunModeEnabled": "Режим TUN включён — приложения используют виртуальный сетевой интерфейс",
-        "tunModeDisabled": "Режим TUN отключён"
+        "inactive": "Proxy is off — most apps will go online directly. Turn on System Proxy to start.",
+        "systemProxy": "System Proxy is on. Most apps will use the proxy.",
+        "tun": "Enhanced Mode is on and is taking over all app traffic.",
+        "both": "Enhanced Mode is taking over all traffic. You can turn System Proxy off."
       },
       "tooltips": {
         "systemProxy": "Разрешает изменение системных настроек прокси. Если не удаётся, настройте прокси вручную",
-        "tunMode": "Режим TUN перехватывает трафик всех приложений и подходит для программ, не работающих через системный прокси"
+        "tunMode": "Режим TUN перехватывает трафик всех приложений и подходит для программ, не работающих через системный прокси",
+        "tunNeedsSetup": "Enhanced Mode needs one admin approval to install the system service"
       }
     },
     "clashInfo": {
