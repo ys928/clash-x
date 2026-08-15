@@ -1,7 +1,7 @@
 .layout {
   --layout-nav-padding-top: 16px;
   --layout-nav-padding-bottom: 8px;
-  --layout-nav-padding-inline: 10px;
+  --layout-nav-padding-inline: var(--cx-page-gutter, 10px);
   --layout-nav-menu-gap: 6px;
 
   width: 100%;
@@ -174,7 +174,7 @@
 }
 
 .app-titlebar {
-  --titlebar-height: 40px;
+  --titlebar-height: var(--cx-titlebar-height, 40px);
   --titlebar-control-width: 46px;
 
   flex: 0 0 var(--titlebar-height);
@@ -198,10 +198,10 @@
   }
 
   &__title {
-    font-size: 12px;
+    font-size: var(--cx-font-xs, 12px);
     font-weight: 500;
     letter-spacing: 0.02em;
-    color: var(--text-secondary, #8b8d93);
+    color: var(--text-secondary);
   }
 
   &__drag {

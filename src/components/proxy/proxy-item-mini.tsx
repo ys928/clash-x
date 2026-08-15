@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { BaseLoading, BaseTooltip } from '@/components/base'
 import { useProxyDelayState } from '@/hooks/use-proxy-delay-state'
 import delayManager from '@/services/delay'
+import { radius, typographyScale } from '@/theme/tokens'
 import {
   memberDetails,
   providerNameOf,
@@ -58,7 +59,7 @@ export const ProxyItemMini = (props: Props) => {
       sx={[
         {
           height: 56,
-          borderRadius: 1.5,
+          borderRadius: `${radius.md}px`,
           pl: 1.5,
           pr: 1,
           justifyContent: 'space-between',
@@ -75,7 +76,7 @@ export const ProxyItemMini = (props: Props) => {
             '&:hover .the-icon': { display: 'none' },
             '& .the-pin, & .the-unpin': {
               position: 'absolute',
-              fontSize: '12px',
+              fontSize: typographyScale.fontSizeXs,
               top: '-5px',
               right: '-5px',
             },
@@ -271,23 +272,22 @@ export const ProxyItemMini = (props: Props) => {
 
 const Widget = styled(Box)(({ theme: { typography } }) => ({
   padding: '2px 4px',
-  fontSize: 14,
+  fontSize: typographyScale.fontSizeMd,
   fontFamily: typography.fontFamily,
-  borderRadius: '4px',
+  borderRadius: radius.xs,
 }))
 
 const TypeBox = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'component',
-})<{ component?: React.ElementType }>(({ theme: { typography } }) => ({
+})<{ component?: React.ElementType }>(({ theme: { typography, palette } }) => ({
   display: 'inline-block',
-  border: '1px solid #ccc',
-  borderColor: 'text.secondary',
-  color: 'text.secondary',
-  borderRadius: 4,
+  border: `1px solid ${alpha(palette.text.secondary, 0.36)}`,
+  color: palette.text.secondary,
+  borderRadius: radius.xs,
   fontSize: 10,
   fontFamily: typography.fontFamily,
-  marginRight: '4px',
+  marginRight: 4,
   marginTop: 'auto',
   padding: '0 4px',
-  lineHeight: 1.5,
+  lineHeight: typographyScale.lineHeightNormal,
 }))

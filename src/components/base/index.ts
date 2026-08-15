@@ -1,3 +1,8 @@
+/**
+ * Base barrel — non-visual utilities live here permanently.
+ * Visual primitives re-export from `@/components/ui` for backward compatibility;
+ * prefer importing App* from `@/components/ui` in new / migrated code.
+ */
 export { BaseDialog, type DialogRef } from './base-dialog'
 export { BaseEmpty } from './base-empty'
 export { BaseErrorBoundary } from './base-error-boundary'

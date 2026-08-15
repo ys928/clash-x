@@ -1,38 +1,29 @@
+import { darkPalette, lightPalette, type ThemeColorDefaults } from '@/theme'
 import getSystem from '@/utils/get-system'
+
 const OS = getSystem()
 
 const fontFamily = `-apple-system, BlinkMacSystemFont,"Microsoft YaHei UI", "Microsoft YaHei", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji"${
   OS === 'windows' ? ', twemoji mozilla' : ''
 }`
 
-// default theme setting
-export const defaultTheme = {
-  primary_color: '#3D6FD9',
-  secondary_color: '#6B7280',
-  primary_text: '#1C1D21',
-  secondary_text: '#6B6E76',
-  info_color: '#3D6FD9',
-  error_color: '#D94A42',
-  warning_color: '#D4870A',
-  success_color: '#2D9A52',
-  background_color: '#FFFFFF',
-  background_default: '#F2F3F5',
-  background_elevated: '#FFFFFF',
+const toThemeDefaults = (palette: typeof lightPalette): ThemeColorDefaults => ({
+  primary_color: palette.primary_color,
+  secondary_color: palette.secondary_color,
+  primary_text: palette.primary_text,
+  secondary_text: palette.secondary_text,
+  info_color: palette.info_color,
+  error_color: palette.error_color,
+  warning_color: palette.warning_color,
+  success_color: palette.success_color,
+  background_color: palette.background_color,
+  background_default: palette.background_default,
+  background_elevated: palette.background_elevated,
   font_family: fontFamily,
-}
+})
 
-// dark mode
-export const defaultDarkTheme = {
-  ...defaultTheme,
-  primary_color: '#5B8DEF',
-  secondary_color: '#8B919A',
-  primary_text: '#E8E8EA',
-  secondary_text: '#8B8D93',
-  info_color: '#5B8DEF',
-  error_color: '#E05252',
-  warning_color: '#E0942E',
-  success_color: '#4CB870',
-  background_color: '#222326',
-  background_default: '#1A1B1E',
-  background_elevated: '#2A2B2F',
-}
+/** Default light theme setting (config-compatible shape) */
+export const defaultTheme = toThemeDefaults(lightPalette)
+
+/** Default dark theme setting (config-compatible shape) */
+export const defaultDarkTheme = toThemeDefaults(darkPalette)

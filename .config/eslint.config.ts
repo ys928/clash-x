@@ -146,6 +146,87 @@ export default defineConfig([
     },
   },
   {
+    // Design system: createTheme only via @/theme (ui/base/theme exempt)
+    files: [
+      'src/pages/**/*.{ts,tsx}',
+      'src/components/**/*.{ts,tsx}',
+      'src/hooks/**/*.{ts,tsx}',
+      'src/providers/**/*.{ts,tsx}',
+    ],
+    ignores: [
+      'src/theme/**',
+      'src/components/ui/**',
+      'src/components/base/**',
+      'src/pages/_layout/hooks/use-custom-theme.ts',
+      'src/pages/_theme.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: '@mui/material',
+              importNames: ['createTheme'],
+              message:
+                'Use createAppTheme from `@/theme` instead of calling createTheme directly.',
+            },
+            {
+              name: '@mui/material/styles',
+              importNames: ['createTheme'],
+              message:
+                'Use createAppTheme from `@/theme` instead of calling createTheme directly.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Prefer App* from `@/components/ui` over legacy Base* visual wrappers in pages
+    files: ['src/pages/**/*.{ts,tsx}'],
+    ignores: [
+      'src/pages/_layout/hooks/use-custom-theme.ts',
+      'src/pages/_theme.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          paths: [
+            {
+              name: '@/components/base',
+              importNames: [
+                'BasePage',
+                'BaseDialog',
+                'BaseEmpty',
+                'BaseStyledTextField',
+                'BaseStyledSelect',
+                'BaseSearchBox',
+                'BaseTooltip',
+                'BaseLoading',
+              ],
+              message:
+                'Import App* equivalents from `@/components/ui` instead of Base* visual wrappers.',
+            },
+            {
+              name: '@mui/material',
+              importNames: ['createTheme'],
+              message:
+                'Use createAppTheme from `@/theme` instead of calling createTheme directly.',
+            },
+            {
+              name: '@mui/material/styles',
+              importNames: ['createTheme'],
+              message:
+                'Use createAppTheme from `@/theme` instead of calling createTheme directly.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['scripts/*.mjs'],
 
     languageOptions: {

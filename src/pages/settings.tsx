@@ -9,11 +9,11 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BasePage } from '@/components/base'
 import SettingClash from '@/components/setting/setting-clash'
 import SettingSystem from '@/components/setting/setting-system'
 import SettingVergeAdvanced from '@/components/setting/setting-verge-advanced'
 import SettingVergeBasic from '@/components/setting/setting-verge-basic'
+import { AppPage } from '@/components/ui'
 import { showNotice } from '@/services/notice-service'
 
 const settingPanelSx = {
@@ -47,7 +47,7 @@ const SettingPage = () => {
   }
 
   return (
-    <BasePage title={t('settings.page.title')}>
+    <AppPage title={t('settings.page.title')}>
       <Box
         sx={{
           maxWidth: 920,
@@ -97,7 +97,7 @@ const SettingPage = () => {
           </AccordionDetails>
         </Accordion>
       </Box>
-    </BasePage>
+    </AppPage>
   )
 }
 

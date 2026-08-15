@@ -12,16 +12,11 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  BaseEmpty,
-  BasePage,
-  BaseSearchBox,
-  VirtualList,
-  type VirtualListHandle,
-} from '@/components/base'
+import { VirtualList, type VirtualListHandle } from '@/components/base'
 import { ScrollTopButton } from '@/components/layout/scroll-top-button'
 import { ProviderButton } from '@/components/rule/provider-button'
 import RuleItem from '@/components/rule/rule-item'
+import { AppEmpty, AppPage, AppSearchField } from '@/components/ui'
 import { useVisibility } from '@/hooks/use-visibility'
 import { useAppRefreshers, useRulesData } from '@/providers/app-data-context'
 
@@ -155,7 +150,7 @@ const RulesPage = () => {
   }
 
   return (
-    <BasePage
+    <AppPage
       full
       title={t('rules.page.title')}
       contentStyle={{
@@ -270,7 +265,7 @@ const RulesPage = () => {
                 },
             }}
           >
-            <BaseSearchBox onSearch={(next) => setMatch(() => next)} />
+            <AppSearchField onSearch={(next) => setMatch(() => next)} />
           </Box>
 
           <Select
@@ -449,11 +444,11 @@ const RulesPage = () => {
           <ScrollTopButton onClick={scrollToTop} show={showScrollTop} />
         </>
       ) : (
-        <BaseEmpty
+        <AppEmpty
           text={hasActiveFilter ? t('rules.page.empty.filtered') : undefined}
         />
       )}
-    </BasePage>
+    </AppPage>
   )
 }
 

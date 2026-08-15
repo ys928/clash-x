@@ -11,10 +11,11 @@ import { useCallback, useEffect, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
-import { BasePage, BaseTooltip, TooltipIcon } from '@/components/base'
+import { TooltipIcon } from '@/components/base'
 import { AutoSwitchPanel } from '@/components/proxy/auto-switch-panel'
 import { ProviderButton } from '@/components/proxy/provider-button'
 import { ProxyGroups } from '@/components/proxy/proxy-groups'
+import { AppPage, AppTooltip } from '@/components/ui'
 import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
 import { useVerge } from '@/hooks/use-verge'
 import {
@@ -142,7 +143,7 @@ const ProxyPage = () => {
   }, [normalizedMode, onChangeMode])
 
   return (
-    <BasePage
+    <AppPage
       full
       contentStyle={{ height: '100%' }}
       title={
@@ -166,7 +167,7 @@ const ProxyPage = () => {
       }
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <BaseTooltip
+          <AppTooltip
             title={
               autoSwitchEnabledCount > 0
                 ? t('proxies.page.autoSwitch.activeTooltip', {
@@ -183,7 +184,7 @@ const ProxyPage = () => {
             >
               <SyncAltRounded fontSize="small" />
             </IconButton>
-          </BaseTooltip>
+          </AppTooltip>
           <IconButton
             size="small"
             color="inherit"
@@ -252,7 +253,7 @@ const ProxyPage = () => {
         open={autoSwitchOpen}
         onClose={() => setAutoSwitchOpen(false)}
       />
-    </BasePage>
+    </AppPage>
   )
 }
 

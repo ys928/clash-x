@@ -25,14 +25,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
-import {
-  BaseEmpty,
-  BasePage,
-  BaseSearchBox,
-  BaseStyledSelect,
-  type SearchState,
-  VirtualList,
-} from '@/components/base'
+import { type SearchState, VirtualList } from '@/components/base'
 import {
   ConnectionDetail,
   ConnectionDetailRef,
@@ -43,6 +36,7 @@ import {
   useConnectionRowViews,
 } from '@/components/connection/connection-row-view'
 import { ConnectionTable } from '@/components/connection/connection-table'
+import { AppEmpty, AppPage, AppSearchField, AppSelect } from '@/components/ui'
 import { useConnectionData } from '@/hooks/use-connection-data'
 import { useConnectionSetting } from '@/hooks/use-connection-setting'
 import { useTrafficData } from '@/hooks/use-traffic-data'
@@ -222,7 +216,7 @@ const ConnectionsPage = () => {
   const closedCount = connections?.closedConnections.length ?? 0
 
   return (
-    <BasePage
+    <AppPage
       full
       title={
         <span style={{ whiteSpace: 'nowrap' }}>
@@ -420,7 +414,7 @@ const ConnectionsPage = () => {
         )}
 
         {!isTableLayout && (
-          <BaseStyledSelect
+          <AppSelect
             value={curOrderOpt}
             onChange={(e) => setCurOrderOpt(e.target.value as OrderKey)}
             sx={{
@@ -441,7 +435,7 @@ const ConnectionsPage = () => {
                 {t(option.labelKey)}
               </MenuItem>
             ))}
-          </BaseStyledSelect>
+          </AppSelect>
         )}
 
         <Box
@@ -466,7 +460,7 @@ const ConnectionsPage = () => {
               },
           }}
         >
-          <BaseSearchBox onSearch={handleSearch} />
+          <AppSearchField onSearch={handleSearch} />
         </Box>
 
         {isTableLayout && (
@@ -501,7 +495,7 @@ const ConnectionsPage = () => {
       </Box>
 
       {!hasTableData ? (
-        <BaseEmpty />
+        <AppEmpty />
       ) : isTableLayout ? (
         <ConnectionTable
           connections={filterConn}
@@ -603,7 +597,7 @@ const ConnectionsPage = () => {
           {t('shared.actions.clear')}
         </Fab>
       </Zoom>
-    </BasePage>
+    </AppPage>
   )
 }
 

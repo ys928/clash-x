@@ -16,6 +16,7 @@ body {
 }
 
 :root {
+  /* Legacy palette vars — synced at runtime by syncCssVars */
   --primary-main: #3d6fd9;
   --text-primary: #1c1d21;
   --selection-color: #f2f3f5;
@@ -25,6 +26,24 @@ body {
   --background-elevated: #ffffff;
   --background-color-alpha: rgba(61, 111, 217, 0.1);
   --border-radius: 8px;
+
+  /* Design-system tokens (defaults; runtime overrides via --cx-*) */
+  --cx-radius-xs: 4px;
+  --cx-radius-sm: 6px;
+  --cx-radius-md: 8px;
+  --cx-radius-lg: 12px;
+  --cx-control-sm: 28px;
+  --cx-control-md: 32px;
+  --cx-control-lg: 36px;
+  --cx-page-header-height: 52px;
+  --cx-page-header-padding-inline: 20px;
+  --cx-page-gutter: 10px;
+  --cx-titlebar-height: 40px;
+  --cx-font-xs: 12px;
+  --cx-font-sm: 13px;
+  --cx-font-md: 14px;
+  --cx-font-lg: 16px;
+  --cx-font-xl: 18px;
 }
 
 ::selection {
@@ -38,7 +57,7 @@ body {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  border-radius: 6px;
+  border-radius: var(--cx-radius-sm);
   background-color: var(--scroller-color);
 }
 *::-webkit-scrollbar-corner {

@@ -17,15 +17,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
-  BaseEmpty,
-  BasePage,
-  BaseSearchBox,
-  BaseStyledSelect,
   type SearchState,
   VirtualList,
   type VirtualListHandle,
 } from '@/components/base'
 import LogItem from '@/components/log/log-item'
+import { AppEmpty, AppPage, AppSearchField, AppSelect } from '@/components/ui'
 import { useClashLog } from '@/hooks/use-clash-log'
 import { useLogData } from '@/hooks/use-log-data'
 
@@ -146,7 +143,7 @@ const LogPage = () => {
   const filteredCount = filteredLogs.length
 
   return (
-    <BasePage
+    <AppPage
       full
       title={t('logs.page.title')}
       contentStyle={{
@@ -298,7 +295,7 @@ const LogPage = () => {
           />
         )}
 
-        <BaseStyledSelect
+        <AppSelect
           value={logState}
           onChange={(e) => handleLogLevelChange(e.target.value as LogFilter)}
           sx={{
@@ -323,7 +320,7 @@ const LogPage = () => {
               )}
             </MenuItem>
           ))}
-        </BaseStyledSelect>
+        </AppSelect>
 
         <Box
           sx={{
@@ -347,7 +344,7 @@ const LogPage = () => {
               },
           }}
         >
-          <BaseSearchBox onSearch={handleSearch} />
+          <AppSearchField onSearch={handleSearch} />
         </Box>
       </Box>
 
@@ -424,9 +421,9 @@ const LogPage = () => {
           </Box>
         </Box>
       ) : (
-        <BaseEmpty />
+        <AppEmpty />
       )}
-    </BasePage>
+    </AppPage>
   )
 }
 

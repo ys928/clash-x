@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { BaseLoading, BaseTooltip } from '@/components/base'
 import { useProxyDelayState } from '@/hooks/use-proxy-delay-state'
 import delayManager from '@/services/delay'
+import { controlHeight, radius, typographyScale } from '@/theme/tokens'
 import {
   memberDetails,
   providerNameOf,
@@ -35,20 +36,20 @@ interface Props {
 
 const Widget = styled(Box)(() => ({
   padding: '3px 6px',
-  fontSize: 14,
-  borderRadius: '4px',
+  fontSize: typographyScale.fontSizeMd,
+  borderRadius: radius.xs,
 }))
 
 const TypeBox = styled('span')(({ theme }) => ({
   display: 'inline-block',
-  border: '1px solid #ccc',
+  border: `1px solid ${alpha(theme.palette.text.secondary, 0.36)}`,
   borderColor: alpha(theme.palette.text.secondary, 0.36),
   color: alpha(theme.palette.text.secondary, 0.42),
-  borderRadius: 4,
+  borderRadius: radius.xs,
   fontSize: 10,
-  marginRight: '4px',
+  marginRight: 4,
   padding: '0 2px',
-  lineHeight: 1.25,
+  lineHeight: typographyScale.lineHeightTight,
 }))
 
 export const ProxyItem = (props: Props) => {
@@ -85,7 +86,7 @@ export const ProxyItem = (props: Props) => {
         selected={!unresolved && selected}
         onClick={unresolved ? undefined : () => onClick?.(member)}
         sx={[
-          { borderRadius: 1 },
+          { borderRadius: `${radius.sm}px` },
           ({ palette: { mode, primary, background } }) => {
             const bgcolor = background.paper
             const selectColor = primary.main
@@ -116,8 +117,8 @@ export const ProxyItem = (props: Props) => {
                   : null),
               },
               backgroundColor: bgcolor,
-              marginBottom: '8px',
-              height: '40px',
+              marginBottom: 1,
+              height: controlHeight.lg + 4,
             }
           },
         ]}
@@ -129,8 +130,8 @@ export const ProxyItem = (props: Props) => {
               <Box
                 sx={{
                   display: 'inline-block',
-                  marginRight: '8px',
-                  fontSize: '14px',
+                  marginRight: 1,
+                  fontSize: typographyScale.fontSizeMd,
                   color: 'text.primary',
                 }}
               >

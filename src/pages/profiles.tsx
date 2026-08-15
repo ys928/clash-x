@@ -47,12 +47,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
-import {
-  BaseDialog,
-  BasePage,
-  BaseStyledTextField,
-  type DialogRef,
-} from '@/components/base'
+import { type DialogRef } from '@/components/base'
 import { ProfileMore } from '@/components/profile/profile-more'
 import {
   ProfileViewer,
@@ -60,6 +55,7 @@ import {
 } from '@/components/profile/profile-viewer'
 import { SortableProfileItem } from '@/components/profile/sortable-profile-item'
 import { ConfigViewer } from '@/components/setting/mods/config-viewer'
+import { AppDialog, AppPage, AppTextField } from '@/components/ui'
 import { useListen } from '@/hooks/use-listen'
 import { useProfiles } from '@/hooks/use-profiles'
 import {
@@ -817,7 +813,7 @@ const ProfilePage = () => {
   }, [])
 
   return (
-    <BasePage
+    <AppPage
       full
       title={t('profiles.page.title')}
       contentStyle={{ height: '100%' }}
@@ -1087,7 +1083,7 @@ const ProfilePage = () => {
         }}
       />
       <ConfigViewer ref={configRef} />
-      <BaseDialog
+      <AppDialog
         open={importOpen}
         title={t('profiles.page.actions.import')}
         contentSx={{ width: 420, maxWidth: '100%', pt: 1 }}
@@ -1099,7 +1095,7 @@ const ProfilePage = () => {
         onCancel={closeImportDialog}
         onClose={closeImportDialog}
       >
-        <BaseStyledTextField
+        <AppTextField
           autoFocus
           value={url}
           variant="outlined"
@@ -1141,8 +1137,8 @@ const ProfilePage = () => {
             },
           }}
         />
-      </BaseDialog>
-    </BasePage>
+      </AppDialog>
+    </AppPage>
   )
 }
 

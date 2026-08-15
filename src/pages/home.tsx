@@ -26,13 +26,13 @@ import {
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BasePage } from '@/components/base'
 import { ClashModeCard } from '@/components/home/clash-mode-card'
 import { CurrentProxyCard } from '@/components/home/current-proxy-card'
 import { EnhancedCard } from '@/components/home/enhanced-card'
 import { EnhancedTrafficStats } from '@/components/home/enhanced-traffic-stats'
 import { HomeProfileCard } from '@/components/home/home-profile-card'
 import ProxyControlSwitches from '@/components/shared/proxy-control-switches'
+import { AppPage } from '@/components/ui'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useVerge } from '@/hooks/use-verge'
 import { entry_lightweight_mode } from '@/services/cmds'
@@ -275,7 +275,7 @@ const HomePage = () => {
   )
 
   return (
-    <BasePage
+    <AppPage
       title={t('home.page.title')}
       contentStyle={{ padding: 2 }}
       header={
@@ -434,7 +434,7 @@ const HomePage = () => {
           homeCards={homeCards}
         />
       )}
-    </BasePage>
+    </AppPage>
   )
 }
 
