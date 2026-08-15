@@ -95,6 +95,50 @@
       "entryNode": "入口",
       "exitNode": "出口"
     },
+    "autoSwitch": {
+      "title": "智能切换",
+      "subtitle": "自选节点组，按延迟定时自动切换",
+      "create": "新建节点组",
+      "createTitle": "新建智能切换组",
+      "editTitle": "编辑智能切换组",
+      "empty": "还没有自定义节点组",
+      "hintTitle": "选择或新建一个节点组",
+      "hintBody": "把访问某类网站更稳定的节点放进一组，定时测延迟，当更优节点比当前快过设定差值时自动切换。",
+      "defaultName": "我的节点组",
+      "listMeta": "{{count}} 个节点 · {{target}}",
+      "testNow": "立即测速并切换",
+      "saved": "智能切换组已保存",
+      "switched": "{{group}}：已从 {{from}} 切换到 {{to}}（{{delay}}ms）",
+      "testedKeep": "{{group}}：当前已是组内最优，无需切换",
+      "intervalSeconds": "{{count}} 秒",
+      "intervalMinutes": "{{count}} 分钟",
+      "thresholdMs": "{{count}} ms",
+      "thresholdAlways": "总是选最快",
+      "clearNodes": "清空",
+      "searchNodes": "搜索节点…",
+      "pickTargetFirst": "请先选择要切换的代理组",
+      "noMatchingNodes": "没有匹配的节点",
+      "fields": {
+        "name": "组名称",
+        "targetGroup": "切换目标代理组",
+        "enabled": "启用自动切换",
+        "interval": "测速间隔",
+        "intervalHint": "每隔多久对组内节点测一次延迟",
+        "intervalCustom": "自定义（秒）",
+        "threshold": "切换阈值",
+        "thresholdHint": "最低延迟节点比当前节点快多少后才切换，避免频繁抖动",
+        "thresholdCustom": "自定义（ms）",
+        "nodes": "组内节点（{{count}}）"
+      },
+      "errors": {
+        "nameRequired": "请填写组名称",
+        "targetRequired": "请选择目标代理组",
+        "minNodes": "请至少选择 2 个节点",
+        "targetUnavailable": "目标代理组不可用",
+        "noResolvableNodes": "组内节点当前无法解析，请重新选择",
+        "testFailed": "测速失败"
+      }
+    },
     "messages": {
       "directMode": "直连模式"
     },

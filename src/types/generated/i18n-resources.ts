@@ -520,6 +520,50 @@ export interface TranslationResources {
           more: string
           toggleChain: string
         }
+        autoSwitch: {
+          clearNodes: string
+          create: string
+          createTitle: string
+          defaultName: string
+          editTitle: string
+          empty: string
+          errors: {
+            minNodes: string
+            nameRequired: string
+            noResolvableNodes: string
+            targetRequired: string
+            targetUnavailable: string
+            testFailed: string
+          }
+          fields: {
+            enabled: string
+            interval: string
+            intervalCustom: string
+            intervalHint: string
+            name: string
+            nodes: string
+            targetGroup: string
+            threshold: string
+            thresholdCustom: string
+            thresholdHint: string
+          }
+          hintBody: string
+          hintTitle: string
+          intervalMinutes: string
+          intervalSeconds: string
+          listMeta: string
+          noMatchingNodes: string
+          pickTargetFirst: string
+          saved: string
+          searchNodes: string
+          subtitle: string
+          switched: string
+          testedKeep: string
+          testNow: string
+          thresholdAlways: string
+          thresholdMs: string
+          title: string
+        }
         chain: {
           connectFailed: string
           disconnectFailed: string

@@ -95,6 +95,50 @@
       "entryNode": "入口",
       "exitNode": "出口"
     },
+    "autoSwitch": {
+      "title": "智慧切換",
+      "subtitle": "自選節點組，依延遲定時自動切換",
+      "create": "新建節點組",
+      "createTitle": "新建智慧切換組",
+      "editTitle": "編輯智慧切換組",
+      "empty": "還沒有自訂節點組",
+      "hintTitle": "選擇或新建一個節點組",
+      "hintBody": "把造訪某類網站更穩定的節點放進一組，定時測延遲，當更優節點比目前快過設定差值時自動切換。",
+      "defaultName": "我的節點組",
+      "listMeta": "{{count}} 個節點 · {{target}}",
+      "testNow": "立即測速並切換",
+      "saved": "智慧切換組已儲存",
+      "switched": "{{group}}：已從 {{from}} 切換到 {{to}}（{{delay}}ms）",
+      "testedKeep": "{{group}}：目前已是組內最優，無需切換",
+      "intervalSeconds": "{{count}} 秒",
+      "intervalMinutes": "{{count}} 分鐘",
+      "thresholdMs": "{{count}} ms",
+      "thresholdAlways": "總是選最快",
+      "clearNodes": "清空",
+      "searchNodes": "搜尋節點…",
+      "pickTargetFirst": "請先選擇要切換的代理組",
+      "noMatchingNodes": "沒有符合的節點",
+      "fields": {
+        "name": "組名稱",
+        "targetGroup": "切換目標代理組",
+        "enabled": "啟用自動切換",
+        "interval": "測速間隔",
+        "intervalHint": "每隔多久對組內節點測一次延遲",
+        "intervalCustom": "自訂（秒）",
+        "threshold": "切換閾值",
+        "thresholdHint": "最低延遲節點比目前節點快多少後才切換，避免頻繁抖動",
+        "thresholdCustom": "自訂（ms）",
+        "nodes": "組內節點（{{count}}）"
+      },
+      "errors": {
+        "nameRequired": "請填寫組名稱",
+        "targetRequired": "請選擇目標代理組",
+        "minNodes": "請至少選擇 2 個節點",
+        "targetUnavailable": "目標代理組不可用",
+        "noResolvableNodes": "組內節點目前無法解析，請重新選擇",
+        "testFailed": "測速失敗"
+      }
+    },
     "messages": {
       "directMode": "直連模式"
     },

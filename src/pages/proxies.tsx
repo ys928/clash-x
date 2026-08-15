@@ -2,17 +2,20 @@ import {
   LanOutlined,
   LanRounded,
   MoreVert,
+  SyncAltRounded,
   WarningRounded,
 } from '@mui/icons-material'
-import { Box, Divider, IconButton, Menu, MenuItem } from '@mui/material'
+import { Badge, Box, Divider, IconButton, Menu, MenuItem } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
-import { BasePage, TooltipIcon } from '@/components/base'
+import { BasePage, BaseTooltip, TooltipIcon } from '@/components/base'
+import { AutoSwitchPanel } from '@/components/proxy/auto-switch-panel'
 import { ProviderButton } from '@/components/proxy/provider-button'
 import { ProxyGroups } from '@/components/proxy/proxy-groups'
+import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
 import { useVerge } from '@/hooks/use-verge'
 import {
   useAppRefreshers,
@@ -49,6 +52,8 @@ const ProxyPage = () => {
     null as string | null,
   )
   const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
+  const [autoSwitchOpen, setAutoSwitchOpen] = useState(false)
+  const { enabledCount: autoSwitchEnabledCount } = useAutoSwitchGroups()
 
   const { clashConfig } = useClashConfigData()
   const { refreshClashConfig } = useAppRefreshers()
@@ -161,6 +166,22 @@ const ProxyPage = () => {
       }
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <BaseTooltip title={t('proxies.page.autoSwitch.title')}>
+            <IconButton
+              size="small"
+              color={autoSwitchEnabledCount > 0 ? 'primary' : 'inherit'}
+              onClick={() => setAutoSwitchOpen(true)}
+              aria-label={t('proxies.page.autoSwitch.title')}
+            >
+              <Badge
+                color="primary"
+                badgeContent={autoSwitchEnabledCount || undefined}
+                overlap="circular"
+              >
+                <SyncAltRounded fontSize="small" />
+              </Badge>
+            </IconButton>
+          </BaseTooltip>
           <IconButton
             size="small"
             color="inherit"
@@ -194,6 +215,15 @@ const ProxyPage = () => {
             ))}
             <Divider />
             <MenuItem
+              onClick={() => {
+                setOverflowAnchor(null)
+                setAutoSwitchOpen(true)
+              }}
+            >
+              <SyncAltRounded fontSize="small" sx={{ mr: 1 }} />
+              {t('proxies.page.autoSwitch.title')}
+            </MenuItem>
+            <MenuItem
               selected={isChainMode}
               onClick={() => {
                 setOverflowAnchor(null)
@@ -215,6 +245,10 @@ const ProxyPage = () => {
         mode={curMode ?? 'rule'}
         isChainMode={isChainMode}
         chainConfigData={chainConfigData}
+      />
+      <AutoSwitchPanel
+        open={autoSwitchOpen}
+        onClose={() => setAutoSwitchOpen(false)}
       />
     </BasePage>
   )

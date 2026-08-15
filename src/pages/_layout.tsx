@@ -42,6 +42,7 @@ import { LayoutTraffic } from '@/components/layout/layout-traffic'
 import { NoticeManager } from '@/components/layout/notice-manager'
 import { ServiceMigrationDialog } from '@/components/layout/service-migration-dialog'
 import { WindowResizeHandles } from '@/components/layout/window-controller'
+import { AutoSwitchRunnerHost } from '@/components/proxy/auto-switch-runner-host'
 import { useI18n } from '@/hooks/use-i18n'
 import { useVerge } from '@/hooks/use-verge'
 import { useThemeMode } from '@/services/states'
@@ -603,6 +604,7 @@ const Layout = () => {
             <div className="the-bar"></div>
             <div className="the-content">
               <BaseErrorBoundary>
+                <AutoSwitchRunnerHost />
                 <Outlet />
               </BaseErrorBoundary>
             </div>

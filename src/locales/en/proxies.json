@@ -95,6 +95,50 @@
       "entryNode": "Entry",
       "exitNode": "Exit"
     },
+    "autoSwitch": {
+      "title": "Smart Switch",
+      "subtitle": "Curated node sets with latency-based auto switching",
+      "create": "New node set",
+      "createTitle": "Create smart switch set",
+      "editTitle": "Edit smart switch set",
+      "empty": "No custom node sets yet",
+      "hintTitle": "Select or create a node set",
+      "hintBody": "Group nodes that work well for a site, test them on a schedule, and auto-switch when a better node beats the current one by your threshold.",
+      "defaultName": "My node set",
+      "listMeta": "{{count}} nodes · {{target}}",
+      "testNow": "Test and switch now",
+      "saved": "Smart switch set saved",
+      "switched": "{{group}}: switched from {{from}} to {{to}} ({{delay}}ms)",
+      "testedKeep": "{{group}}: already on the best node in the set",
+      "intervalSeconds": "{{count}}s",
+      "intervalMinutes": "{{count}} min",
+      "thresholdMs": "{{count}} ms",
+      "thresholdAlways": "Always fastest",
+      "clearNodes": "Clear",
+      "searchNodes": "Search nodes…",
+      "pickTargetFirst": "Pick a target proxy group first",
+      "noMatchingNodes": "No matching nodes",
+      "fields": {
+        "name": "Set name",
+        "targetGroup": "Target proxy group",
+        "enabled": "Enable auto switch",
+        "interval": "Test interval",
+        "intervalHint": "How often to measure latency for nodes in this set",
+        "intervalCustom": "Custom (seconds)",
+        "threshold": "Switch threshold",
+        "thresholdHint": "Only switch when the best node is this many ms faster than the current one",
+        "thresholdCustom": "Custom (ms)",
+        "nodes": "Nodes in set ({{count}})"
+      },
+      "errors": {
+        "nameRequired": "Please enter a set name",
+        "targetRequired": "Please select a target proxy group",
+        "minNodes": "Select at least 2 nodes",
+        "targetUnavailable": "Target proxy group is unavailable",
+        "noResolvableNodes": "Nodes in this set could not be resolved; please reselect",
+        "testFailed": "Latency test failed"
+      }
+    },
     "messages": {
       "directMode": "Direct Mode"
     },
