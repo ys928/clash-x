@@ -27,6 +27,8 @@ interface VergeEvents {
   'verge://run-state-changed': RunState
   /** Silent updater badge: new version available / downloaded. */
   'verge://update-status': UpdateStatus
+  /** Pending failures changed; reread the table. */
+  'verge://pending-failures-changed': null
   /** Which profile is active changed. */
   'profile-changed': string
   'profile-update-started': { uid?: string }
