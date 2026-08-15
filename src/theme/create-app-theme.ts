@@ -74,8 +74,11 @@ export const buildThemeOptions = (
   const palette = resolvePalette(mode, dt)
   const primaryMain = setting.primary_color || palette.primary_color
   const dividerColor = palette.divider
-  const selectedBg = alpha(primaryMain, mode === 'light' ? 0.1 : 0.14)
-  const hoverBg = palette.background_elevated
+  const selectedBg = alpha(primaryMain, mode === 'light' ? 0.1 : 0.12)
+  const hoverBg =
+    mode === 'light'
+      ? alpha(palette.primary_text, 0.04)
+      : alpha('#FFFFFF', 0.04)
   const elev = mode === 'light' ? elevation : elevationDark
 
   return {
@@ -229,7 +232,7 @@ export const buildThemeOptions = (
             '&:hover': {
               backgroundColor: alpha(
                 primaryMain,
-                mode === 'light' ? 0.06 : 0.1,
+                mode === 'light' ? 0.06 : 0.08,
               ),
             },
           },
@@ -314,6 +317,55 @@ export const buildThemeOptions = (
           root: {
             borderRadius: radius.sm,
             height: controlHeight.sm,
+          },
+        },
+      },
+      MuiCheckbox: {
+        defaultProps: {
+          disableRipple: true,
+          size: 'small',
+        },
+        styleOverrides: {
+          root: {
+            borderRadius: radius.sm,
+            padding: 6,
+            color: alpha(palette.primary_text, mode === 'light' ? 0.28 : 0.4),
+            transition: 'color 0.14s ease, background-color 0.14s ease',
+            '&:hover': {
+              backgroundColor: alpha(
+                primaryMain,
+                mode === 'light' ? 0.06 : 0.08,
+              ),
+            },
+            '&.Mui-checked, &.MuiCheckbox-indeterminate': {
+              color: primaryMain,
+            },
+            '&.Mui-disabled': {
+              opacity: 0.42,
+            },
+          },
+        },
+      },
+      MuiFormControlLabel: {
+        styleOverrides: {
+          root: {
+            marginLeft: -6,
+            marginRight: 0,
+            gap: 4,
+            borderRadius: radius.md,
+            paddingBlock: 2,
+            paddingInline: 4,
+            '&:hover': {
+              backgroundColor: alpha(
+                primaryMain,
+                mode === 'light' ? 0.04 : 0.06,
+              ),
+            },
+          },
+          label: {
+            fontSize: typographyScale.fontSizeSm,
+            fontWeight: typographyScale.fontWeightMedium,
+            lineHeight: typographyScale.lineHeightNormal,
           },
         },
       },

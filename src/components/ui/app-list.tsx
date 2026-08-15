@@ -10,7 +10,7 @@ import {
 } from '@mui/material'
 import { useState, type ReactNode } from 'react'
 
-import { typographyScale } from '@/theme/tokens'
+import { radius, typographyScale } from '@/theme/tokens'
 import isAsyncFunction from '@/utils/is-async-function'
 
 export interface AppListRowProps {
@@ -56,19 +56,67 @@ export const AppListRow: React.FC<AppListRowProps> = ({
   }
 
   return clickable ? (
-    <ListItem disablePadding>
-      <ListItemButton onClick={handleClick} disabled={isLoading}>
-        <ListItemText primary={primary} secondary={secondary} />
+    <ListItem disablePadding sx={{ mb: 0.25 }}>
+      <ListItemButton
+        onClick={handleClick}
+        disabled={isLoading}
+        sx={{
+          borderRadius: `${radius.md}px`,
+          px: 1.25,
+          py: 0.85,
+        }}
+      >
+        <ListItemText
+          primary={primary}
+          secondary={secondary}
+          slotProps={{
+            primary: {
+              sx: {
+                fontSize: typographyScale.fontSizeMd,
+                fontWeight: typographyScale.fontWeightMedium,
+              },
+            },
+            secondary: {
+              sx: {
+                fontSize: typographyScale.fontSizeXs,
+                mt: 0.15,
+              },
+            },
+          }}
+        />
         {isLoading ? (
-          <CircularProgress color="inherit" size={20} />
+          <CircularProgress color="inherit" size={18} />
         ) : (
-          <ChevronRightRounded />
+          <ChevronRightRounded sx={{ color: 'text.disabled', fontSize: 20 }} />
         )}
       </ListItemButton>
     </ListItem>
   ) : (
-    <ListItem sx={{ py: 0.625 }}>
-      <ListItemText primary={primary} secondary={secondary} />
+    <ListItem
+      sx={{
+        py: 0.75,
+        px: 1.25,
+        borderRadius: `${radius.md}px`,
+      }}
+    >
+      <ListItemText
+        primary={primary}
+        secondary={secondary}
+        slotProps={{
+          primary: {
+            sx: {
+              fontSize: typographyScale.fontSizeMd,
+              fontWeight: typographyScale.fontWeightMedium,
+            },
+          },
+          secondary: {
+            sx: {
+              fontSize: typographyScale.fontSizeXs,
+              mt: 0.15,
+            },
+          },
+        }}
+      />
       {children}
     </ListItem>
   )
@@ -80,13 +128,23 @@ export interface AppListProps {
 }
 
 export const AppList: React.FC<AppListProps> = ({ title, children }) => (
-  <List>
+  <List
+    sx={{
+      py: 0.5,
+      '& .MuiListItem-root': {
+        borderRadius: `${radius.md}px`,
+      },
+    }}
+  >
     <ListSubheader
       sx={{
         background: 'transparent',
         fontSize: typographyScale.fontSizeLg,
         fontWeight: typographyScale.fontWeightBold,
         color: 'text.primary',
+        lineHeight: typographyScale.lineHeightTight,
+        mb: 0.5,
+        px: 1.25,
       }}
       disableSticky
     >

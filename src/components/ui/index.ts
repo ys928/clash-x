@@ -1,5 +1,6 @@
 export { AppButton, type AppButtonProps } from './app-button'
 export { AppCard, type AppCardProps } from './app-card'
+export { AppCheckbox, type AppCheckboxProps } from './app-checkbox'
 export { AppChip, type AppChipProps } from './app-chip'
 export { AppDialog, type AppDialogProps, type DialogRef } from './app-dialog'
 export { AppEmpty, type AppEmptyProps } from './app-empty'

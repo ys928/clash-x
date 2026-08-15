@@ -12,7 +12,6 @@ import { CloseRounded, DragIndicatorRounded } from '@mui/icons-material'
 import {
   Box,
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +23,8 @@ import {
 } from '@mui/material'
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { AppCheckbox } from '@/components/ui'
 
 export interface ConnectionColumnOption {
   id: string
@@ -71,57 +72,6 @@ const listScrollSx = {
     background: 'transparent',
   },
 } as const
-
-const UncheckedIcon = () => (
-  <Box
-    component="span"
-    className="column-check-box"
-    sx={(theme) => ({
-      width: 14,
-      height: 14,
-      borderRadius: '4px',
-      boxSizing: 'border-box',
-      border: '1.5px solid',
-      borderColor: alpha(
-        theme.palette.text.primary,
-        theme.palette.mode === 'light' ? 0.28 : 0.38,
-      ),
-      bgcolor: alpha(
-        theme.palette.background.paper,
-        theme.palette.mode === 'light' ? 1 : 0.4,
-      ),
-      transition: 'border-color 0.12s ease, background-color 0.12s ease',
-    })}
-  />
-)
-
-const CheckedIcon = () => (
-  <Box
-    component="span"
-    className="column-check-box column-check-box--checked"
-    sx={{
-      width: 14,
-      height: 14,
-      borderRadius: '4px',
-      boxSizing: 'border-box',
-      bgcolor: 'primary.main',
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: (theme) =>
-        `0 0 0 1px ${alpha(theme.palette.primary.main, 0.2)}`,
-      '&::after': {
-        content: '""',
-        width: 3.5,
-        height: 7,
-        border: 'solid',
-        borderColor: 'primary.contrastText',
-        borderWidth: '0 1.5px 1.5px 0',
-        transform: 'translateY(-0.5px) rotate(45deg)',
-      },
-    }}
-  />
-)
 
 export const ConnectionColumnManager = ({
   open,
@@ -387,11 +337,8 @@ const SortableColumnItem = ({
         },
       })}
     >
-      <Checkbox
+      <AppCheckbox
         size="small"
-        disableRipple
-        icon={<UncheckedIcon />}
-        checkedIcon={<CheckedIcon />}
         checked={column.visible}
         disabled={disableToggle}
         onChange={(event) => column.toggleVisibility(event.target.checked)}
@@ -401,15 +348,6 @@ const SortableColumnItem = ({
           width: 18,
           height: 18,
           flexShrink: 0,
-          '&.Mui-disabled': {
-            opacity: 0.4,
-          },
-          '&:hover': {
-            bgcolor: 'transparent',
-          },
-          '&:hover .column-check-box:not(.column-check-box--checked)': {
-            borderColor: 'primary.main',
-          },
         }}
       />
       <Typography

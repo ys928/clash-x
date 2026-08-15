@@ -11,8 +11,6 @@ import {
   alpha,
   Box,
   Button,
-  Checkbox,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -25,7 +23,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
   MenuItem,
   Select,
@@ -53,6 +50,7 @@ import {
   toNodeBinding,
   type AutoSwitchGroup,
 } from '@/components/proxy/auto-switch-model'
+import { AppCheckbox, AppChip } from '@/components/ui'
 import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
 import { runAutoSwitchOnce } from '@/hooks/use-auto-switch-runner'
 import { useProxySelection } from '@/hooks/use-proxy-selection'
@@ -63,6 +61,7 @@ import {
   useProxiesData,
 } from '@/providers/app-data-context'
 import { showNotice } from '@/services/notice-service'
+import { radius, typographyScale } from '@/theme/tokens'
 import {
   isInteractableMember,
   resolveMember,
@@ -613,13 +612,22 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
                         ? alpha(theme.palette.primary.main, 0.35)
                         : 'transparent',
                       '&.Mui-selected': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        bgcolor: alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'light' ? 0.08 : 0.12,
+                        ),
                       },
                       '&.Mui-selected:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.12),
+                        bgcolor: alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'light' ? 0.12 : 0.16,
+                        ),
                       },
                       '&:hover': {
-                        bgcolor: alpha(theme.palette.action.hover, 0.6),
+                        bgcolor:
+                          theme.palette.mode === 'light'
+                            ? alpha(theme.palette.text.primary, 0.04)
+                            : alpha('#FFFFFF', 0.045),
                       },
                     }}
                   >
@@ -1066,7 +1074,7 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
                     {editing.nodes.map((binding) => {
                       const key = bindingKey(binding)
                       return (
-                        <Chip
+                        <AppChip
                           key={key}
                           size="small"
                           label={binding.name}
@@ -1074,10 +1082,10 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
                           sx={{
                             maxWidth: 200,
                             height: 26,
-                            borderRadius: 1.5,
+                            borderRadius: `${radius.sm}px`,
                             bgcolor: alpha(theme.palette.primary.main, 0.08),
                             color: 'text.primary',
-                            fontWeight: 500,
+                            fontWeight: typographyScale.fontWeightMedium,
                             '& .MuiChip-label': { px: 1 },
                             '& .MuiChip-deleteIcon': {
                               fontSize: 16,
@@ -1117,13 +1125,14 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
                   sx={{
                     border: '1px solid',
                     borderColor: 'divider',
-                    borderRadius: 2,
-                    maxHeight: 240,
+                    borderRadius: `${radius.lg}px`,
+                    maxHeight: 260,
                     overflow: 'auto',
+                    p: 0.5,
                     bgcolor:
                       theme.palette.mode === 'light'
-                        ? alpha('#000', 0.015)
-                        : alpha('#fff', 0.02),
+                        ? alpha(theme.palette.grey[500], 0.04)
+                        : alpha(theme.palette.common.white, 0.03),
                   }}
                 >
                   {!editing.targetGroupName ? (
@@ -1144,68 +1153,111 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
                     </Typography>
                   ) : (
                     <List dense disablePadding>
-                      {filteredCandidates.map((node, index) => {
+                      {filteredCandidates.map((node) => {
                         const key = bindingKey(toNodeBinding(node))
                         const checked = selectedKeys.has(key)
                         return (
                           <ListItemButton
                             key={node.recordId}
                             dense
+                            disableRipple
                             onClick={() => toggleNode(node)}
                             sx={{
-                              py: 0.65,
-                              px: 1.25,
-                              borderBottom:
-                                index < filteredCandidates.length - 1
-                                  ? '1px solid'
-                                  : 'none',
-                              borderColor: alpha(theme.palette.divider, 0.6),
+                              gap: 1.25,
+                              py: 0.85,
+                              px: 1.15,
+                              mb: 0.25,
+                              borderRadius: `${radius.md}px`,
                               bgcolor: checked
-                                ? alpha(theme.palette.primary.main, 0.06)
+                                ? alpha(
+                                    theme.palette.primary.main,
+                                    theme.palette.mode === 'light'
+                                      ? 0.08
+                                      : 0.12,
+                                  )
                                 : 'transparent',
+                              boxShadow: checked
+                                ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.22 : 0.28)}`
+                                : 'inset 0 0 0 1px transparent',
+                              transition:
+                                'background-color 0.14s ease, box-shadow 0.14s ease',
                               '&:hover': {
                                 bgcolor: checked
-                                  ? alpha(theme.palette.primary.main, 0.1)
-                                  : alpha(theme.palette.action.hover, 0.5),
+                                  ? alpha(
+                                      theme.palette.primary.main,
+                                      theme.palette.mode === 'light'
+                                        ? 0.12
+                                        : 0.16,
+                                    )
+                                  : theme.palette.mode === 'light'
+                                    ? alpha(theme.palette.text.primary, 0.04)
+                                    : alpha('#FFFFFF', 0.045),
+                              },
+                              '&.Mui-focusVisible': {
+                                bgcolor: alpha(
+                                  theme.palette.primary.main,
+                                  theme.palette.mode === 'light' ? 0.1 : 0.14,
+                                ),
                               },
                             }}
                           >
-                            <ListItemIcon sx={{ minWidth: 34 }}>
-                              <Checkbox
-                                edge="start"
-                                size="small"
-                                checked={checked}
-                                tabIndex={-1}
-                                disableRipple
-                                sx={{
-                                  p: 0.5,
-                                  color: 'text.disabled',
-                                  '&.Mui-checked': {
-                                    color: 'primary.main',
-                                  },
-                                }}
-                              />
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={node.name}
-                              secondary={node.type}
+                            <AppCheckbox
+                              edge="start"
+                              checked={checked}
+                              tabIndex={-1}
                               slotProps={{
-                                primary: {
-                                  sx: {
-                                    fontSize: 13,
-                                    fontWeight: checked ? 620 : 450,
-                                    lineHeight: 1.35,
-                                  },
-                                },
-                                secondary: {
-                                  sx: {
-                                    fontSize: 11,
-                                    opacity: 0.75,
-                                    mt: 0.1,
-                                  },
+                                input: {
+                                  'aria-label': node.name,
                                 },
                               }}
                             />
+                            <Box
+                              sx={{
+                                flex: 1,
+                                minWidth: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  flex: 1,
+                                  minWidth: 0,
+                                  fontSize: typographyScale.fontSizeSm,
+                                  fontWeight: checked
+                                    ? typographyScale.fontWeightSemibold
+                                    : typographyScale.fontWeightMedium,
+                                  lineHeight: typographyScale.lineHeightTight,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {node.name}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                sx={{
+                                  flexShrink: 0,
+                                  px: 0.75,
+                                  py: 0.15,
+                                  borderRadius: `${radius.xs}px`,
+                                  fontSize: 10.5,
+                                  fontWeight: typographyScale.fontWeightMedium,
+                                  letterSpacing: 0.02,
+                                  color: 'text.secondary',
+                                  bgcolor:
+                                    theme.palette.mode === 'light'
+                                      ? alpha(theme.palette.grey[500], 0.1)
+                                      : alpha(theme.palette.common.white, 0.06),
+                                }}
+                              >
+                                {node.type}
+                              </Typography>
+                            </Box>
                           </ListItemButton>
                         )
                       })}

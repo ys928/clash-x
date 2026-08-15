@@ -7,7 +7,6 @@ import {
 import {
   Box,
   Button,
-  Checkbox,
   Collapse,
   Dialog,
   DialogActions,
@@ -32,7 +31,7 @@ import { EnhancedCard } from '@/components/home/enhanced-card'
 import { EnhancedTrafficStats } from '@/components/home/enhanced-traffic-stats'
 import { HomeProfileCard } from '@/components/home/home-profile-card'
 import ProxyControlSwitches from '@/components/shared/proxy-control-switches'
-import { AppPage } from '@/components/ui'
+import { AppCheckbox, AppPage } from '@/components/ui'
 import { useProfiles } from '@/hooks/use-profiles'
 import { useVerge } from '@/hooks/use-verge'
 import { entry_lightweight_mode } from '@/services/cmds'
@@ -134,7 +133,7 @@ const HomeSettingsDialog = ({
         <FormGroup>
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.profile || false}
                 onChange={() => handleToggle('profile')}
               />
@@ -143,7 +142,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.proxy || false}
                 onChange={() => handleToggle('proxy')}
               />
@@ -152,7 +151,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.network || false}
                 onChange={() => handleToggle('network')}
               />
@@ -161,7 +160,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.mode || false}
                 onChange={() => handleToggle('mode')}
               />
@@ -170,7 +169,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.traffic || false}
                 onChange={() => handleToggle('traffic')}
               />
@@ -179,7 +178,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.test || false}
                 onChange={() => handleToggle('test')}
               />
@@ -188,7 +187,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.ip || false}
                 onChange={() => handleToggle('ip')}
               />
@@ -197,7 +196,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.clashinfo || false}
                 onChange={() => handleToggle('clashinfo')}
               />
@@ -206,7 +205,7 @@ const HomeSettingsDialog = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <AppCheckbox
                 checked={cards.systeminfo || false}
                 onChange={() => handleToggle('systeminfo')}
               />
