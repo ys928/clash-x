@@ -3,8 +3,6 @@
  * Theme bridge and App UI components must read from here (or MUI theme derived from here).
  */
 
-export const spacingUnit = 8
-
 export const radius = {
   xs: 4,
   sm: 6,

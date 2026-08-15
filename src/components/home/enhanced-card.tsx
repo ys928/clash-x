@@ -1,4 +1,1 @@
-export {
-  AppCard as EnhancedCard,
-  type AppCardProps as EnhancedCardProps,
-} from '@/components/ui/app-card'
+export { AppCard as EnhancedCard } from '@/components/ui/app-card'

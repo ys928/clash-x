@@ -1,4 +1,1 @@
-export {
-  BaseSearchBox as AppSearchField,
-  type SearchState,
-} from '@/components/base/base-search-box'
+export { BaseSearchBox as AppSearchField } from '@/components/base/base-search-box'

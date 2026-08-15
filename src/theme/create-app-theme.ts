@@ -66,7 +66,7 @@ export const resolvePalette = (
   }
 }
 
-export const buildThemeOptions = (
+const buildThemeOptions = (
   mode: 'light' | 'dark',
   dt: ThemeColorDefaults,
   setting: ThemeSetting,

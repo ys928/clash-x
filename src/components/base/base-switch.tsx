@@ -1,4 +1,1 @@
-export {
-  AppSwitch as Switch,
-  type AppSwitchProps,
-} from '@/components/ui/app-switch'
+export { AppSwitch as Switch } from '@/components/ui/app-switch'

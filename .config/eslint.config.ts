@@ -197,11 +197,8 @@ export default defineConfig([
             {
               name: '@/components/base',
               importNames: [
-                'BasePage',
                 'BaseDialog',
                 'BaseEmpty',
-                'BaseStyledTextField',
-                'BaseStyledSelect',
                 'BaseSearchBox',
                 'BaseTooltip',
                 'BaseLoading',

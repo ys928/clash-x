@@ -1,7 +1,7 @@
 import type { ProxyNodeBinding, ProxyNodeView } from '@/types/proxy-view'
 import { classifyDelay, DEFAULT_DELAY_TIMEOUT } from '@/utils/delay'
 
-export const AUTO_SWITCH_STORAGE_KEY = 'clash-verge-auto-switch-groups'
+const AUTO_SWITCH_STORAGE_KEY = 'clash-verge-auto-switch-groups'
 
 export const DEFAULT_INTERVAL_SECONDS = 60
 export const DEFAULT_THRESHOLD_MS = 50
@@ -51,7 +51,7 @@ const isValidBinding = (value: unknown): value is ProxyNodeBinding => {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
-export const createAutoSwitchGroupId = () =>
+const createAutoSwitchGroupId = () =>
   `asg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
 
 export const createEmptyAutoSwitchGroup = (
@@ -67,9 +67,7 @@ export const createEmptyAutoSwitchGroup = (
   ...partial,
 })
 
-export function normalizeAutoSwitchGroup(
-  value: unknown,
-): AutoSwitchGroup | null {
+function normalizeAutoSwitchGroup(value: unknown): AutoSwitchGroup | null {
   if (!value || typeof value !== 'object') return null
   const raw = value as Partial<AutoSwitchGroup>
   if (typeof raw.id !== 'string' || !raw.id) return null
