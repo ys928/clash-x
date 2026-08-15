@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 
 import { useUpdate } from './use-update'
@@ -9,12 +9,15 @@ const check = vi.hoisted(() => vi.fn())
 vi.mock('@tauri-apps/plugin-updater', () => ({ check }))
 
 beforeEach(() => {
-  localStorage.clear()
   check.mockReset()
 })
 
-test('manual update check works when automatic checks are disabled', async () => {
-  const availableUpdate = { version: '9.9.9' }
+test('manual update check returns available update package', async () => {
+  const availableUpdate = {
+    version: '9.9.9',
+    body: 'notes',
+    close: vi.fn(),
+  }
   check.mockResolvedValueOnce(availableUpdate)
   const { result } = renderHook(() => useUpdate())
 
@@ -25,5 +28,18 @@ test('manual update check works when automatic checks are disabled', async () =>
 
   expect(check).toHaveBeenCalledOnce()
   expect(checked).toEqual({ data: availableUpdate })
-  await waitFor(() => expect(result.current.lastCheckUpdate).not.toBeNull())
+  expect(result.current.updateInfo).toEqual(availableUpdate)
+})
+
+test('manual update check returns null when already up to date', async () => {
+  check.mockResolvedValueOnce(null)
+  const { result } = renderHook(() => useUpdate())
+
+  let checked
+  await act(async () => {
+    checked = await result.current.checkUpdate()
+  })
+
+  expect(checked).toEqual({ data: null })
+  expect(result.current.updateInfo).toBeNull()
 })

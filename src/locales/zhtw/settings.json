@@ -195,7 +195,6 @@
           "copyVersion": "複製Verge版本號"
         },
         "notifications": {
-          "latestVersion": "目前已是最新版本",
           "versionCopied": "Verge版本已複製到剪貼簿"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "配置目錄",
           "openCoreDir": "內核目錄",
           "openLogsDir": "日誌目錄",
-          "checkUpdates": "檢查更新",
           "openDevTools": "開發人員工具",
           "liteModeSettings": "輕量模式設定",
           "exit": "離開",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "應用程式日誌最大大小",
         "appLogMaxCount": "應用程式日誌最大數量",
         "autoCloseConnections": "自動關閉連線",
-        "autoCheckUpdate": "自動檢查更新",
         "enableBuiltinEnhanced": "內建增強功能",
         "proxyLayoutColumns": "代理頁面欄數",
         "autoLogClean": "自動清理日誌",
@@ -442,11 +439,12 @@
       "title": "新版本 v{{version}}",
       "actions": {
         "goToRelease": "前往發佈頁面",
-        "update": "更新"
+        "update": "下載更新"
       },
       "messages": {
         "breakChangeError": "此版本為重大更新，不支援應用程式內更新，請解除安裝後手動下載安裝",
-        "available": "有新版本可用"
+        "available": "有新版本可用",
+        "unavailable": "暫時無法取得更新資訊，請稍後再試或前往發佈頁下載"
       },
       "alerts": {
         "note": "備註",

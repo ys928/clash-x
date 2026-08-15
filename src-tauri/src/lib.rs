@@ -210,7 +210,6 @@ mod app_init {
             cmd::get_unlock_items,
             cmd::check_media_unlock,
             cmd::get_update_status,
-            cmd::install_downloaded_update,
         ]
     }
 }

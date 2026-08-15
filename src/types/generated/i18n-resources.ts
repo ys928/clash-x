@@ -138,7 +138,6 @@ export interface TranslationResources {
           }
           fields: {
             autoLaunch: string
-            lastCheckUpdate: string
             osInfo: string
             runningMode: string
             vergeVersion: string
@@ -247,10 +246,6 @@ export interface TranslationResources {
           title: string
           unavailableMessage: string
         }
-        titlebar: {
-          newVersion: string
-          newVersionTooltip: string
-        }
         sysproxyPrivilege: {
           alternative: string
           applying: string
@@ -262,6 +257,10 @@ export interface TranslationResources {
           title: string
           tunMessage: string
           tunTitle: string
+        }
+        titlebar: {
+          newVersion: string
+          newVersionTooltip: string
         }
       }
       feedback: {
@@ -777,7 +776,6 @@ export interface TranslationResources {
             }
             fields: {
               backupSetting: string
-              checkUpdates: string
               exit: string
               exportDiagnostics: string
               liteModeSettings: string
@@ -789,7 +787,6 @@ export interface TranslationResources {
               vergeVersion: string
             }
             notifications: {
-              latestVersion: string
               versionCopied: string
             }
             title: string
@@ -1175,7 +1172,6 @@ export interface TranslationResources {
             appLogLevel: string
             appLogMaxCount: string
             appLogMaxSize: string
-            autoCheckUpdate: string
             autoCloseConnections: string
             autoDelayDetection: string
             autoDelayDetectionInterval: string
@@ -1278,6 +1274,7 @@ export interface TranslationResources {
           messages: {
             available: string
             breakChangeError: string
+            unavailable: string
           }
           title: string
         }
@@ -1528,7 +1525,6 @@ export interface TranslationResources {
           importSuccess: string
           importWithClashProxy: string
           saved: string
-          updateAvailable: string
         }
         validation: {
           config: {

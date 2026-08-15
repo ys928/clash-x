@@ -195,7 +195,6 @@
           "copyVersion": "Copy Version"
         },
         "notifications": {
-          "latestVersion": "Сездә иң соңгы версия урнаштырылган",
           "versionCopied": "Version copied to clipboard"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "Кушымта папкасын ачу",
           "openCoreDir": "Ядро сакланган папканы ачу",
           "openLogsDir": "Логлар папкасын ачу",
-          "checkUpdates": "Яңартуларны тикшерү",
           "openDevTools": "Разработчик коралларын ачу",
           "liteModeSettings": "LightWeight Mode Settings",
           "exit": "Чыгу",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "App Log Max Size",
         "appLogMaxCount": "App Log Max Count",
         "autoCloseConnections": "Тоташуларны автоматик ябу",
-        "autoCheckUpdate": "Яңартуларны автоматик тикшерү",
         "enableBuiltinEnhanced": "Эчке камилләштерүне кабызу",
         "proxyLayoutColumns": "Прокси күрсәтү баганалары саны",
         "autoLogClean": "Логларны автоматик чистарту",
@@ -446,7 +443,8 @@
       },
       "messages": {
         "breakChangeError": "Бу зур яңарту, ул кушымта эчендә яңартылмый. Борып алып ташлап, яңадан урнаштыру сорала.",
-        "available": "Яңа версия бар"
+        "available": "Яңа версия бар",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "Искәрмә",

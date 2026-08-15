@@ -220,15 +220,11 @@ export async function restartApp() {
 export interface UpdateStatus {
   available: boolean
   version: string | null
-  downloaded: boolean
+  body: string | null
 }
 
 export async function getUpdateStatus() {
   return invoke<UpdateStatus>('get_update_status')
-}
-
-export async function installDownloadedUpdate() {
-  return invoke<void>('install_downloaded_update')
 }
 
 export async function getAppDir() {

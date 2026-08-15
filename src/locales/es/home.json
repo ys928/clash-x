@@ -65,7 +65,6 @@
         "osInfo": "Información del sistema operativo",
         "autoLaunch": "Inicio automático al arrancar el sistema",
         "runningMode": "Modo de ejecución",
-        "lastCheckUpdate": "Última comprobación de actualizaciones",
         "vergeVersion": "Versión de Verge"
       },
       "actions": {

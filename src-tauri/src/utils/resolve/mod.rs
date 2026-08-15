@@ -67,7 +67,7 @@ pub fn resolve_setup_async() {
             init_core_manager().await;
         });
 
-        init_silent_updater();
+        init_update_checker();
 
         let _ = futures::join!(
             core_init,
@@ -135,24 +135,18 @@ pub(super) async fn init_auto_backup() {
     logging_error!(Type::Setup, AutoBackupManager::global().init().await);
 }
 
-fn init_silent_updater() {
-    use crate::core::SilentUpdater;
+fn init_update_checker() {
+    use crate::core::UpdateChecker;
     use crate::core::handle::Handle;
 
-    logging!(info, Type::Setup, "Initializing silent updater...");
+    logging!(info, Type::Setup, "Initializing update checker...");
 
-    let app_handle = Handle::app_handle();
-
-    // Restore badge state from a previously downloaded package; install happens
-    // when the user clicks the titlebar button.
-    SilentUpdater::global().restore_cached_update();
-
-    let app_handle = app_handle.clone();
+    let app_handle = Handle::app_handle().clone();
     tokio::spawn(async move {
-        SilentUpdater::global().start_background_check(app_handle).await;
+        UpdateChecker::global().start_background_check(app_handle).await;
     });
 
-    logging!(info, Type::Setup, "Silent updater initialized");
+    logging!(info, Type::Setup, "Update checker initialized");
 }
 
 pub fn init_signal() {

@@ -25,7 +25,7 @@ interface VergeEvents {
   'verge://timer-updated': string
   /** How the core is running changed; carries the whole snapshot. */
   'verge://run-state-changed': RunState
-  /** Silent updater badge: new version available / downloaded. */
+  /** Backend update detection: new version available. */
   'verge://update-status': UpdateStatus
   /** Pending failures changed; reread the table. */
   'verge://pending-failures-changed': null

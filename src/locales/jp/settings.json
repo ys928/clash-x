@@ -195,7 +195,6 @@
           "copyVersion": "Copy Version"
         },
         "notifications": {
-          "latestVersion": "現在は最新バージョンです。",
           "versionCopied": "Version copied to clipboard"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "設定ディレクトリを開く",
           "openCoreDir": "コアディレクトリを開く",
           "openLogsDir": "ログディレクトリを開く",
-          "checkUpdates": "更新を確認",
           "openDevTools": "開発者ツールを開く",
           "liteModeSettings": "軽量モード設定",
           "exit": "終了",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "App Log Max Size",
         "appLogMaxCount": "App Log Max Count",
         "autoCloseConnections": "接続を自動的に閉じる",
-        "autoCheckUpdate": "自動更新チェック",
         "enableBuiltinEnhanced": "組み込み拡張機能を有効にする",
         "proxyLayoutColumns": "プロキシページのレイアウト列数",
         "autoLogClean": "ログを自動的にクリーンアップ",
@@ -446,7 +443,8 @@
       },
       "messages": {
         "breakChangeError": "このバージョンは重大な更新であり、アプリケーション内での更新はサポートされていません。アンインストールしてから手動でダウンロードしてインストールしてください。",
-        "available": "新しいバージョンが利用可能です"
+        "available": "新しいバージョンが利用可能です",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "メモ",

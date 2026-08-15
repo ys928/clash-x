@@ -20,7 +20,6 @@ import { LayoutViewer } from './mods/layout-viewer'
 import { MiscViewer } from './mods/misc-viewer'
 import { SettingItem, SettingList } from './mods/setting-comp'
 import { ThemeModeSwitch } from './mods/theme-mode-switch'
-import { UpdateViewer } from './mods/update-viewer'
 
 interface Props {
   onError?: (err: Error) => void
@@ -46,7 +45,6 @@ const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
   const hotkeyRef = useRef<DialogRef>(null)
   const miscRef = useRef<DialogRef>(null)
   const layoutRef = useRef<DialogRef>(null)
-  const updateRef = useRef<DialogRef>(null)
   const backupRef = useRef<DialogRef>(null)
 
   const onChangeData = (patch: any) => {
@@ -75,7 +73,6 @@ const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
       <HotkeyViewer ref={hotkeyRef} />
       <MiscViewer ref={miscRef} />
       <LayoutViewer ref={layoutRef} />
-      <UpdateViewer ref={updateRef} />
       <BackupViewer ref={backupRef} />
 
       {showEssentials && (

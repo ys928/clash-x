@@ -65,7 +65,6 @@
         "osInfo": "作業系統資訊",
         "autoLaunch": "開機自啟",
         "runningMode": "執行模式",
-        "lastCheckUpdate": "最後檢查更新",
         "vergeVersion": "Verge 版本"
       },
       "actions": {

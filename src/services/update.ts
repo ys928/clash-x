@@ -125,22 +125,40 @@ const localVersionNormalized = normalizeVersion(appVersion)
 export const checkUpdateSafe = async (
   options?: CheckOptions,
 ): Promise<Update | null> => {
-  const result = await check({ ...(options ?? {}), allowDowngrades: false })
-  if (!result) return null
+  console.info(
+    `[updater] checking for updates (local=v${localVersionNormalized ?? appVersion})`,
+  )
 
-  const remoteVersion = resolveRemoteVersion(result)
-  const comparison = compareVersions(remoteVersion, localVersionNormalized)
-
-  if (comparison !== null && comparison <= 0) {
-    try {
-      await result.close()
-    } catch (err) {
-      console.warn('[updater] failed to close stale update resource', err)
+  try {
+    const result = await check({ ...(options ?? {}), allowDowngrades: false })
+    if (!result) {
+      console.info('[updater] no update available')
+      return null
     }
-    return null
-  }
 
-  return result
+    const remoteVersion = resolveRemoteVersion(result)
+    const comparison = compareVersions(remoteVersion, localVersionNormalized)
+
+    if (comparison !== null && comparison <= 0) {
+      console.info(
+        `[updater] remote version not newer (remote=${remoteVersion ?? result.version}, local=${localVersionNormalized ?? appVersion})`,
+      )
+      try {
+        await result.close()
+      } catch (err) {
+        console.warn('[updater] failed to close stale update resource', err)
+      }
+      return null
+    }
+
+    console.info(
+      `[updater] update available: v${remoteVersion ?? result.version}`,
+    )
+    return result
+  } catch (err) {
+    console.warn('[updater] check failed:', err)
+    throw err
+  }
 }
 
 export type { CheckOptions }

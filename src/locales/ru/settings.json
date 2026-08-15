@@ -195,7 +195,6 @@
           "copyVersion": "Копировать версию"
         },
         "notifications": {
-          "latestVersion": "Обновление не требуется",
           "versionCopied": "Версия скопирована в буфер обмена"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "Открыть папку приложения",
           "openCoreDir": "Открыть папку ядра",
           "openLogsDir": "Открыть папку логов",
-          "checkUpdates": "Проверить обновления",
           "openDevTools": "Открыть инструменты разработчика",
           "liteModeSettings": "Настройки режима LightWeight",
           "exit": "Выход",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "Максимальный размер журнала приложения",
         "appLogMaxCount": "Максимальное количество файлов журнала",
         "autoCloseConnections": "Автоматическое закрытие соединений",
-        "autoCheckUpdate": "Автоматическая проверка обновлений",
         "enableBuiltinEnhanced": "Включить встроенные улучшения",
         "proxyLayoutColumns": "Количество столбцов в макете прокси",
         "autoLogClean": "Автоматическая очистка логов",
@@ -446,7 +443,8 @@
       },
       "messages": {
         "breakChangeError": "Это крупное обновление, которое не поддерживает обновление внутри приложения. Пожалуйста, удалите текущую версию и загрузите установочный файл вручную.",
-        "available": "Доступна новая версия"
+        "available": "Доступна новая версия",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "Примечание",

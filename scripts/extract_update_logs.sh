@@ -13,14 +13,21 @@ if [[ ! -f "$CHANGELOG_FILE" ]]; then
   exit 1
 fi
 
-# 提取从第一个 '## v' 开始到下一个 '## v' 前的内容
+# 提取从第一个 '## v' 开始到 '---' 或下一个 '## v' 前的内容（不含分隔线）
 UPDATE_LOGS=$(awk '
   /^## v/ {
     if (found) exit;
     found=1
+    next
   }
-  found
+  found {
+    if (/^---/ || /^## v/) exit;
+    print
+  }
 ' "$CHANGELOG_FILE")
+
+# Trim trailing blank lines
+UPDATE_LOGS=$(printf '%s\n' "$UPDATE_LOGS" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
 
 if [[ -z "$UPDATE_LOGS" ]]; then
   echo "⚠️ 未找到更新日志内容"

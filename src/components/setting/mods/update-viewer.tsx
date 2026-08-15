@@ -1,4 +1,12 @@
-import { alpha, Box, Button, LinearProgress } from '@mui/material'
+import {
+  alpha,
+  Box,
+  Button,
+  Chip,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { open as openUrl } from '@tauri-apps/plugin-shell'
 import type { DownloadEvent } from '@tauri-apps/plugin-updater'
 import { useLockFn } from 'ahooks'
@@ -16,9 +24,11 @@ import type { Options as ReactMarkdownOptions } from 'react-markdown'
 
 import { BaseDialog, DialogRef } from '@/components/base'
 import { useUpdate } from '@/hooks/use-update'
+import { useUpdateStatus } from '@/hooks/use-update-status'
 import { restartApp } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import { useSetUpdateState, useUpdateState } from '@/services/states'
+import { version as appVersion } from '@root/package.json'
 
 type MarkdownNode = {
   type: string
@@ -58,8 +68,6 @@ const GITHUB_ALERT_PATTERN =
   /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][\t ]*\n?/i
 const GITHUB_ALERT_CLASS_PATTERN =
   /markdown-alert-(note|tip|important|warning|caution)/
-
-const shouldShowReleaseNotes = (language: string) => language === 'zh'
 
 const LazyReactMarkdown = lazy(async () => {
   const [{ default: ReactMarkdown }, { default: rehypeRaw }] =
@@ -137,14 +145,34 @@ const remarkGitHubAlerts = (labels: Record<GitHubAlertType, string>) => {
   return visit
 }
 
+/** Collapse consecutive horizontal rules / trailing separators from release notes. */
+const normalizeReleaseNotes = (body: string): string =>
+  body
+    .replace(/\r\n/g, '\n')
+    .replace(/^(?:---+\s*\n)+/gm, '')
+    .replace(/(?:\n---+\s*)+$/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+
+const formatBytes = (bytes: number): string => {
+  if (bytes <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const index = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  )
+  const value = bytes / 1024 ** index
+  return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`
+}
+
 export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const [open, setOpen] = useState(false)
   const updateState = useUpdateState()
   const setUpdateState = useSetUpdateState()
-
-  const { updateInfo } = useUpdate()
+  const updateStatus = useUpdateStatus()
+  const { updateInfo, checkUpdate, loading } = useUpdate()
 
   const [downloaded, setDownloaded] = useState(0)
   const [total, setTotal] = useState(0)
@@ -176,31 +204,38 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
     [githubAlertLabels],
   )
 
-  const activeLanguage = i18n.resolvedLanguage ?? i18n.language
+  const remoteVersion =
+    updateStatus.version?.trim() || updateInfo?.version?.trim() || ''
+  const releaseNotes =
+    updateStatus.body?.trim() || updateInfo?.body?.trim() || ''
+
   const markdownContent = useMemo(() => {
-    if (!updateInfo?.body) {
+    if (!releaseNotes) {
       return t('settings.modals.update.messages.available')
     }
-    if (!shouldShowReleaseNotes(activeLanguage)) {
-      return t('settings.modals.update.messages.available')
-    }
-    return updateInfo?.body
-  }, [activeLanguage, t, updateInfo])
+    return normalizeReleaseNotes(releaseNotes)
+  }, [releaseNotes, t])
 
   const breakChangeFlag = useMemo(() => {
-    if (!updateInfo?.body) {
-      return false
-    }
-    return updateInfo?.body.toLowerCase().includes('break change')
-  }, [updateInfo])
+    if (!releaseNotes) return false
+    return releaseNotes.toLowerCase().includes('break change')
+  }, [releaseNotes])
+
+  const releaseUrl = remoteVersion
+    ? `https://github.com/ys928/clash-x/releases/tag/v${remoteVersion.replace(/^v/i, '')}`
+    : 'https://github.com/ys928/clash-x/releases/latest'
+
+  const onGoToRelease = () => {
+    void openUrl(releaseUrl)
+  }
 
   const onUpdate = useLockFn(async () => {
-    if (!updateInfo?.body) return
     if (breakChangeFlag) {
       showNotice.error('settings.modals.update.messages.breakChangeError')
       return
     }
     if (updateState) return
+
     setUpdateState(true)
     setDownloaded(0)
     setTotal(0)
@@ -232,7 +267,17 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
     }
 
     try {
-      await updateInfo.downloadAndInstall(onDownloadEvent)
+      let packageUpdate = updateInfo
+      if (!packageUpdate) {
+        const { data } = await checkUpdate()
+        packageUpdate = data
+      }
+      if (!packageUpdate) {
+        showNotice.error('settings.modals.update.messages.unavailable')
+        return
+      }
+
+      await packageUpdate.downloadAndInstall(onDownloadEvent)
       await restartApp()
     } catch (err: any) {
       showNotice.error(err)
@@ -248,57 +293,79 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
   return (
     <BaseDialog
       open={open}
-      title={
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            minWidth: 0,
-          }}
-        >
-          <Box
-            component="span"
-            sx={{
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t('settings.modals.update.title', {
-              version: updateInfo?.version ?? '',
-            })}
-          </Box>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ whiteSpace: 'nowrap' }}
-            onClick={() => {
-              openUrl(
-                `https://github.com/ys928/clash-x/releases/tag/v${updateInfo?.version}`,
-              )
-            }}
-          >
-            {t('settings.modals.update.actions.goToRelease')}
-          </Button>
-        </Box>
-      }
+      title={t('settings.modals.update.title', {
+        version: remoteVersion || '…',
+      })}
       contentSx={{
         width: { xs: 'calc(100vw - 56px)', sm: 560 },
         maxWidth: 'calc(100vw - 56px)',
         height: 'min(64vh, 680px)',
         display: 'flex',
         flexDirection: 'column',
+        gap: 1.5,
         pb: 1,
       }}
+      disableOk={updateState || breakChangeFlag || !remoteVersion}
+      loading={updateState || loading}
       okBtn={t('settings.modals.update.actions.update')}
       cancelBtn={t('shared.actions.cancel')}
-      onClose={() => setOpen(false)}
-      onCancel={() => setOpen(false)}
-      onOk={onUpdate}
+      onClose={() => !updateState && setOpen(false)}
+      onCancel={() => !updateState && setOpen(false)}
+      onOk={() => {
+        void onUpdate()
+      }}
     >
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
+      >
+        <Chip
+          size="small"
+          label={`v${appVersion}`}
+          variant="outlined"
+          sx={{ fontWeight: 600 }}
+        />
+        <Typography variant="body2" color="text.secondary">
+          →
+        </Typography>
+        <Chip
+          size="small"
+          color="primary"
+          label={remoteVersion ? `v${remoteVersion}` : '…'}
+          sx={{ fontWeight: 600 }}
+        />
+        <Box sx={{ flex: 1 }} />
+        <Button
+          size="small"
+          variant="outlined"
+          disabled={updateState}
+          onClick={onGoToRelease}
+        >
+          {t('settings.modals.update.actions.goToRelease')}
+        </Button>
+      </Stack>
+
+      {breakChangeFlag && (
+        <Box
+          sx={(theme) => ({
+            px: 1.5,
+            py: 1,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'warning.main',
+            bgcolor: alpha(
+              theme.palette.warning.main,
+              theme.palette.mode === 'dark' ? 0.16 : 0.08,
+            ),
+            color: 'warning.dark',
+            typography: 'body2',
+          })}
+        >
+          {t('settings.modals.update.messages.breakChangeError')}
+        </Box>
+      )}
+
       <Box
         sx={{
           flex: 1,
@@ -310,54 +377,22 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
           lineHeight: 1.65,
           color: 'text.primary',
           overflowWrap: 'break-word',
-          '& > :first-child': {
-            mt: 0,
-          },
-          '& > :last-child': {
-            mb: 0,
-          },
-          '& h1': {
-            mt: 0,
-            mb: 1.5,
-            fontSize: 24,
-            lineHeight: 1.25,
-          },
-          '& h2': {
-            mt: 2.25,
-            mb: 1,
-            fontSize: 19,
-            lineHeight: 1.3,
-          },
-          '& h3': {
-            mt: 2,
-            mb: 0.75,
-            fontSize: 16,
-            lineHeight: 1.35,
-          },
+          '& > :first-child': { mt: 0 },
+          '& > :last-child': { mb: 0 },
+          '& h1': { mt: 0, mb: 1.5, fontSize: 22, lineHeight: 1.25 },
+          '& h2': { mt: 2, mb: 1, fontSize: 18, lineHeight: 1.3 },
+          '& h3': { mt: 1.75, mb: 0.75, fontSize: 15, lineHeight: 1.35 },
           '& h4, & h5, & h6': {
             mt: 1.5,
             mb: 0.75,
             fontSize: 14,
             lineHeight: 1.4,
           },
-          '& p': {
-            my: 1,
-          },
-          '& ul, & ol': {
-            my: 1,
-            pl: 2.75,
-          },
-          '& li': {
-            my: 0.35,
-            pl: 0.25,
-          },
-          '& a': {
-            color: 'primary.main',
-            overflowWrap: 'anywhere',
-          },
-          '& strong': {
-            fontWeight: 700,
-          },
+          '& p': { my: 1 },
+          '& ul, & ol': { my: 1, pl: 2.75 },
+          '& li': { my: 0.35, pl: 0.25 },
+          '& a': { color: 'primary.main', overflowWrap: 'anywhere' },
+          '& strong': { fontWeight: 700 },
           '& code': {
             px: 0.5,
             py: 0.125,
@@ -372,11 +407,7 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
             borderRadius: 1,
             bgcolor: 'action.hover',
           },
-          '& pre code': {
-            p: 0,
-            bgcolor: 'transparent',
-            fontSize: '0.9em',
-          },
+          '& pre code': { p: 0, bgcolor: 'transparent', fontSize: '0.9em' },
           '& table': {
             display: 'block',
             width: '100%',
@@ -391,10 +422,7 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
             borderColor: 'divider',
             verticalAlign: 'top',
           },
-          '& th': {
-            bgcolor: 'action.hover',
-            fontWeight: 700,
-          },
+          '& th': { bgcolor: 'action.hover', fontWeight: 700 },
           '& hr': {
             my: 2,
             border: 0,
@@ -453,9 +481,7 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
                             color,
                             theme.palette.mode === 'dark' ? 0.16 : 0.08,
                           ),
-                          '& p': {
-                            my: 0.75,
-                          },
+                          '& p': { my: 0.75 },
                           '& .markdown-alert-title': {
                             display: 'flex',
                             alignItems: 'center',
@@ -477,12 +503,23 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
           </Suspense>
         )}
       </Box>
+
       {updateState && (
-        <LinearProgress
-          variant={total > 0 ? 'determinate' : 'indeterminate'}
-          value={progress}
-          sx={{ mt: 1 }}
-        />
+        <Box sx={{ mt: 0.5 }}>
+          <LinearProgress
+            variant={total > 0 ? 'determinate' : 'indeterminate'}
+            value={progress}
+          />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mt: 0.75, textAlign: 'right' }}
+          >
+            {total > 0
+              ? `${formatBytes(downloaded)} / ${formatBytes(total)} (${Math.round(progress)}%)`
+              : formatBytes(downloaded)}
+          </Typography>
+        </Box>
       )}
     </BaseDialog>
   )

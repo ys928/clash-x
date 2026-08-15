@@ -6,21 +6,14 @@ import {
   ExtensionOutlined,
 } from '@mui/icons-material'
 import { Typography, Stack, Divider, Chip, IconButton } from '@mui/material'
-import { useLockFn } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 
 import { useServiceInstaller } from '@/hooks/use-service-installer'
 import { useSystemState } from '@/hooks/use-system-state'
-import {
-  useUpdate,
-  updateLastCheckTime,
-  readLastCheckTime,
-} from '@/hooks/use-update'
 import { useVerge } from '@/hooks/use-verge'
 import { getSystemInfo } from '@/services/cmds'
-import { showNotice } from '@/services/notice-service'
 import { version as appVersion } from '@root/package.json'
 
 import { EnhancedCard } from './enhanced-card'
@@ -32,17 +25,8 @@ export const SystemInfoCard = () => {
   const { isAdminMode, isSidecarMode, mutateSystemState } = useSystemState()
   const { installServiceAndRestartCore } = useServiceInstaller()
 
-  // lastCheckUpdate is shared; silent updater + manual checks write it
-  const { checkUpdate: triggerCheckUpdate, lastCheckUpdate } = useUpdate()
-
   const [osInfo, setOsInfo] = useState('')
 
-  const lastCheckUpdateText = useMemo(
-    () => (lastCheckUpdate ? new Date(lastCheckUpdate).toLocaleString() : '-'),
-    [lastCheckUpdate],
-  )
-
-  // 初始化系统信息
   useEffect(() => {
     getSystemInfo()
       .then((info) => {
@@ -61,19 +45,10 @@ export const SystemInfoCard = () => {
       .catch(console.error)
   }, [])
 
-  // Seed last-check timestamp if auto-check is on but nothing has been recorded yet
-  useEffect(() => {
-    if (!verge?.auto_check_update) return
-    if (readLastCheckTime() !== null) return
-    updateLastCheckTime()
-  }, [verge?.auto_check_update])
-
-  // 导航到设置页面
   const goToSettings = useCallback(() => {
     navigate('/settings')
   }, [navigate])
 
-  // 切换自启动状态
   const toggleAutoLaunch = useCallback(async () => {
     if (!verge) return
     try {
@@ -83,7 +58,6 @@ export const SystemInfoCard = () => {
     }
   }, [verge, patchVerge])
 
-  // 点击运行模式处理,Sidecar或纯管理员模式允许安装服务
   const handleRunningModeClick = useCallback(async () => {
     if (isSidecarMode || (isAdminMode && isSidecarMode)) {
       await installServiceAndRestartCore()
@@ -96,34 +70,13 @@ export const SystemInfoCard = () => {
     mutateSystemState,
   ])
 
-  // 检查更新
-  const onCheckUpdate = useLockFn(async () => {
-    try {
-      const result = await triggerCheckUpdate()
-      const info = result.data
-      if (!info?.available) {
-        showNotice.success(
-          'settings.components.verge.advanced.notifications.latestVersion',
-        )
-      } else {
-        showNotice.info('shared.feedback.notifications.updateAvailable', 2000)
-        goToSettings()
-      }
-    } catch (err) {
-      showNotice.error(err)
-    }
-  })
-
-  // 是否启用自启动
   const autoLaunchEnabled = useMemo(
     () => verge?.enable_auto_launch || false,
     [verge],
   )
 
-  // 运行模式样式
   const runningModeStyle = useMemo(
     () => ({
-      // Sidecar或纯管理员模式允许安装服务
       cursor:
         isSidecarMode || (isAdminMode && isSidecarMode) ? 'pointer' : 'default',
       textDecoration:
@@ -138,10 +91,8 @@ export const SystemInfoCard = () => {
     [isSidecarMode, isAdminMode],
   )
 
-  // 获取模式图标和文本
   const getModeIcon = () => {
     if (isAdminMode) {
-      // 判断是否为组合模式（管理员+服务）
       if (!isSidecarMode) {
         return (
           <>
@@ -179,10 +130,8 @@ export const SystemInfoCard = () => {
     }
   }
 
-  // 获取模式文本
   const getModeText = () => {
     if (isAdminMode) {
-      // 判断是否同时处于服务模式
       if (!isSidecarMode) {
         return t('home.components.systemInfo.badges.adminServiceMode')
       }
@@ -194,7 +143,6 @@ export const SystemInfoCard = () => {
     }
   }
 
-  // 只有当verge存在时才渲染内容
   if (!verge) return null
 
   return (
@@ -259,24 +207,6 @@ export const SystemInfoCard = () => {
           >
             {getModeIcon()}
             {getModeText()}
-          </Typography>
-        </Stack>
-        <Divider />
-        <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-          <Typography variant="body2" color="text.secondary">
-            {t('home.components.systemInfo.fields.lastCheckUpdate')}
-          </Typography>
-          <Typography
-            variant="body2"
-            onClick={onCheckUpdate}
-            sx={{
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              fontWeight: 'medium',
-              '&:hover': { opacity: 0.7 },
-            }}
-          >
-            {lastCheckUpdateText}
           </Typography>
         </Stack>
         <Divider />

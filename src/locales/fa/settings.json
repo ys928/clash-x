@@ -195,7 +195,6 @@
           "copyVersion": "کپی نسخه"
         },
         "notifications": {
-          "latestVersion": "در حال حاضر در آخرین نسخه",
           "versionCopied": "نسخه در کلیپ بورد کپی شد"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "باز کردن پوشه برنامه",
           "openCoreDir": "باز کردن پوشه هسته",
           "openLogsDir": "باز کردن پوشه لاگ‌ها",
-          "checkUpdates": "بررسی برای به‌روزرسانی‌ها",
           "openDevTools": "باز کردن ابزارهای توسعه‌دهنده",
           "liteModeSettings": "LightWeight Mode Settings",
           "exit": "خروج",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "App Log Max Size",
         "appLogMaxCount": "App Log Max Count",
         "autoCloseConnections": "بستن خودکار اتصالات",
-        "autoCheckUpdate": "بررسی خودکار به‌روزرسانی",
         "enableBuiltinEnhanced": "فعال کردن تقویت داخلی",
         "proxyLayoutColumns": "ستون چیدمان پراکسی",
         "autoLogClean": "پاکسازی خودکار لاگ",
@@ -446,7 +443,8 @@
       },
       "messages": {
         "breakChangeError": "این نسخه یک به‌روزرسانی اساسی است و پشتیبانی از به‌روزرسانی درون برنامه را پشتیبانی نمی‌کند. لطفاً پس از حذف، دستی دانلود و نصب کنید.",
-        "available": "نسخه جدیدی در دسترس است"
+        "available": "نسخه جدیدی در دسترس است",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "یادداشت",

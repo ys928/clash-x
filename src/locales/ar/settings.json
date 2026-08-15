@@ -195,7 +195,6 @@
           "copyVersion": "Copy Version"
         },
         "notifications": {
-          "latestVersion": "أنت على أحدث إصدار حاليًا",
           "versionCopied": "Version copied to clipboard"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "فتح مجلد التكوين",
           "openCoreDir": "فتح مجلد النواة",
           "openLogsDir": "فتح مجلد السجلات",
-          "checkUpdates": "التحقق من وجود تحديثات",
           "openDevTools": "أدوات المطور",
           "liteModeSettings": "LightWeight Mode Settings",
           "exit": "خروج",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "App Log Max Size",
         "appLogMaxCount": "App Log Max Count",
         "autoCloseConnections": "إغلاق الاتصالات تلقائيًا",
-        "autoCheckUpdate": "فحص التحديث تلقائيًا",
         "enableBuiltinEnhanced": "تفعيل التحسين المدمج",
         "proxyLayoutColumns": "أعمدة عرض الوكيل",
         "autoLogClean": "تنظيف السجلات تلقائيًا",
@@ -446,7 +443,8 @@
       },
       "messages": {
         "breakChangeError": "هذا الإصدار هو تحديث رئيسي ولا يدعم التحديث داخل التطبيق. يرجى إلغاء التثبيت وتنزيل الإصدار الجديد وتثبيته يدويًا",
-        "available": "يتوفّر إصدار جديد"
+        "available": "يتوفّر إصدار جديد",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "ملاحظة",

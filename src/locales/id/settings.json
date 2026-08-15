@@ -195,7 +195,6 @@
           "copyVersion": "Copy Version"
         },
         "notifications": {
-          "latestVersion": "Saat ini pada Versi Terbaru",
           "versionCopied": "Version copied to clipboard"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "Buka Direktori Konfigurasi",
           "openCoreDir": "Buka Direktori Core",
           "openLogsDir": "Buka Direktori Log",
-          "checkUpdates": "Periksa Pembaruan",
           "openDevTools": "Buka Alat Pengembang",
           "liteModeSettings": "LightWeight Mode Settings",
           "exit": "Keluar",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "App Log Max Size",
         "appLogMaxCount": "App Log Max Count",
         "autoCloseConnections": "Tutup Koneksi Otomatis",
-        "autoCheckUpdate": "Periksa Pembaruan Otomatis",
         "enableBuiltinEnhanced": "Aktifkan Peningkatan Bawaan",
         "proxyLayoutColumns": "Kolom Tata Letak Proksi",
         "autoLogClean": "Pembersihan Log Otomatis",
@@ -446,7 +443,8 @@
       },
       "messages": {
         "breakChangeError": "Versi ini adalah pembaruan besar dan tidak mendukung pembaruan dalam aplikasi. Harap hapus instalasi dan unduh serta instal versi baru secara manual",
-        "available": "Versi baru tersedia"
+        "available": "Versi baru tersedia",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "Catatan",

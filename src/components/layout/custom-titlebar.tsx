@@ -1,5 +1,4 @@
 import { SvgIcon } from '@mui/material'
-import { useLockFn } from 'ahooks'
 import { useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -7,11 +6,8 @@ import iconDark from '@/assets/image/icon_dark.svg?react'
 import iconLight from '@/assets/image/icon_light.svg?react'
 import { DialogRef } from '@/components/base'
 import { UpdateViewer } from '@/components/setting/mods/update-viewer'
-import { useSilentUpdateStatus } from '@/hooks/use-silent-update-status'
-import { useUpdate } from '@/hooks/use-update'
+import { useUpdateStatus } from '@/hooks/use-update-status'
 import { useWindowControls } from '@/hooks/use-window'
-import { installDownloadedUpdate } from '@/services/cmds'
-import { showNotice } from '@/services/notice-service'
 import { useThemeMode } from '@/services/states'
 import getSystem from '@/utils/get-system'
 
@@ -26,46 +22,19 @@ export const CustomTitlebar = () => {
   const isDark = mode !== 'light'
   const isMac = OS === 'macos'
   const { toggleMaximize } = useWindowControls()
-  const updateStatus = useSilentUpdateStatus()
-  const { checkUpdate } = useUpdate()
+  const updateStatus = useUpdateStatus()
   const updateRef = useRef<DialogRef>(null)
 
   const handleDoubleClick = useCallback(() => {
     void toggleMaximize()
   }, [toggleMaximize])
 
-  const onNewVersionClick = useLockFn(async () => {
-    if (updateStatus.downloaded) {
-      try {
-        await installDownloadedUpdate()
-      } catch (err) {
-        showNotice.error(err)
-      }
-      return
-    }
-
-    try {
-      const { data } = await checkUpdate()
-      if (!data?.available) {
-        showNotice.success(
-          'settings.components.verge.advanced.notifications.latestVersion',
-        )
-        return
-      }
-      updateRef.current?.open()
-    } catch (err) {
-      showNotice.error(err)
-    }
-  })
-
   const newVersionButton = updateStatus.available ? (
     <button
       type="button"
       className="app-titlebar__update-btn"
       data-tauri-drag-region="false"
-      onClick={() => {
-        void onNewVersionClick()
-      }}
+      onClick={() => updateRef.current?.open()}
       title={
         updateStatus.version
           ? t('layout.components.titlebar.newVersionTooltip', {

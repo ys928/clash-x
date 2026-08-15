@@ -22,5 +22,5 @@ pub mod win_uwp;
 pub use self::{
     manager::CoreManager,
     timer::Timer,
-    updater::{SilentUpdater, UpdateStatus},
+    updater::{UpdateChecker, UpdateStatus},
 };

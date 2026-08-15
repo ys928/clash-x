@@ -195,7 +195,6 @@
           "copyVersion": "Copy Version"
         },
         "notifications": {
-          "latestVersion": "Currently on the Latest Version",
           "versionCopied": "Version copied to clipboard"
         },
         "fields": {
@@ -204,7 +203,6 @@
           "openConfDir": "Open Conf Dir",
           "openCoreDir": "Open Core Dir",
           "openLogsDir": "Open Logs Dir",
-          "checkUpdates": "Check for Updates",
           "openDevTools": "Dev Tools",
           "liteModeSettings": "LightWeight Mode Settings",
           "exit": "Exit",
@@ -413,7 +411,6 @@
         "appLogMaxSize": "App Log Max Size",
         "appLogMaxCount": "App Log Max Count",
         "autoCloseConnections": "Auto Close Connections",
-        "autoCheckUpdate": "Auto Check Update",
         "enableBuiltinEnhanced": "Enable Builtin Enhanced",
         "proxyLayoutColumns": "Proxy Layout Columns",
         "autoLogClean": "Auto Log Clean",
@@ -442,11 +439,12 @@
       "title": "New Version v{{version}}",
       "actions": {
         "goToRelease": "Go to Release Page",
-        "update": "Update"
+        "update": "Download Update"
       },
       "messages": {
         "breakChangeError": "This version is a major update and does not support in-app updates. Please uninstall it and manually download and install the new version",
-        "available": "A new version is available"
+        "available": "A new version is available",
+        "unavailable": "Update details are unavailable. Please try again later or download from the release page"
       },
       "alerts": {
         "note": "Note",
