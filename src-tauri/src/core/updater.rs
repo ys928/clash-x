@@ -131,7 +131,7 @@ impl UpdateChecker {
             match Self::check_with_proxy(app_handle, proxy).await {
                 Ok(Some(update)) => {
                     let version = update.version.clone();
-                    let body = update.body.clone();
+                    let body = update.body;
                     logging!(info, Type::System, "Update check: update available v{version}");
                     self.set_status(UpdateStatus::available(version, body));
                     return Ok(());
