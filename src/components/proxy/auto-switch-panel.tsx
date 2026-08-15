@@ -531,9 +531,15 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
           sx={{
             width: { xs: '100%', sm: 268 },
             flexShrink: 0,
-            borderRight: { sm: '1px solid' },
-            borderBottom: { xs: '1px solid', sm: 'none' },
-            borderColor: 'divider',
+            // Include color in the shorthand — responsive `1px solid` alone
+            // resets to currentColor inside the media query and looks white in dark mode.
+            borderRight: {
+              sm: `1px solid ${theme.palette.divider}`,
+            },
+            borderBottom: {
+              xs: `1px solid ${theme.palette.divider}`,
+              sm: 'none',
+            },
             display: 'flex',
             flexDirection: 'column',
             maxHeight: { xs: 220, sm: 'none' },
