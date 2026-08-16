@@ -36,7 +36,6 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.config/**'
-              - 'biome.json'
               - 'tsconfig.json'
 
       - name: Skip if no frontend changes

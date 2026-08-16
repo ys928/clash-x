@@ -29,8 +29,8 @@
     "eslint": "pnpm lint",
     "lint": "eslint -c .config/eslint.config.ts --max-warnings=0 --cache --cache-location .eslintcache src",
     "lint:fix": "eslint -c .config/eslint.config.ts --max-warnings=0 --cache --cache-location .eslintcache --fix src",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
+    "format": "biome format --config-path .config/biome.json --write .",
+    "format:check": "biome format --config-path .config/biome.json .",
     "i18n:check": "node scripts/cleanup-unused-i18n.mjs",
     "i18n:format": "node scripts/cleanup-unused-i18n.mjs --align --apply",
     "i18n:types": "node scripts/generate-i18n-keys.mjs",
@@ -133,10 +133,10 @@
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [
       "eslint -c .config/eslint.config.ts --fix --max-warnings=0",
-      "biome format --write --no-errors-on-unmatched"
+      "biome format --config-path .config/biome.json --write --no-errors-on-unmatched"
     ],
     "*.{css,scss,json}": [
-      "biome format --write --no-errors-on-unmatched"
+      "biome format --config-path .config/biome.json --write --no-errors-on-unmatched"
     ]
   },
   "type": "module",
