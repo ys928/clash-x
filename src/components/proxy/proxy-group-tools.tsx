@@ -16,10 +16,10 @@ import { memo, useEffect, type MouseEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
+import { BaseTooltip, type SearchState } from '@/components/base'
+import { AppSearchField } from '@/components/ui'
 import { useVerge } from '@/hooks/use-verge'
 import delayManager from '@/services/delay'
-
-import { BaseSearchBox, BaseTooltip, type SearchState } from '../base'
 
 import type { ProxySortType } from './use-filter-sort'
 import type { HeadState } from './use-head-state'
@@ -136,7 +136,7 @@ export const ProxyGroupTools = memo(function ProxyGroupTools(props: Props) {
     >
       {textState === 'filter' && (
         <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
-          <BaseSearchBox
+          <AppSearchField
             defaultValue={filterText}
             matchCase={filterMatchCase}
             matchWholeWord={filterMatchWholeWord}

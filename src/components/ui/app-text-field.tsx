@@ -10,6 +10,25 @@ const StyledField = styled(TextField)(({ theme }) => ({
         ? theme.palette.background.paper
         : undefined,
     minHeight: controlHeight.md,
+    outline: 'none',
+    boxShadow: 'none',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: theme.palette.divider,
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: theme.palette.divider,
+  },
+  '& .MuiOutlinedInput-root.Mui-focused': {
+    outline: 'none',
+    boxShadow: 'none',
+  },
+  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderWidth: 1,
+    borderColor: theme.palette.divider,
+  },
+  '& .MuiInputBase-input:focus, & .MuiInputBase-input:focus-visible': {
+    outline: 'none',
   },
 }))
 

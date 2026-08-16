@@ -15,7 +15,8 @@ import { Box, IconButton, TextField, type SxProps } from '@mui/material'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BaseSearchBox, BaseTooltip } from '@/components/base'
+import { BaseTooltip } from '@/components/base'
+import { AppSearchField } from '@/components/ui'
 import { useVerge } from '@/hooks/use-verge'
 import delayManager from '@/services/delay'
 import { debugLog } from '@/utils/debug'
@@ -165,7 +166,7 @@ export const ProxyHead = ({
 
       {textState === 'filter' && (
         <Box sx={{ ml: 0.5, flex: '1 1 auto' }}>
-          <BaseSearchBox
+          <AppSearchField
             autoFocus={autoFocus}
             value={filterText}
             searchState={{

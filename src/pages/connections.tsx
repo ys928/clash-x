@@ -445,7 +445,8 @@ const ConnectionsPage = () => {
             display: 'flex',
             alignItems: 'center',
             '& .MuiInputBase-root': {
-              ...controlSx,
+              height: 34,
+              borderRadius: 1.5,
               fontSize: 13,
               pr: 0.5,
             },
@@ -453,11 +454,6 @@ const ConnectionsPage = () => {
               py: '7px',
               fontSize: 13,
             },
-            '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-              {
-                borderWidth: '1px !important',
-                borderColor: 'divider !important',
-              },
           }}
         >
           <AppSearchField onSearch={handleSearch} />

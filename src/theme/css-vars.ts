@@ -161,7 +161,9 @@ export const buildGlobalThemeStyles = (
           background-color: var(--background-paper) !important;
         }
 
-        *:focus-visible {
+        *:focus-visible:not(input):not(textarea):not(select):not(
+            .MuiInputBase-input
+          ):not(.MuiSelect-select) {
           outline: 2px solid ${alpha(theme.palette.primary.main, 0.5)} !important;
           outline-offset: 1px;
         }

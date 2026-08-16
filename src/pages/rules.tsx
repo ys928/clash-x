@@ -233,36 +233,15 @@ const RulesPage = () => {
             sx={{
               minWidth: 0,
               '& .MuiInputBase-root': {
-                ...controlSx,
+                height: 34,
+                borderRadius: 1.5,
                 fontSize: 13,
                 pr: 0.5,
               },
               '& .MuiInputBase-input': {
                 py: '7px',
                 fontSize: 13,
-                outline: 'none !important',
               },
-              '& .MuiInputBase-input:focus, & .MuiInputBase-input:focus-visible':
-                {
-                  outline: 'none !important',
-                  boxShadow: 'none',
-                },
-              '& .MuiOutlinedInput-root': {
-                outline: 'none !important',
-              },
-              '& .MuiOutlinedInput-root:focus, & .MuiOutlinedInput-root:focus-visible, & .MuiOutlinedInput-root.Mui-focused':
-                {
-                  outline: 'none !important',
-                  boxShadow: 'none',
-                },
-              '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'divider',
-              },
-              '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                {
-                  borderWidth: '1px !important',
-                  borderColor: 'divider !important',
-                },
             }}
           >
             <AppSearchField onSearch={(next) => setMatch(() => next)} />

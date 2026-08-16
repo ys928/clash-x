@@ -43,6 +43,30 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {
     background: theme.palette.background.paper,
     paddingRight: '4px',
+    outline: 'none',
+    boxShadow: 'none',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: theme.palette.divider,
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: theme.palette.divider,
+  },
+  '& .MuiOutlinedInput-root.Mui-focused': {
+    outline: 'none',
+    boxShadow: 'none',
+  },
+  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderWidth: 1,
+    borderColor: theme.palette.divider,
+  },
+  '& .MuiInputBase-input': {
+    outline: 'none',
+    boxShadow: 'none',
+  },
+  '& .MuiInputBase-input:focus, & .MuiInputBase-input:focus-visible': {
+    outline: 'none',
+    boxShadow: 'none',
   },
   "& .MuiInputBase-root svg[aria-label='active'] path": {
     fill: theme.palette.primary.main,
