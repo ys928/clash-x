@@ -1,10 +1,11 @@
-use super::{IClashTemp, IProfiles, IVerge};
+use super::{IClashTemp, IProfiles, IVerge, MixedPort};
 use crate::{
     config::{PrfItem, profiles_append_item_to_safe, runtime::IRuntime},
     constants::{files, timing},
     core::{
         CoreManager,
         handle::{self, Handle},
+        listener::MIXED_PORT_KEY,
         tray,
         validate::CoreConfigValidator,
     },
@@ -23,7 +24,7 @@ use std::{
     path::PathBuf,
     sync::atomic::{AtomicBool, Ordering},
 };
-use tokio::sync::OnceCell;
+use tokio::sync::{Mutex, MutexGuard, OnceCell};
 use tokio::time::sleep;
 
 pub struct Config {
@@ -34,6 +35,7 @@ pub struct Config {
 }
 
 static TUN_SESSION_SUPPRESSED: AtomicBool = AtomicBool::new(false);
+static CONFIG_WRITE_LOCK: Mutex<()> = Mutex::const_new(());
 
 impl Config {
     pub async fn global() -> &'static Self {
@@ -64,6 +66,11 @@ impl Config {
 
     pub async fn runtime() -> Draft<IRuntime> {
         Self::global().await.runtime_config.clone()
+    }
+
+    /// Serialize transactions that share configuration draft layers.
+    pub(crate) async fn lock_config_write() -> MutexGuard<'static, ()> {
+        CONFIG_WRITE_LOCK.lock().await
     }
 
     /// 初始化订阅
@@ -252,6 +259,11 @@ impl Config {
         let (mut config, exists_keys, logs) = enhance::enhance(profiles).await?;
 
         sanitize_tunnels_proxy(&mut config);
+        // Applied here rather than in the Merge Config: this is the only place the Core's config
+        // is built, and `config.yaml` must stay unaware so the next launch asks for the original.
+        if let Some(port) = MixedPort::session_fallback() {
+            config.insert(MIXED_PORT_KEY.into(), port.into());
+        }
 
         Self::runtime().await.edit_draft(|d| {
             *d = IRuntime {

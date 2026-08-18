@@ -31,7 +31,6 @@ pub fn init_work_dir_and_logger() -> anyhow::Result<()> {
     AsyncHandler::block_on(async {
         init_work_config().await;
         logging!(info, Type::Setup, "Initializing logger");
-        // #[cfg(not(feature = "tokio-trace"))]
         Logger::global().init().await?;
         Ok(())
     })
@@ -48,12 +47,16 @@ pub fn resolve_setup_async() {
     AsyncHandler::spawn(|| async {
         logging!(info, Type::ClashVergeRev, "Version: {}", env!("CARGO_PKG_VERSION"));
 
+        // Migrate before windows or timers can change the loaded config.
+        logging_error!(Type::Setup, init::migrate_short_update_intervals().await);
+
         #[cfg(target_os = "macos")]
         resolve_dock_show().await;
         init_startup_script().await;
         init_service_manager().await;
         let config_initialized = init_verge_config_before_window().await;
         init_window().await;
+        feat::reconcile_startup_tun_availability().await;
         init_resources().await;
         if let Err(e) = init::init_dns_config().await {
             logging!(warn, Type::Setup, "DNS config initialization failed: {}", e);
@@ -123,7 +126,6 @@ pub(super) async fn init_timer() {
 }
 
 pub(super) async fn init_hotkey() {
-    // if hotkey is not use by global, skip init it
     let skip_register_hotkeys = !Config::verge().await.latest_arc().enable_global_hotkey.unwrap_or(true);
     logging_error!(Type::Setup, Hotkey::global().init(skip_register_hotkeys).await);
 }
@@ -146,6 +148,15 @@ fn init_update_checker() {
 
     logging!(info, Type::Setup, "Initializing update checker...");
 
+    let app_handle = Handle::app_handle();
+
+    // Install cached updates before starting background checks.
+    if SilentUpdater::global().try_install_on_startup(app_handle).await {
+        logging!(info, Type::Setup, "Update installed at startup, restarting...");
+        feat::restart_app().await;
+    }
+
+    let app_handle = app_handle.clone();
     let app_handle = Handle::app_handle().clone();
     tokio::spawn(async move {
         UpdateChecker::global().start_background_check(app_handle).await;
