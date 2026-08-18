@@ -109,6 +109,19 @@ export const handleNoticeMessage = (
         'settings.modals.clashPort.messages.automaticFallbackFailed',
         { error: msg },
       ),
+    'auto_switch::switched': () => {
+      try {
+        const payload = JSON.parse(msg) as {
+          group?: string
+          from?: string
+          to?: string
+          delay?: number
+        }
+        showNotice.info('proxies.page.autoSwitch.switched', payload)
+      } catch {
+        showNotice.info('proxies.page.autoSwitch.switched')
+      }
+    },
   }
 
   const handler = handlers[status]

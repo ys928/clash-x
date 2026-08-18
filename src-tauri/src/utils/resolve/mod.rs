@@ -13,7 +13,7 @@ use crate::{
         tray::Tray,
     },
     feat,
-    module::{auto_backup::AutoBackupManager, lightweight::auto_lightweight_boot},
+    module::{auto_backup::AutoBackupManager, auto_switch::AutoSwitchManager, lightweight::auto_lightweight_boot},
     process::AsyncHandler,
     utils::{init, server, window_manager::WindowManager},
 };
@@ -76,6 +76,7 @@ pub fn resolve_setup_async() {
             init_hotkey(),
             init_auto_lightweight_boot(),
             init_auto_backup(),
+            init_auto_switch(),
         );
 
         Handle::refresh_clash();
@@ -133,6 +134,10 @@ pub(super) async fn init_auto_lightweight_boot() {
 
 pub(super) async fn init_auto_backup() {
     logging_error!(Type::Setup, AutoBackupManager::global().init().await);
+}
+
+pub(super) async fn init_auto_switch() {
+    logging_error!(Type::Setup, AutoSwitchManager::global().init().await);
 }
 
 fn init_update_checker() {

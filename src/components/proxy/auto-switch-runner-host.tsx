@@ -1,7 +1,13 @@
-import { useAutoSwitchRunner } from '@/hooks/use-auto-switch-runner'
+import { useEffect } from 'react'
 
-/** Keeps curated auto-switch groups running while the app shell is mounted. */
+import { hydrateAutoSwitchGroups } from '@/components/proxy/auto-switch-store'
+
+/** Loads backend auto-switch groups as soon as the app shell mounts, so localStorage can migrate. */
 export function AutoSwitchRunnerHost() {
-  useAutoSwitchRunner()
+  useEffect(() => {
+    void hydrateAutoSwitchGroups().catch((error) => {
+      console.error('[AutoSwitch] failed to load groups from backend', error)
+    })
+  }, [])
   return null
 }

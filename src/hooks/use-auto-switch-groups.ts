@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 
 import {
   createEmptyAutoSwitchGroup,
@@ -6,6 +6,7 @@ import {
 } from '@/components/proxy/auto-switch-model'
 import {
   getAutoSwitchGroups,
+  hydrateAutoSwitchGroups,
   removeAutoSwitchGroup,
   setAutoSwitchGroups,
   subscribeAutoSwitchGroups,
@@ -14,6 +15,12 @@ import {
 } from '@/components/proxy/auto-switch-store'
 
 export function useAutoSwitchGroups() {
+  useEffect(() => {
+    void hydrateAutoSwitchGroups().catch((error) => {
+      console.error('[AutoSwitch] failed to load groups from backend', error)
+    })
+  }, [])
+
   const groups = useSyncExternalStore(
     subscribeAutoSwitchGroups,
     getAutoSwitchGroups,
@@ -38,27 +45,27 @@ export function useAutoSwitchGroups() {
 
   const createGroup = useCallback((partial?: Partial<AutoSwitchGroup>) => {
     const group = createEmptyAutoSwitchGroup(partial)
-    upsertAutoSwitchGroup(group)
+    void upsertAutoSwitchGroup(group)
     return group
   }, [])
 
   const saveGroup = useCallback((group: AutoSwitchGroup) => {
-    upsertAutoSwitchGroup(group)
+    return upsertAutoSwitchGroup(group)
   }, [])
 
   const patchGroup = useCallback(
     (id: string, patch: Partial<AutoSwitchGroup>) => {
-      updateAutoSwitchGroup(id, patch)
+      return updateAutoSwitchGroup(id, patch)
     },
     [],
   )
 
   const deleteGroup = useCallback((id: string) => {
-    removeAutoSwitchGroup(id)
+    return removeAutoSwitchGroup(id)
   }, [])
 
   const replaceGroups = useCallback((next: AutoSwitchGroup[]) => {
-    setAutoSwitchGroups(next)
+    return setAutoSwitchGroups(next)
   }, [])
 
   return {

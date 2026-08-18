@@ -52,14 +52,12 @@ import {
 } from '@/components/proxy/auto-switch-model'
 import { AppCheckbox, AppChip } from '@/components/ui'
 import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
-import { runAutoSwitchOnce } from '@/hooks/use-auto-switch-runner'
-import { useProxySelection } from '@/hooks/use-proxy-selection'
-import { useVerge } from '@/hooks/use-verge'
 import {
   useAppRefreshers,
   useClashConfigData,
   useProxiesData,
 } from '@/providers/app-data-context'
+import { runAutoSwitchOnce } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import { radius, typographyScale } from '@/theme/tokens'
 import {
@@ -72,6 +70,20 @@ import {
 const INTERVAL_PRESETS = [30, 60, 120, 300] as const
 const THRESHOLD_PRESETS = [0, 30, 50, 100, 200] as const
 const SELECTABLE = new Set(['Selector', 'URLTest', 'Fallback'])
+
+function autoSwitchErrorMessage(error: unknown) {
+  if (typeof error === 'string') return error
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>
+    if (typeof record.detail === 'string' && record.detail.length > 0) {
+      return record.detail
+    }
+    if (typeof record.message === 'string' && record.message.length > 0) {
+      return record.message
+    }
+  }
+  return 'unknown'
+}
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -236,10 +248,6 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
   const { proxyView } = useProxiesData()
   const { clashConfig } = useClashConfigData()
   const { refreshProxy } = useAppRefreshers()
-  const { verge } = useVerge()
-  const { changeProxy } = useProxySelection({
-    onSuccess: () => refreshProxy(),
-  })
 
   const [editing, setEditing] = useState<EditorState | null>(null)
   const [nodeFilter, setNodeFilter] = useState('')
@@ -375,33 +383,34 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
       ),
     )
 
-    saveGroup({
+    void saveGroup({
       ...editing,
       name,
       intervalSeconds,
       thresholdMs,
     })
-    setEditing(null)
-    showNotice.success('proxies.page.autoSwitch.saved')
+      .then(() => {
+        setEditing(null)
+        showNotice.success('proxies.page.autoSwitch.saved')
+      })
+      .catch((error) => {
+        showNotice.error(error)
+      })
   }
 
   const handleTestNow = useLockFn(async (group: AutoSwitchGroup) => {
-    if (!proxyView) return
     setTestingId(group.id)
     try {
-      const { decision } = await runAutoSwitchOnce(group, {
-        proxyView,
-        mode,
-        timeout: verge?.default_latency_timeout || 10000,
-        changeProxy,
-      })
+      const { decision } = await runAutoSwitchOnce(group)
       if (decision.action === 'keep') {
         showNotice.info('proxies.page.autoSwitch.testedKeep', {
           group: group.name,
         })
+      } else {
+        refreshProxy()
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'unknown'
+      const message = autoSwitchErrorMessage(error)
       if (message === 'target-unavailable') {
         showNotice.error('proxies.page.autoSwitch.errors.targetUnavailable')
       } else if (message === 'no-nodes') {
@@ -416,7 +425,9 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
 
   const handleDelete = useCallback(
     (id: string) => {
-      deleteGroup(id)
+      void deleteGroup(id).catch((error) => {
+        showNotice.error(error)
+      })
       if (editing?.id === id) setEditing(null)
     },
     [deleteGroup, editing?.id],
@@ -588,9 +599,13 @@ export function AutoSwitchPanel({ open, onClose }: AutoSwitchPanelProps) {
                   secondaryAction={
                     <Switch
                       checked={group.enabled}
-                      onChange={(_, checked) =>
-                        patchGroup(group.id, { enabled: checked })
-                      }
+                      onChange={(_, checked) => {
+                        void patchGroup(group.id, { enabled: checked }).catch(
+                          (error) => {
+                            showNotice.error(error)
+                          },
+                        )
+                      }}
                       onClick={(event) => event.stopPropagation()}
                       sx={{
                         transform: 'scale(0.78)',

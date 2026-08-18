@@ -407,7 +407,9 @@ where
     if let Err(error) = publish_result {
         match std::fs::remove_file(&temporary_path) {
             Ok(()) => return Err(error),
-            Err(cleanup_error) if cleanup_error.kind() == std::io::ErrorKind::NotFound => return Err(error),
+            Err(cleanup_error) if cleanup_error.kind() == std::io::ErrorKind::NotFound => {
+                return Err(error);
+            }
             Err(cleanup_error) => {
                 return Err(error).with_context(|| {
                     format!(

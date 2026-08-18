@@ -123,10 +123,10 @@ export function loadAutoSwitchGroups(): AutoSwitchGroup[] {
   }
 }
 
-export function saveAutoSwitchGroups(groups: AutoSwitchGroup[]) {
+export function clearAutoSwitchGroupsStorage() {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(AUTO_SWITCH_STORAGE_KEY, JSON.stringify(groups))
+    localStorage.removeItem(AUTO_SWITCH_STORAGE_KEY)
   } catch {
     // ignore quota / private mode
   }

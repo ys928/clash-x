@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import dayjs from 'dayjs'
 
+import type { AutoSwitchGroup } from '@/components/proxy/auto-switch-model'
 import type { CommandFailure } from '@/services/notice-service'
 import { showNotice } from '@/services/notice-service'
 import type { ProxyViewV1 } from '@/types/proxy-view'
@@ -142,6 +143,47 @@ export async function getProxyView(): Promise<ProxyViewV1> {
     throw new Error('Unsupported proxy view schema: ' + view.schemaVersion)
   }
   return view
+}
+
+export type AutoSwitchDecision =
+  | { action: 'keep' }
+  | {
+      action: 'switch'
+      name: string
+      bestDelay: number
+      currentDelay: number | null
+    }
+
+export interface AutoSwitchRunResult {
+  decision: AutoSwitchDecision
+  results: Array<{ name: string; delay: number }>
+}
+
+export async function getAutoSwitchGroups() {
+  return invoke<AutoSwitchGroup[]>('get_auto_switch_groups')
+}
+
+export async function replaceAutoSwitchGroups(groups: AutoSwitchGroup[]) {
+  return invoke<AutoSwitchGroup[]>('replace_auto_switch_groups', { groups })
+}
+
+export async function upsertAutoSwitchGroup(group: AutoSwitchGroup) {
+  return invoke<AutoSwitchGroup[]>('upsert_auto_switch_group', { group })
+}
+
+export async function patchAutoSwitchGroup(
+  id: string,
+  patch: Partial<AutoSwitchGroup>,
+) {
+  return invoke<AutoSwitchGroup[]>('patch_auto_switch_group', { id, patch })
+}
+
+export async function deleteAutoSwitchGroup(id: string) {
+  return invoke<AutoSwitchGroup[]>('delete_auto_switch_group', { id })
+}
+
+export async function runAutoSwitchOnce(group: AutoSwitchGroup) {
+  return invoke<AutoSwitchRunResult>('run_auto_switch_once', { group })
 }
 
 export async function getClashLogs() {
