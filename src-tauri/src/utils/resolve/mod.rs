@@ -148,15 +148,6 @@ fn init_update_checker() {
 
     logging!(info, Type::Setup, "Initializing update checker...");
 
-    let app_handle = Handle::app_handle();
-
-    // Install cached updates before starting background checks.
-    if SilentUpdater::global().try_install_on_startup(app_handle).await {
-        logging!(info, Type::Setup, "Update installed at startup, restarting...");
-        feat::restart_app().await;
-    }
-
-    let app_handle = app_handle.clone();
     let app_handle = Handle::app_handle().clone();
     tokio::spawn(async move {
         UpdateChecker::global().start_background_check(app_handle).await;
