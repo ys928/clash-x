@@ -37,11 +37,11 @@ const AUTO_SWITCH_FILE: &str = "auto-switch.yaml";
 const DEFAULT_INTERVAL_SECONDS: u32 = 60;
 const DEFAULT_THRESHOLD_MS: u32 = 50;
 
-fn default_interval_seconds() -> u32 {
+const fn default_interval_seconds() -> u32 {
     DEFAULT_INTERVAL_SECONDS
 }
 
-fn default_threshold_ms() -> u32 {
+const fn default_threshold_ms() -> u32 {
     DEFAULT_THRESHOLD_MS
 }
 const MIN_INTERVAL_SECONDS: u32 = 15;
@@ -294,15 +294,11 @@ impl AutoSwitchManager {
     async fn group_loop(group_id: String) {
         tokio::time::sleep(Duration::from_millis(INITIAL_DELAY_MS)).await;
 
-        loop {
-            let Some(group) = Self::global()
-                .list()
-                .into_iter()
-                .find(|item| item.id == group_id && item.enabled)
-            else {
-                break;
-            };
-
+        while let Some(group) = Self::global()
+            .list()
+            .into_iter()
+            .find(|item| item.id == group_id && item.enabled)
+        {
             if let Err(err) = Self::global().execute_group(&group, false).await {
                 logging!(
                     warn,
@@ -560,7 +556,7 @@ async fn test_url_for_group(group: &crate::core::proxy_view::ProxyGroupView) -> 
         .unwrap_or_else(|| DEFAULT_TEST_URL.to_owned())
 }
 
-fn is_selectable_type(proxy_type: &ProxyType) -> bool {
+const fn is_selectable_type(proxy_type: &ProxyType) -> bool {
     matches!(
         proxy_type,
         ProxyType::Selector | ProxyType::URLTest | ProxyType::Fallback
@@ -687,7 +683,7 @@ fn resolve_curated_nodes<'a>(
     members
 }
 
-fn classify_delay(delay: u32, timeout: u32) -> &'static str {
+const fn classify_delay(delay: u32, timeout: u32) -> &'static str {
     if delay > IMPLAUSIBLE_DELAY {
         "error"
     } else if delay == 0 || delay >= timeout {
@@ -849,95 +845,84 @@ mod tests {
 
     #[test]
     fn switches_when_improvement_meets_threshold() {
-        match decide_auto_switch(
-            Some("a"),
-            &[
-                DelaySample {
-                    name: "a".into(),
-                    delay: 160,
-                },
-                DelaySample {
-                    name: "b".into(),
-                    delay: 90,
-                },
-            ],
-            50,
-            10_000,
-        ) {
+        assert!(matches!(
+            decide_auto_switch(
+                Some("a"),
+                &[
+                    DelaySample {
+                        name: "a".into(),
+                        delay: 160,
+                    },
+                    DelaySample {
+                        name: "b".into(),
+                        delay: 90,
+                    },
+                ],
+                50,
+                10_000,
+            ),
             AutoSwitchDecision::Switch {
                 name,
                 best_delay,
                 current_delay,
-            } => {
-                assert_eq!(name, "b");
-                assert_eq!(best_delay, 90);
-                assert_eq!(current_delay, Some(160));
-            }
-            other => panic!("expected switch, got {other:?}"),
-        }
+            } if name == "b" && best_delay == 90 && current_delay == Some(160)
+        ));
     }
 
     #[test]
     fn switches_when_current_outside_set() {
-        match decide_auto_switch(
-            Some("outside"),
-            &[
-                DelaySample {
-                    name: "a".into(),
-                    delay: 140,
-                },
-                DelaySample {
-                    name: "b".into(),
-                    delay: 80,
-                },
-            ],
-            50,
-            10_000,
-        ) {
+        assert!(matches!(
+            decide_auto_switch(
+                Some("outside"),
+                &[
+                    DelaySample {
+                        name: "a".into(),
+                        delay: 140,
+                    },
+                    DelaySample {
+                        name: "b".into(),
+                        delay: 80,
+                    },
+                ],
+                50,
+                10_000,
+            ),
             AutoSwitchDecision::Switch {
                 name,
                 best_delay,
                 current_delay,
-            } => {
-                assert_eq!(name, "b");
-                assert_eq!(best_delay, 80);
-                assert_eq!(current_delay, None);
-            }
-            other => panic!("expected switch, got {other:?}"),
-        }
+            } if name == "b" && best_delay == 80 && current_delay.is_none()
+        ));
     }
 
     #[test]
     fn ignores_timeouts_and_errors() {
-        match decide_auto_switch(
-            Some("a"),
-            &[
-                DelaySample {
-                    name: "a".into(),
-                    delay: 200,
-                },
-                DelaySample {
-                    name: "dead".into(),
-                    delay: 0,
-                },
-                DelaySample {
-                    name: "err".into(),
-                    delay: 1_000_000,
-                },
-                DelaySample {
-                    name: "b".into(),
-                    delay: 110,
-                },
-            ],
-            0,
-            10_000,
-        ) {
-            AutoSwitchDecision::Switch { name, best_delay, .. } => {
-                assert_eq!(name, "b");
-                assert_eq!(best_delay, 110);
-            }
-            other => panic!("expected switch, got {other:?}"),
-        }
+        assert!(matches!(
+            decide_auto_switch(
+                Some("a"),
+                &[
+                    DelaySample {
+                        name: "a".into(),
+                        delay: 200,
+                    },
+                    DelaySample {
+                        name: "dead".into(),
+                        delay: 0,
+                    },
+                    DelaySample {
+                        name: "err".into(),
+                        delay: 1_000_000,
+                    },
+                    DelaySample {
+                        name: "b".into(),
+                        delay: 110,
+                    },
+                ],
+                0,
+                10_000,
+            ),
+            AutoSwitchDecision::Switch { name, best_delay, .. } if name == "b" && best_delay == 110
+        ));
     }
 
     #[test]

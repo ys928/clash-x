@@ -145,7 +145,7 @@ export async function getProxyView(): Promise<ProxyViewV1> {
   return view
 }
 
-export type AutoSwitchDecision =
+type AutoSwitchDecision =
   | { action: 'keep' }
   | {
       action: 'switch'
