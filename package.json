@@ -37,7 +37,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config .config/vitest.config.mts",
     "test:watch": "vitest --config .config/vitest.config.mts",
-    "test:dev-control": "node --test scripts/dev-control.test.mjs scripts/service-release.test.mjs",
     "knip:check": "knip --config .config/knip.json",
     "knip:report": "knip --config .config/knip.json --no-exit-code"
   },

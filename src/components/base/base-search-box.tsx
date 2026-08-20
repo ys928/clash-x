@@ -27,6 +27,7 @@ export type SearchState = {
 type SearchOptionState = Omit<SearchState, 'text'>
 
 type SearchProps = {
+  inputRef?: React.RefObject<HTMLInputElement | null>
   value?: string
   defaultValue?: string
   autoFocus?: boolean
@@ -97,6 +98,7 @@ const useControllableState = <T,>(options: {
 }
 
 export const BaseSearchBox = ({
+  inputRef,
   value,
   defaultValue,
   autoFocus,
@@ -224,6 +226,7 @@ export const BaseSearchBox = ({
   return (
     <Tooltip title={effectiveErrorMessage || ''} placement="bottom-start">
       <StyledTextField
+        inputRef={inputRef}
         autoComplete="new-password"
         hiddenLabel
         fullWidth
