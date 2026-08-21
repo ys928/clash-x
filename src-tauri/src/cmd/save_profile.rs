@@ -93,14 +93,15 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     }
 
     // Global DIRECT domain rules also feed the OS proxy bypass list; refresh when Rules change.
-    if changes_applied.is_valid() && index == "Rules" {
-        if let Err(err) = crate::core::proxy_control::apply().await {
-            logging!(
-                warn,
-                Type::Config,
-                "[cmd配置save] 全局规则保存后刷新系统代理失败: {err}"
-            );
-        }
+    if changes_applied.is_valid()
+        && index == "Rules"
+        && let Err(err) = crate::core::proxy_control::apply().await
+    {
+        logging!(
+            warn,
+            Type::Config,
+            "[cmd配置save] 全局规则保存后刷新系统代理失败: {err}"
+        );
     }
 
     Ok(changes_applied)
