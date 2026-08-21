@@ -154,6 +154,7 @@ mod app_init {
             cmd::patch_clash_mode,
             cmd::get_clash_mode,
             cmd::change_clash_core,
+            cmd::upgrade_clash_core,
             cmd::get_runtime_config,
             cmd::get_proxy_view,
             cmd::get_auto_switch_groups,
@@ -215,6 +216,7 @@ mod app_init {
             cmd::restore_webdav_backup,
             cmd::get_unlock_items,
             cmd::check_media_unlock,
+            cmd::check_media_unlock_item,
             cmd::get_update_status,
             cmd::get_updater_clash_proxy,
         ]
