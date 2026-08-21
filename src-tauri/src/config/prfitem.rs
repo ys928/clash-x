@@ -189,7 +189,7 @@ impl PrfItem {
             script = script_item.uid.clone();
         }
         if rules.is_none() {
-            let rules_item = &mut Self::from_rules()?;
+            let rules_item = &mut Self::from_rules(None)?;
             profiles::profiles_append_item_safe(rules_item).await?;
             rules = rules_item.uid.clone();
         }
@@ -370,7 +370,7 @@ impl PrfItem {
             script = script_item.uid.clone();
         }
         if rules.is_none() {
-            let rules_item = &mut Self::from_rules()?;
+            let rules_item = &mut Self::from_rules(None)?;
             profiles::profiles_append_item_safe(rules_item).await?;
             rules = rules_item.uid.clone();
         }
@@ -445,12 +445,12 @@ impl PrfItem {
         })
     }
 
-    pub fn from_rules() -> Result<Self> {
-        let uid = help::get_uid("r").into();
-        let file = format!("{uid}.yaml").into(); // yaml ext
+    pub fn from_rules(uid: Option<String>) -> Result<Self> {
+        let id = uid.unwrap_or_else(|| help::get_uid("r").into());
+        let file = format!("{id}.yaml").into(); // yaml ext
 
         Ok(Self {
-            uid: Some(uid),
+            uid: Some(id),
             itype: Some("rules".into()),
             file: Some(file),
             updated: Some(chrono::Local::now().timestamp() as usize),

@@ -1,4 +1,5 @@
 mod chain;
+pub mod direct_domain;
 pub mod field;
 mod merge;
 mod script;
@@ -7,6 +8,7 @@ mod tun;
 
 use self::{
     chain::{AsyncChainItemFrom as _, ChainItem, ChainType},
+    direct_domain::{apply_direct_domain_dns, extract_direct_domains},
     field::{use_keys, use_lowercase, use_sort},
     merge::use_merge,
     script::use_script,
@@ -53,6 +55,7 @@ struct ProfileItems {
     groups_item: ChainItem,
     global_merge: ChainItem,
     global_script: ChainItem,
+    global_rules: ChainItem,
     profile_name: String,
 }
 
@@ -88,6 +91,10 @@ impl Default for ProfileItems {
             global_script: ChainItem {
                 uid: "Script".into(),
                 data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
+            },
+            global_rules: ChainItem {
+                uid: "Rules".into(),
+                data: ChainType::Rules(SeqMap::default()),
             },
         }
     }
@@ -160,7 +167,28 @@ async fn get_config_values() -> ConfigValues {
 async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
     let current_profile_uid = match profiles.get_current().cloned() {
         Some(uid) => uid,
-        None => return Ok(ProfileItems::default()),
+        None => {
+            let (global_merge, global_script, global_rules) = tokio::join!(
+                chain_item_or_default(profiles.get_item("Merge").ok(), || ChainItem {
+                    uid: "Merge".into(),
+                    data: ChainType::Merge(Mapping::new()),
+                },),
+                chain_item_or_default(profiles.get_item("Script").ok(), || ChainItem {
+                    uid: "Script".into(),
+                    data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
+                },),
+                chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
+                    uid: "Rules".into(),
+                    data: ChainType::Rules(SeqMap::default()),
+                },),
+            );
+            return Ok(ProfileItems {
+                global_merge,
+                global_script,
+                global_rules,
+                ..ProfileItems::default()
+            });
+        }
     };
 
     let current = profiles
@@ -180,7 +208,8 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         .current_script()
         .cloned()
         .unwrap_or_else(|| "Script".into());
-    let rules_uid = current_item.current_rules().cloned().unwrap_or_else(|| "Rules".into());
+    // Profile rules use a dedicated sidecar UID; never fall back to the global "Rules" item.
+    let rules_uid = current_item.current_rules().cloned();
     let proxies_uid = current_item
         .current_proxies()
         .cloned()
@@ -192,7 +221,7 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
 
     let name = current_item.name.clone().unwrap_or_default();
 
-    let (merge_item, script_item, rules_item, proxies_item, groups_item, global_merge, global_script) = tokio::join!(
+    let (merge_item, script_item, rules_item, proxies_item, groups_item, global_merge, global_script, global_rules) = tokio::join!(
         chain_item_or_default(profiles.get_item(&merge_uid).ok(), || ChainItem {
             uid: "".into(),
             data: ChainType::Merge(Mapping::new()),
@@ -201,9 +230,11 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
             uid: "".into(),
             data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
         },),
-        chain_item_or_default(profiles.get_item(&rules_uid).ok(), || ChainItem {
-            uid: "".into(),
-            data: ChainType::Rules(SeqMap::default()),
+        chain_item_or_default(rules_uid.as_ref().and_then(|uid| profiles.get_item(uid).ok()), || {
+            ChainItem {
+                uid: "".into(),
+                data: ChainType::Rules(SeqMap::default()),
+            }
         },),
         chain_item_or_default(profiles.get_item(&proxies_uid).ok(), || ChainItem {
             uid: "".into(),
@@ -221,6 +252,10 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
             uid: "Script".into(),
             data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
         },),
+        chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
+            uid: "Rules".into(),
+            data: ChainType::Rules(SeqMap::default()),
+        },),
     );
 
     Ok(ProfileItems {
@@ -232,6 +267,7 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         groups_item,
         global_merge,
         global_script,
+        global_rules,
         profile_name: name,
     })
 }
@@ -283,6 +319,17 @@ fn process_seq_items(
         config = use_seq(groups, config, "proxy-groups");
     }
 
+    config
+}
+
+fn process_global_rules(mut config: Mapping, global_rules: ChainItem) -> Mapping {
+    if let ChainType::Rules(rules) = global_rules.data {
+        // DIRECT domain rules need companion DNS (system resolver); routing alone is not enough
+        // for VPN / `.local` zones and often surfaces as HTTP 502 from the mixed port.
+        let direct_domains = extract_direct_domains(&rules);
+        config = use_seq(rules, config, "rules");
+        config = apply_direct_domain_dns(config, &direct_domains);
+    }
     config
 }
 
@@ -727,6 +774,7 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
     let groups_item = profile.groups_item;
     let global_merge = profile.global_merge;
     let global_script = profile.global_script;
+    let global_rules = profile.global_rules;
     let profile_name = profile.profile_name;
 
     let result_map = HashMap::new();
@@ -764,6 +812,9 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
 
     let (config, exists_keys, result_map) =
         process_profile_items(config, exists_keys, result_map, merge_item, script_item, &profile_name).await;
+
+    // Global rules run last so prepend DIRECT/bypass always wins across subscriptions.
+    let config = process_global_rules(config, global_rules);
 
     let config = authoritative.enforce(config);
     let config = ensure_lan_bind_address(config);

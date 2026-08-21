@@ -322,10 +322,13 @@ export interface TranslationResources {
         more: {
           chips: {
             merge: string
+            rules: string
             script: string
           }
           global: {
             merge: string
+            rules: string
+            rulesHint: string
             script: string
           }
         }
@@ -720,6 +723,15 @@ export interface TranslationResources {
               invalidRule: string
             }
           }
+          globalHint: string
+          globalTitle: string
+          presets: {
+            addDomainDirect: string
+            domainPlaceholder: string
+            lanAdded: string
+            lanDirect: string
+            title: string
+          }
           ruleTypes: {
             AND: string
             DOMAIN: string
@@ -759,6 +771,9 @@ export interface TranslationResources {
         }
       }
       page: {
+        actions: {
+          editGlobal: string
+        }
         empty: {
           filtered: string
         }

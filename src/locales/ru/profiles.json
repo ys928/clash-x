@@ -88,11 +88,14 @@
     "more": {
       "global": {
         "merge": "Глобальная Merge-конфигурация",
-        "script": "Глобальный Script"
+        "script": "Глобальный Script",
+        "rules": "Global Routing Rules",
+        "rulesHint": "Always applied — LAN / VPN domains stay DIRECT across subscriptions"
       },
       "chips": {
         "merge": "Merge",
-        "script": "Script"
+        "script": "Script",
+        "rules": "Rules"
       }
     },
     "profileItem": {

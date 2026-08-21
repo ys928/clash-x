@@ -254,11 +254,13 @@ impl Default for Sysopt {
 }
 
 #[cfg(target_os = "windows")]
-static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;<local>";
+// `*.local` mirrors macOS: Windows `<local>` only skips hosts without dots, so
+// `gitlab.corp.local` still hits the proxy without an explicit `*.local` pattern.
+static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;*.local;<local>";
 #[cfg(target_os = "windows")]
 static BYPASS_SEPARATOR: &str = ";";
 #[cfg(target_os = "linux")]
-static DEFAULT_BYPASS: &str = "localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,::1";
+static DEFAULT_BYPASS: &str = "localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,::1,*.local";
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 static BYPASS_SEPARATOR: &str = ",";
 #[cfg(target_os = "macos")]
@@ -280,7 +282,9 @@ async fn get_bypass() -> String {
     let use_default = verge.use_default_bypass.unwrap_or(true);
     let custom_bypass = verge.system_proxy_bypass.as_deref().unwrap_or("");
 
-    format_bypass(use_default, custom_bypass)
+    let base = format_bypass(use_default, custom_bypass);
+    let extras = crate::enhance::direct_domain::global_direct_sysproxy_patterns().await;
+    crate::enhance::direct_domain::merge_sysproxy_bypass(&base, BYPASS_SEPARATOR, &extras).into()
 }
 
 singleton!(Sysopt, SYSOPT);

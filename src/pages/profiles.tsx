@@ -48,6 +48,7 @@ import { useLocation } from 'react-router'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
 import { type DialogRef } from '@/components/base'
+import { GlobalRulesMore } from '@/components/profile/global-rules-more'
 import { ProfileMore } from '@/components/profile/profile-more'
 import {
   ProfileViewer,
@@ -1045,7 +1046,16 @@ const ProfilePage = () => {
             ></Divider>
             <Box sx={{ mt: 1.5, mb: '10px' }}>
               <Grid container spacing={{ xs: 1, lg: 1 }}>
-                <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
+                <Grid size={{ xs: 12, sm: 12, md: 4, lg: 4 }}>
+                  <GlobalRulesMore
+                    onSave={async (prev, curr) => {
+                      if (prev !== curr) {
+                        await onEnhance(false)
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
                   <ProfileMore
                     id="Merge"
                     onSave={async (prev, curr) => {
@@ -1055,7 +1065,7 @@ const ProfilePage = () => {
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
                   <ProfileMore
                     id="Script"
                     logInfo={chainLogs['Script']}

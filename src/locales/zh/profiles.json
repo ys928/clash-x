@@ -88,11 +88,14 @@
     "more": {
       "global": {
         "merge": "全局扩展覆写配置",
-        "script": "全局扩展脚本"
+        "script": "全局扩展脚本",
+        "rules": "全局路由规则",
+        "rulesHint": "跨订阅始终生效，局域网 / 内网 VPN 域名可强制直连"
       },
       "chips": {
         "merge": "Merge",
-        "script": "Script"
+        "script": "Script",
+        "rules": "Rules"
       }
     },
     "profileItem": {

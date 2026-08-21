@@ -9,6 +9,9 @@
       }
     },
     "title": "قوانین",
+    "actions": {
+      "editGlobal": "Global Rules"
+    },
     "filters": {
       "allTypes": "All types",
       "allPolicies": "All policies"
@@ -88,7 +91,16 @@
         "NOT": "منطق NOT",
         "MATCH": "مطابقت با تمام درخواست‌ها"
       },
-      "title": "ویرایش قوانین"
+      "title": "ویرایش قوانین",
+      "globalTitle": "Edit Global Rules",
+      "globalHint": "These rules apply to every subscription. Prepended DIRECT domains also use system DNS and OS proxy bypass so corporate VPN hosts do not return 502.",
+      "presets": {
+        "title": "Quick presets",
+        "lanDirect": "Add LAN / private IP → DIRECT",
+        "lanAdded": "LAN direct rules added to prepend",
+        "domainPlaceholder": "corp.vpn.example.com",
+        "addDomainDirect": "Domain → DIRECT"
+      }
     }
   }
 }

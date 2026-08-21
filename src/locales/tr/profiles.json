@@ -88,11 +88,14 @@
     "more": {
       "global": {
         "merge": "Global Extend Config",
-        "script": "Global Extend Script"
+        "script": "Global Extend Script",
+        "rules": "Global Routing Rules",
+        "rulesHint": "Always applied — LAN / VPN domains stay DIRECT across subscriptions"
       },
       "chips": {
         "merge": "Merge",
-        "script": "Script"
+        "script": "Script",
+        "rules": "Rules"
       }
     },
     "profileItem": {

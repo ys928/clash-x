@@ -9,6 +9,9 @@
       }
     },
     "title": "規則",
+    "actions": {
+      "editGlobal": "全域規則"
+    },
     "filters": {
       "allTypes": "全部類型",
       "allPolicies": "全部策略"
@@ -88,7 +91,16 @@
         "NOT": "邏輯非 (NOT)",
         "MATCH": "匹配所有請求 (MATCH)"
       },
-      "title": "編輯規則"
+      "title": "編輯規則",
+      "globalTitle": "編輯全域規則",
+      "globalHint": "對所有訂閱全域生效。前置規則優先級最高；網域直連會同時走系統 DNS，並寫入系統代理略過，避免內網 VPN 網域 502。",
+      "presets": {
+        "title": "快捷預設",
+        "lanDirect": "新增區網 / 私有 IP → 直連",
+        "lanAdded": "已將區網直連規則加入前置",
+        "domainPlaceholder": "corp.vpn.example.com",
+        "addDomainDirect": "網域 → 直連"
+      }
     }
   }
 }

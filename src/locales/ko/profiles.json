@@ -88,11 +88,14 @@
     "more": {
       "global": {
         "merge": "전역 확장 구성",
-        "script": "전역 확장 스크립트"
+        "script": "전역 확장 스크립트",
+        "rules": "Global Routing Rules",
+        "rulesHint": "Always applied — LAN / VPN domains stay DIRECT across subscriptions"
       },
       "chips": {
         "merge": "병합",
-        "script": "스크립트"
+        "script": "스크립트",
+        "rules": "Rules"
       }
     },
     "profileItem": {

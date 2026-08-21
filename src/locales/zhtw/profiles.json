@@ -87,12 +87,15 @@
     },
     "more": {
       "global": {
-        "merge": "Global Extend Config",
-        "script": "Global Extend Script"
+        "merge": "全域擴充覆寫設定",
+        "script": "全域擴充腳本",
+        "rules": "全域路由規則",
+        "rulesHint": "跨訂閱始終生效，區網 / 公司 VPN 網域可強制直連"
       },
       "chips": {
         "merge": "Merge",
-        "script": "Script"
+        "script": "Script",
+        "rules": "Rules"
       }
     },
     "profileItem": {

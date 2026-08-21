@@ -25,6 +25,7 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     let backup_trigger = match index.as_str() {
         "Merge" => Some(AutoBackupTrigger::GlobalMerge),
         "Script" => Some(AutoBackupTrigger::GlobalScript),
+        "Rules" => Some(AutoBackupTrigger::GlobalRules),
         _ => None,
     };
 
@@ -91,6 +92,17 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
         AutoBackupManager::trigger_backup(trigger);
     }
 
+    // Global DIRECT domain rules also feed the OS proxy bypass list; refresh when Rules change.
+    if changes_applied.is_valid() && index == "Rules" {
+        if let Err(err) = crate::core::proxy_control::apply().await {
+            logging!(
+                warn,
+                Type::Config,
+                "[cmd配置save] 全局规则保存后刷新系统代理失败: {err}"
+            );
+        }
+    }
+
     Ok(changes_applied)
 }
 
@@ -107,6 +119,11 @@ async fn restore_original(
 }
 
 fn profile_affects_runtime(profiles: &IProfiles, index: &str) -> bool {
+    // Global enhancement files always feed the runtime config.
+    if matches!(index, "Merge" | "Script" | "Rules") {
+        return true;
+    }
+
     let Some(current_uid) = profiles.get_current() else {
         return false;
     };

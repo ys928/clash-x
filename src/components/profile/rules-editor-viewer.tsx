@@ -16,6 +16,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,6 +25,8 @@ import {
   ListItem,
   ListItemText,
   TextField,
+  Typography,
+  alpha,
   styled,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
@@ -55,14 +58,26 @@ import { isValidIpCidr } from '@/utils/network'
 import { parseYamlSafe } from '@/utils/yaml'
 
 interface Props {
-  groupsUid: string
-  mergeUid: string
-  profileUid: string
+  groupsUid?: string
+  mergeUid?: string
+  profileUid?: string
   property: string
   open: boolean
   onClose: () => void
   onSave?: (prev?: string, curr?: string) => void
+  /** Global rules apply to every subscription and take highest prepend priority. */
+  global?: boolean
 }
+
+const LAN_DIRECT_PRESETS = [
+  'IP-CIDR,127.0.0.0/8,DIRECT,no-resolve',
+  'IP-CIDR,10.0.0.0/8,DIRECT,no-resolve',
+  'IP-CIDR,172.16.0.0/12,DIRECT,no-resolve',
+  'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve',
+  'IP-CIDR,169.254.0.0/16,DIRECT,no-resolve',
+  'IP-CIDR6,fc00::/7,DIRECT,no-resolve',
+  'IP-CIDR6,fe80::/10,DIRECT,no-resolve',
+] as const
 
 const portValidator = (value: string): boolean => {
   return new RegExp(
@@ -253,8 +268,16 @@ const PROXY_POLICY_LABEL_KEYS: Record<string, TranslationKey> =
   )
 
 export const RulesEditorViewer = (props: Props) => {
-  const { groupsUid, mergeUid, profileUid, property, open, onClose, onSave } =
-    props
+  const {
+    groupsUid = '',
+    mergeUid = '',
+    profileUid = '',
+    property,
+    open,
+    onClose,
+    onSave,
+    global = false,
+  } = props
   const { t } = useTranslation()
   const themeMode = useThemeMode()
 
@@ -273,6 +296,7 @@ export const RulesEditorViewer = (props: Props) => {
   const [ruleList, setRuleList] = useState<string[]>([])
   const [ruleSetList, setRuleSetList] = useState<string[]>([])
   const [subRuleList, setSubRuleList] = useState<string[]>([])
+  const [domainDraft, setDomainDraft] = useState('')
 
   const [prependSeq, setPrependSeq] = useState<string[]>([])
   const [appendSeq, setAppendSeq] = useState<string[]>([])
@@ -503,10 +527,19 @@ export const RulesEditorViewer = (props: Props) => {
   }, [prependSeq, appendSeq, deleteSeq])
 
   const fetchProfile = useCallback(async () => {
-    const data = await readProfileFile(profileUid) // 原配置文件
-    const groupsData = await readProfileFile(groupsUid) // groups配置文件
-    const mergeData = await readProfileFile(mergeUid) // merge配置文件
-    const globalMergeData = await readProfileFile('Merge') // global merge配置文件
+    const readOptional = async (uid: string) => {
+      if (!uid) return ''
+      try {
+        return await readProfileFile(uid)
+      } catch {
+        return ''
+      }
+    }
+
+    const data = await readOptional(profileUid)
+    const groupsData = await readOptional(groupsUid)
+    const mergeData = await readOptional(mergeUid)
+    const globalMergeData = await readOptional('Merge')
 
     const rulesObj = parseYamlSafe(data) as { rules: [] } | null
 
@@ -575,6 +608,33 @@ export const RulesEditorViewer = (props: Props) => {
     setRuleList(rulesObj?.rules || [])
   }, [groupsUid, mergeUid, profileUid])
 
+  const addPrependRules = useCallback((rawRules: string[]) => {
+    setPrependSeq((prev) => {
+      const toAdd = rawRules.filter((raw) => !prev.includes(raw))
+      return toAdd.length ? [...toAdd, ...prev] : prev
+    })
+  }, [])
+
+  const handleAddLanPreset = () => {
+    addPrependRules([...LAN_DIRECT_PRESETS])
+    showNotice.success('rules.modals.editor.presets.lanAdded')
+  }
+
+  const handleAddDomainDirect = () => {
+    const domain = domainDraft.trim().replace(/^\.+/, '')
+    if (!domain) {
+      showNotice.error('rules.modals.editor.form.validation.conditionRequired')
+      return
+    }
+    const raw = `DOMAIN-SUFFIX,${domain},DIRECT`
+    if (prependSeq.includes(raw)) {
+      setDomainDraft('')
+      return
+    }
+    addPrependRules([raw])
+    setDomainDraft('')
+  }
+
   useEffect(() => {
     if (!open) return
     fetchContent()
@@ -630,8 +690,25 @@ export const RulesEditorViewer = (props: Props) => {
       <DialogTitle>
         {
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            {t('rules.modals.editor.title')}
-            <Box>
+            <Box sx={{ pr: 2, minWidth: 0 }}>
+              <Typography component="span" variant="h6">
+                {t(
+                  global
+                    ? 'rules.modals.editor.globalTitle'
+                    : 'rules.modals.editor.title',
+                )}
+              </Typography>
+              {global && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, fontWeight: 400 }}
+                >
+                  {t('rules.modals.editor.globalHint')}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ flexShrink: 0 }}>
               <Button
                 variant="contained"
                 size="small"
@@ -759,6 +836,79 @@ export const RulesEditorViewer = (props: Props) => {
                     checked={noResolve}
                     onChange={() => setNoResolve(!noResolve)}
                   />
+                </Item>
+              )}
+              {global && (
+                <Item
+                  sx={{
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    gap: 1,
+                    py: 1.25,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 600, letterSpacing: 0.2 }}
+                  >
+                    {t('rules.modals.editor.presets.title')}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    <Chip
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      label={t('rules.modals.editor.presets.lanDirect')}
+                      onClick={handleAddLanPreset}
+                      sx={{
+                        height: 28,
+                        fontWeight: 600,
+                        bgcolor: (theme) =>
+                          alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'light' ? 0.06 : 0.12,
+                          ),
+                      }}
+                    />
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 1,
+                      alignItems: 'center',
+                      mt: 0.25,
+                    }}
+                  >
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={domainDraft}
+                      placeholder={t(
+                        'rules.modals.editor.presets.domainPlaceholder',
+                      )}
+                      onChange={(e) => setDomainDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleAddDomainDirect()
+                        }
+                      }}
+                      sx={{
+                        '& .MuiInputBase-root': { minHeight: 32 },
+                        '& .MuiInputBase-input': { py: '6px', fontSize: 13 },
+                      }}
+                    />
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={handleAddDomainDirect}
+                      disabled={!domainDraft.trim()}
+                      sx={{ minHeight: 32, whiteSpace: 'nowrap' }}
+                    >
+                      {t('rules.modals.editor.presets.addDomainDirect')}
+                    </Button>
+                  </Box>
                 </Item>
               )}
               <Item>

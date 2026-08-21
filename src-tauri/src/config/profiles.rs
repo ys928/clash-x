@@ -518,6 +518,7 @@ impl IProfiles {
 
         protected_files.insert("Merge.yaml".into());
         protected_files.insert("Script.js".into());
+        protected_files.insert("Rules.yaml".into());
 
         protected_files
     }

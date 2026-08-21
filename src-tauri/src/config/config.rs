@@ -168,6 +168,10 @@ impl Config {
             let script_item = &mut PrfItem::from_script(Some("Script".into()))?;
             profiles_append_item_to_safe(profiles, script_item).await?;
         }
+        if profiles.latest_arc().get_item("Rules").is_err() {
+            let rules_item = &mut PrfItem::from_rules(Some("Rules".into()))?;
+            profiles_append_item_to_safe(profiles, rules_item).await?;
+        }
         Ok(())
     }
 

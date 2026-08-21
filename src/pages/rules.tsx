@@ -1,6 +1,7 @@
-import { RefreshRounded } from '@mui/icons-material'
+import { EditRounded, RefreshRounded } from '@mui/icons-material'
 import {
   Box,
+  Button,
   Chip,
   Fade,
   IconButton,
@@ -14,9 +15,11 @@ import { useTranslation } from 'react-i18next'
 
 import { VirtualList, type VirtualListHandle } from '@/components/base'
 import { ScrollTopButton } from '@/components/layout/scroll-top-button'
+import { RulesEditorViewer } from '@/components/profile/rules-editor-viewer'
 import { ProviderButton } from '@/components/rule/provider-button'
 import RuleItem from '@/components/rule/rule-item'
 import { AppEmpty, AppPage, AppSearchField } from '@/components/ui'
+import { useProfiles } from '@/hooks/use-profiles'
 import { useVisibility } from '@/hooks/use-visibility'
 import { useAppRefreshers, useRulesData } from '@/providers/app-data-context'
 
@@ -69,10 +72,12 @@ const RulesPage = () => {
   const { t } = useTranslation()
   const { rules = [], ruleProviders } = useRulesData()
   const { refreshRules, refreshRuleProviders } = useAppRefreshers()
+  const { current } = useProfiles()
   const [match, setMatch] = useState(() => (_: string) => true)
   const [typeFilter, setTypeFilter] = useState(ALL)
   const [policyFilter, setPolicyFilter] = useState(ALL)
   const [refreshing, setRefreshing] = useState(false)
+  const [globalEditorOpen, setGlobalEditorOpen] = useState(false)
   const virtuosoRef = useRef<VirtualListHandle>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const pageVisible = useVisibility()
@@ -141,6 +146,10 @@ const RulesPage = () => {
     }
   }, [refreshRules, refreshRuleProviders])
 
+  const handleGlobalRulesSaved = useCallback(async () => {
+    await Promise.all([refreshRules(), refreshRuleProviders()])
+  }, [refreshRules, refreshRuleProviders])
+
   const handleScroll = useCallback((e: Event) => {
     setShowScrollTop((e.target as HTMLElement).scrollTop > 100)
   }, [])
@@ -185,6 +194,21 @@ const RulesPage = () => {
               }}
             />
           )}
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<EditRounded fontSize="small" />}
+            onClick={() => setGlobalEditorOpen(true)}
+            sx={{
+              height: 30,
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 1.25,
+            }}
+          >
+            {t('rules.page.actions.editGlobal')}
+          </Button>
           <ProviderButton />
           <IconButton
             size="small"
@@ -206,6 +230,18 @@ const RulesPage = () => {
         </Box>
       }
     >
+      {globalEditorOpen && (
+        <RulesEditorViewer
+          open
+          global
+          property="Rules"
+          profileUid={current?.uid ?? ''}
+          groupsUid={current?.option?.groups ?? ''}
+          mergeUid={current?.option?.merge ?? ''}
+          onSave={handleGlobalRulesSaved}
+          onClose={() => setGlobalEditorOpen(false)}
+        />
+      )}
       <Box
         sx={{
           px: 1.5,
