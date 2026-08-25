@@ -8,7 +8,6 @@ import delayManager from '@/services/delay'
 import { radius, typographyScale } from '@/theme/tokens'
 import {
   memberDetails,
-  providerNameOf,
   type ProxyGroupView,
   type ResolvedProxyMember,
 } from '@/types/proxy-view'
@@ -37,8 +36,6 @@ export const ProxyItemMini = (props: Props) => {
   const unresolved = member.kind === 'unresolved'
   const name = member.ref.name
   const type = unresolved ? member.ref.reason : (details?.type ?? '')
-  const provider =
-    member.kind === 'node' ? providerNameOf(member.node) : undefined
   const now = member.kind === 'group' ? member.group.now : undefined
   const showAutoSwitch = !unresolved && selected && autoSwitchActive
 
@@ -147,11 +144,6 @@ export const ProxyItemMini = (props: Props) => {
               >
                 {now}
               </Typography>
-            )}
-            {!!provider && (
-              <TypeBox color="text.secondary" component="span">
-                {provider}
-              </TypeBox>
             )}
             <TypeBox color="text.secondary" component="span">
               {type}

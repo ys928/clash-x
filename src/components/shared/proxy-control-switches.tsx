@@ -172,7 +172,7 @@ const ProxyControlSwitches = ({
   const { uninstallServiceAndStartSidecar } = useServiceUninstaller()
   const { indicator: systemProxyIndicator, toggleSystemProxy } =
     useSystemProxyState()
-  const { runState, isTunModeAvailable } = useSystemState()
+  const { runState, isTunModeAvailable, isLoading } = useSystemState()
   // Offer to uninstall only a service that is actually there and working.
   const isServiceInstallReady = runState.serviceUsable
 
@@ -184,6 +184,15 @@ const ProxyControlSwitches = ({
 
   // Keep TUN visible when already on; otherwise start collapsed as advanced.
   const [advancedOpen, setAdvancedOpen] = useState(tunEnabled)
+
+  // Enabling needs a running core; disabling only writes OS state and must stay available.
+  const handleSystemProxyToggle = async (value: boolean) => {
+    if (value && !isLoading && runState.mode === 'NotRunning') {
+      showNotice.error('settings.feedback.errors.sysproxy.coreNotReady')
+      return false
+    }
+    await toggleSystemProxy(value)
+  }
 
   const handleTunToggle = async (value: boolean) => {
     if (value && !isTunModeAvailable) {
@@ -225,7 +234,7 @@ const ProxyControlSwitches = ({
       active={systemProxyIndicator}
       infoTitle={t('home.components.proxyTun.tooltips.systemProxy')}
       onInfoClick={() => sysproxyRef.current?.open()}
-      onToggle={(value) => toggleSystemProxy(value)}
+      onToggle={handleSystemProxyToggle}
       onError={onError}
       highlight={systemProxyIndicator && !tunEnabled}
       badge={

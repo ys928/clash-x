@@ -125,7 +125,7 @@ fn profile_affects_runtime(profiles: &IProfiles, index: &str) -> bool {
         return true;
     }
 
-    let Some(current_uid) = profiles.get_current() else {
+    let Some(current_uid) = profiles.current.as_ref() else {
         return false;
     };
     if current_uid == index {

@@ -7,7 +7,6 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { open as openUrl } from '@tauri-apps/plugin-shell'
 import type { DownloadEvent } from '@tauri-apps/plugin-updater'
 import { useLockFn } from 'ahooks'
 import type { Ref } from 'react'
@@ -28,6 +27,7 @@ import { useUpdateStatus } from '@/hooks/use-update-status'
 import { restartApp } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import { useSetUpdateState, useUpdateState } from '@/services/states'
+import { openExternalUrl } from '@/utils/open-external-url'
 import { version as appVersion } from '@root/package.json'
 
 type MarkdownNode = {
@@ -179,6 +179,10 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
   const downloadedRef = useRef(0)
   const totalRef = useRef(0)
 
+  const openUrlWithNotice = (url: string) => {
+    void openExternalUrl(url).catch(showNotice.error)
+  }
+
   const progress = useMemo(() => {
     if (total <= 0) return 0
     return Math.min((downloaded / total) * 100, 100)
@@ -226,7 +230,7 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
     : 'https://github.com/ys928/clash-x/releases/latest'
 
   const onGoToRelease = () => {
-    void openUrl(releaseUrl)
+    openUrlWithNotice(releaseUrl)
   }
 
   const onUpdate = useLockFn(async () => {
@@ -448,10 +452,25 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
             <LazyReactMarkdown
               remarkPlugins={[remarkGitHubAlertsPlugin]}
               components={{
-                a: ({ ...props }) => {
-                  const { children } = props
+                a: ({ href, children, ...props }) => {
                   return (
-                    <a {...props} target="_blank" rel="noreferrer">
+                    <a
+                      {...props}
+                      href={href ? '#' : undefined}
+                      target={undefined}
+                      rel={undefined}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        if (!href) return
+                        openUrlWithNotice(href)
+                      }}
+                      onAuxClick={(event) => {
+                        event.preventDefault()
+                        if (event.button === 1 && href) {
+                          openUrlWithNotice(href)
+                        }
+                      }}
+                    >
                       {children}
                     </a>
                   )

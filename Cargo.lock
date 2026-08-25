@@ -1224,6 +1224,7 @@ dependencies = [
  "tauri-plugin-http",
  "tauri-plugin-mihomo",
  "tauri-plugin-notification",
+ "tauri-plugin-opener",
  "tauri-plugin-process",
  "tauri-plugin-shell",
  "tauri-plugin-updater",
@@ -1256,8 +1257,8 @@ dependencies = [
 
 [[package]]
 name = "clash_verge_service_ipc"
-version = "2.6.4"
-source = "git+https://github.com/clash-verge-rev/clash-verge-service-ipc.git?tag=v2.6.4#9b50250b3cd48febc2e438b405be74d64bf2156f"
+version = "2.6.5"
+source = "git+https://github.com/clash-verge-rev/clash-verge-service-ipc.git?tag=v2.6.5#5c72df93adad81d015d522424d124ff25dbe4c2e"
 dependencies = [
  "anyhow",
  "compact_str",
@@ -6985,8 +6986,8 @@ dependencies = [
 
 [[package]]
 name = "sysproxy"
-version = "0.6.1"
-source = "git+https://github.com/clash-verge-rev/sysproxy-rs?branch=main#c63788cf88e3deac1087d759c16543235d66b921"
+version = "0.7.0"
+source = "git+https://github.com/clash-verge-rev/sysproxy-rs.git?rev=1677bcb8d3cd9436b71a2e61629f41be9f0e80ba#1677bcb8d3cd9436b71a2e61629f41be9f0e80ba"
 dependencies = [
  "iptools",
  "log",
@@ -7462,6 +7463,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-opener"
+version = "2.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17e1bea14edce6b793a04e2417e3fd924b9bc4faae83cdee7d714156cceeed29"
+dependencies = [
+ "dunce",
+ "glob",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "open",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.20",
+ "url",
+ "windows 0.61.3",
+ "zbus",
+]
+
+[[package]]
 name = "tauri-plugin-process"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7623,7 +7646,7 @@ dependencies = [
  "serde_with",
  "swift-rs",
  "thiserror 2.0.20",
- "toml 1.1.4+spec-1.1.0",
+ "toml 0.9.12+spec-1.1.0",
  "url",
  "urlpattern",
  "uuid",

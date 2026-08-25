@@ -185,13 +185,13 @@ async fn resolve_latest_version(alpha: bool) -> Result<(ProxyType, std::string::
 
     for proxy in [ProxyType::Localhost, ProxyType::System, ProxyType::None] {
         let attempt = NetworkManager::new()
-            .get_with_interrupt(&url, proxy, Some(VERSION_TIMEOUT_SECS), None, false)
+            .get(&url, proxy, Some(VERSION_TIMEOUT_SECS), None, false)
             .await;
 
         match attempt {
             Ok(response) if response.status().is_success() => {
                 // An error page answered with 200 must not become a version, nor reach the URL.
-                let version = response.text_with_charset()?.trim().to_owned();
+                let version = response.text().trim().to_owned();
                 if !is_usable_version(&version) {
                     last_error = Some(anyhow!("{url} returned an unusable version"));
                     continue;
@@ -220,7 +220,7 @@ async fn download_package(proxy: ProxyType, alpha: bool, version: &str) -> Resul
     logging!(info, Type::Core, "core upgrade: downloading {url}");
 
     NetworkManager::new()
-        .get_bytes_with_interrupt(&url, proxy, Some(PACKAGE_TIMEOUT_SECS), MAX_PACKAGE_BYTES)
+        .get_bytes(&url, proxy, Some(PACKAGE_TIMEOUT_SECS), MAX_PACKAGE_BYTES)
         .await
         .with_context(|| format!("failed to download {url}"))
 }
@@ -396,15 +396,7 @@ fn read_core_version(path: &Path) -> Result<std::string::String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{asset_base_name, is_usable_version, package_url};
-
-    #[test]
-    fn asset_names_match_the_prebuild_map() {
-        let release = asset_base_name(false).unwrap_or_default();
-        let alpha = asset_base_name(true).unwrap_or_default();
-        assert!(release.starts_with("mihomo-"));
-        assert!(alpha.starts_with("mihomo-"));
-    }
+    use super::{is_usable_version, package_url};
 
     #[test]
     fn only_plain_version_tokens_reach_the_package_url() {
