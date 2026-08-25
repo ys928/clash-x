@@ -184,7 +184,7 @@ pub async fn load_global_rules_seq() -> Option<SeqMap> {
     let item = profiles.get_item("Rules").ok()?;
     let file = item.file.as_ref()?;
     let path = dirs::app_profiles_dir().ok()?.join(file.as_str());
-    help::read_seq_map(&path).await.ok()
+    help::read_yaml::<SeqMap>(&path).await.ok()
 }
 
 pub async fn global_direct_sysproxy_patterns() -> Vec<String> {

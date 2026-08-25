@@ -449,7 +449,7 @@ async fn save_to_disk(groups: &[AutoSwitchGroup]) -> Result<()> {
     if let Some(parent) = path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
-    help::save_yaml_atomic(
+    help::save_yaml(
         &path,
         &AutoSwitchFile {
             groups: groups.to_vec(),
