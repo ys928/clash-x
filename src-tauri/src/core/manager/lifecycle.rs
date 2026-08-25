@@ -1,7 +1,6 @@
 use super::{CoreManager, RunningMode};
 use crate::config::{Config, IVerge};
 use crate::core::handle::Handle;
-use crate::core::manager::CLASH_LOGGER;
 use crate::core::proxy_control::{self, SysproxyFailure};
 use crate::core::service::{SERVICE_MANAGER, ServiceStatus};
 use anyhow::{Result, ensure};
@@ -537,7 +536,6 @@ impl CoreManager {
     }
 
     async fn stop_core_unprepared_inner(&self) -> Result<()> {
-        CLASH_LOGGER.clear_logs().await;
         match *self.get_running_mode() {
             RunningMode::Service => self.stop_core_by_service().await,
             RunningMode::Sidecar => {

@@ -4,9 +4,7 @@ mod state;
 
 use anyhow::Result;
 use arc_swap::{ArcSwap, ArcSwapOption};
-use clash_verge_logger::AsyncLogger;
 use clash_verge_logging::{Type, logging};
-use once_cell::sync::Lazy;
 use std::{
     fmt,
     sync::{
@@ -21,8 +19,6 @@ use crate::core::runstate::{RUN_STATE, RealEnv, RunStateStore};
 use crate::singleton;
 #[cfg(target_os = "windows")]
 use std::os::windows::io::OwnedHandle;
-
-pub(crate) static CLASH_LOGGER: Lazy<Arc<AsyncLogger>> = Lazy::new(|| Arc::new(AsyncLogger::new()));
 
 tokio::task_local! {
     static PROFILE_SELECTIONS_PENDING_COMMIT: bool;

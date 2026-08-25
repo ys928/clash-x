@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/core'
-import dayjs from 'dayjs'
 
 import type { AutoSwitchGroup } from '@/components/proxy/auto-switch-model'
 import type { CommandFailure } from '@/services/notice-service'
@@ -181,29 +180,6 @@ export async function deleteAutoSwitchGroup(id: string) {
 
 export async function runAutoSwitchOnce(group: AutoSwitchGroup) {
   return invoke<AutoSwitchRunResult>('run_auto_switch_once', { group })
-}
-
-export async function getClashLogs() {
-  const regex = /time="(.+?)"\s+level=(.+?)\s+msg="(.+?)"/
-  const newRegex = /(.+?)\s+(.+?)\s+(.+)/
-  const logs = await invoke<string[]>('get_clash_logs')
-
-  return logs.reduce<ILogItem[]>((acc, log) => {
-    const result = log.match(regex)
-    if (result) {
-      const [_, _time, type, payload] = result
-      const time = dayjs(_time).format('MM-DD HH:mm:ss')
-      acc.push({ time, type, payload })
-      return acc
-    }
-
-    const result2 = log.match(newRegex)
-    if (result2) {
-      const [_, time, type, payload] = result2
-      acc.push({ time, type, payload })
-    }
-    return acc
-  }, [])
 }
 
 export async function getVergeConfig() {

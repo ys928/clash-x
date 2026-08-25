@@ -4,7 +4,7 @@ use super::{CoreManager, PROFILE_SELECTIONS_PENDING_COMMIT, RunningMode};
 use crate::{
     AsyncHandler,
     config::Config,
-    core::{handle, logger::Logger, manager::CLASH_LOGGER, proxy_control, service},
+    core::{handle, logger::Logger, proxy_control, service},
     logging,
     utils::dirs,
 };
@@ -80,14 +80,6 @@ use {
 };
 
 impl CoreManager {
-    pub async fn get_clash_logs(&self) -> Result<Vec<CompactString>> {
-        match *self.get_running_mode() {
-            RunningMode::Service => service::get_clash_logs_by_service().await,
-            RunningMode::Sidecar => Ok(CLASH_LOGGER.get_logs().await),
-            RunningMode::NotRunning => Ok(Vec::new()),
-        }
-    }
-
     pub(super) async fn start_core_by_sidecar(&self) -> Result<()> {
         logging!(info, Type::Core, "Starting core in sidecar mode");
         self.core_stopped();
@@ -194,7 +186,6 @@ impl CoreManager {
                     | tauri_plugin_shell::process::CommandEvent::Stderr(line) => {
                         let message = CompactString::from(&*String::from_utf8_lossy(&line));
                         Logger::global().writer_sidecar_log(Level::Error, &message);
-                        CLASH_LOGGER.append_log(message).await;
                     }
                     tauri_plugin_shell::process::CommandEvent::Terminated(term) => {
                         let manager = Self::global();
@@ -207,7 +198,6 @@ impl CoreManager {
                             CompactString::from("Process terminated")
                         };
                         Logger::global().writer_sidecar_log(Level::Info, &message);
-                        CLASH_LOGGER.clear_logs().await;
                         manager.clear_terminated_sidecar(pid).await;
                         break;
                     }

@@ -232,7 +232,6 @@ export interface TranslationResources {
           tabs: {
             connections: string
             home: string
-            logs: string
             more: string
             profiles: string
             proxies: string
@@ -280,18 +279,6 @@ export interface TranslationResources {
           quitCoreStopFailed: string
           restartCoreStopFailed: string
         }
-      }
-    }
-    logs: {
-      actions: {
-        showAscending: string
-        showDescending: string
-      }
-      page: {
-        actions: {
-          more: string
-        }
-        title: string
       }
     }
     profiles: {

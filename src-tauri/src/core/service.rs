@@ -924,29 +924,6 @@ where
     (captured, operation().await)
 }
 
-pub(super) async fn get_clash_logs_by_service() -> Result<Vec<CompactString>> {
-    logging!(info, Type::Service, "正在获取服务模式下的 Clash 日志");
-
-    let credentials = current_owner_credentials()?;
-    let (generation, response) = capture_generation_before(&OWNER_MONITOR_GENERATION, || {
-        clash_verge_service_ipc::get_clash_logs(&credentials)
-    })
-    .await;
-    let response = response.context("无法连接到Clash Verge Service")?;
-
-    if response.code > 0 {
-        if response.code == clash_verge_service_ipc::ServiceErrorCode::NotActive as u16 {
-            recover_after_owner_loss(generation, OwnerRecoveryReason::Displaced).await;
-        }
-        let err_msg = response.message;
-        logging!(error, Type::Service, "获取服务模式下的 Clash 日志失败: {}", err_msg);
-        bail!(err_msg);
-    }
-
-    logging!(info, Type::Service, "成功获取服务模式下的 Clash 日志");
-    Ok(response.data.unwrap_or_default())
-}
-
 pub(crate) async fn get_clash_log_snapshot_by_service() -> Result<String> {
     let credentials = current_owner_credentials()?;
     let (generation, response) = capture_generation_before(&OWNER_MONITOR_GENERATION, || {

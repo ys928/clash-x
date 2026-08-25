@@ -4,11 +4,10 @@ import { invoke } from '@tauri-apps/api/core'
 import { useLockFn } from 'ahooks'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { updateGeo, type LogLevel } from 'tauri-plugin-mihomo-api'
+import { updateGeo } from 'tauri-plugin-mihomo-api'
 
 import { DialogRef, Switch, TooltipIcon } from '@/components/base'
 import { useClash } from '@/hooks/use-clash'
-import { useClashLog } from '@/hooks/use-clash-log'
 import { useDisplayedMixedPort } from '@/hooks/use-displayed-mixed-port'
 import { useVerge } from '@/hooks/use-verge'
 import { invoke_uwp_tool } from '@/services/cmds'
@@ -38,7 +37,6 @@ const SettingClash = ({ onError }: Props) => {
   const { clash, version, mutateClash, patchClash } = useClash()
   const { verge, patchVerge } = useVerge()
   const displayedMixedPort = useDisplayedMixedPort()
-  const [, setClashLog] = useClashLog()
 
   const {
     ipv6,
@@ -190,13 +188,7 @@ const SettingClash = ({ onError }: Props) => {
           onCatch={onError}
           onFormat={(e: any) => e.target.value}
           onChange={(e) => onChangeData({ 'log-level': e })}
-          onGuard={(e) => {
-            setClashLog((pre) => ({
-              ...pre!,
-              logLevel: e.toUpperCase() as LogLevel,
-            }))
-            return patchClash({ 'log-level': e })
-          }}
+          onGuard={(e) => patchClash({ 'log-level': e })}
         >
           <Select size="small" sx={{ width: 100, '> div': { py: '7.5px' } }}>
             <MenuItem value="debug">

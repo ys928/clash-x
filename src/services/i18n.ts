@@ -91,7 +91,6 @@ const STARTUP_LANGUAGE_SECTIONS = [
   'tests',
   'rules',
   'connections',
-  'logs',
 ] as const
 
 const localeModules = import.meta.glob<LocaleModule>('@/locales/*/*.json')
