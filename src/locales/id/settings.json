@@ -178,8 +178,6 @@
           "copyEnvType": "Salin Jenis Env",
           "startPage": "Halaman Mulai",
           "startupScript": "Skrip Startup",
-          "themeSetting": "Pengaturan Tema",
-          "layoutSetting": "Pengaturan Tata Letak",
           "misc": "Lain-lain",
           "hotkeySetting": "Pengaturan Pintasan"
         }
@@ -208,72 +206,6 @@
           "exit": "Keluar",
           "exportDiagnostics": "Export Diagnostic Info",
           "vergeVersion": "Versi Verge"
-        }
-      },
-      "theme": {
-        "title": "Pengaturan Tema",
-        "fields": {
-          "primaryColor": "Warna Utama",
-          "secondaryColor": "Warna Sekunder",
-          "primaryText": "Teks Utama",
-          "secondaryText": "Teks Sekunder",
-          "infoColor": "Warna Info",
-          "warningColor": "Warna Peringatan",
-          "errorColor": "Warna Kesalahan",
-          "successColor": "Warna Keberhasilan",
-          "fontFamily": "Keluarga Font",
-          "cssInjection": "Injeksi CSS"
-        },
-        "actions": {
-          "editCss": "Edit CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "Edit CSS"
-        }
-      },
-      "layout": {
-        "title": "Pengaturan Tata Letak",
-        "fields": {
-          "preferSystemTitlebar": "Prefer System Titlebar",
-          "trafficGraph": "Grafik Lalu Lintas",
-          "memoryUsage": "Penggunaan Memori",
-          "proxyGroupIcon": "Ikon Grup Proksi",
-          "toastPosition": "Posisi toast",
-          "hoverNavigator": "Hover Jump Navigator",
-          "hoverNavigatorDelay": "Hover Jump Navigator Delay",
-          "navIcon": "Ikon Navigasi",
-          "collapseNavBar": "Ciutkan bilah navigasi",
-          "trayIcon": "Ikon Tray",
-          "proxyGroupsDisplayMode": "Proxy Groups Display Mode",
-          "showOutboundModesInline": "Show Outbound Modes Inline",
-          "commonTrayIcon": "Ikon Tray Umum",
-          "systemProxyTrayIcon": "Ikon Tray Proksi Sistem",
-          "tunTrayIcon": "Ikon Tray Tun",
-          "enableTrayIcon": "Enable Tray Icon",
-          "enableTraySpeed": "Aktifkan Tray Speed",
-          "pauseRenderTrafficStatsOnBlur": "Jeda render statistik lalu lintas saat jendela tidak fokus"
-        },
-        "tooltips": {
-          "hoverNavigator": "Automatically scroll to the corresponding proxy group when hovering over alphabet letters",
-          "hoverNavigatorDelay": "Delay before auto scrolling when hovering, in milliseconds"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "Monokrom",
-            "colorful": "Berwarna",
-            "disable": "Nonaktifkan"
-          },
-          "toastPosition": {
-            "topLeft": "Kiri atas",
-            "topRight": "Kanan atas",
-            "bottomLeft": "Kiri bawah",
-            "bottomRight": "Kanan bawah"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "Default",
-            "inline": "Inline",
-            "disable": "Disable"
-          }
         }
       }
     }

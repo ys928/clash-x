@@ -178,8 +178,6 @@
           "copyEnvType": "Env төрен күчереп алу",
           "startPage": "Баш бит",
           "startupScript": "Башлану скрипты",
-          "themeSetting": "Тема көйләүләре",
-          "layoutSetting": "Расположение көйләүләре",
           "misc": "Өстәмә көйләүләр",
           "hotkeySetting": "Клавиатура төймәләре (hotkey) көйләүләре"
         }
@@ -208,72 +206,6 @@
           "exit": "Чыгу",
           "exportDiagnostics": "Export Diagnostic Info",
           "vergeVersion": "Verge версиясе"
-        }
-      },
-      "theme": {
-        "title": "Тема көйләүләре",
-        "fields": {
-          "primaryColor": "Төп төс",
-          "secondaryColor": "Икенче төс",
-          "primaryText": "Primary Text",
-          "secondaryText": "Secondary Text",
-          "infoColor": "Мәгълүмат төсе",
-          "warningColor": "Кисәтү төсе",
-          "errorColor": "Хата төсе",
-          "successColor": "Уңыш төсе",
-          "fontFamily": "Шрифтлар гаиләсе",
-          "cssInjection": "CSS кертү"
-        },
-        "actions": {
-          "editCss": "Edit CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "Edit CSS"
-        }
-      },
-      "layout": {
-        "title": "Расположение көйләүләре",
-        "fields": {
-          "preferSystemTitlebar": "Prefer System Titlebar",
-          "trafficGraph": "Трафик графигы",
-          "memoryUsage": "Хәтер куллану",
-          "proxyGroupIcon": "Прокси төркеме иконкасы",
-          "toastPosition": "Toast Position",
-          "hoverNavigator": "Hover Jump Navigator",
-          "hoverNavigatorDelay": "Hover Jump Navigator Delay",
-          "navIcon": "Навигация иконкасы",
-          "collapseNavBar": "Навигация панелен җыю",
-          "trayIcon": "Трей иконкасы",
-          "proxyGroupsDisplayMode": "Proxy Groups Display Mode",
-          "showOutboundModesInline": "Show Outbound Modes Inline",
-          "commonTrayIcon": "Гомуми трей иконкасы",
-          "systemProxyTrayIcon": "Системалы прокси иконкасы",
-          "tunTrayIcon": "Tun (виртуаль адаптер) иконкасы",
-          "enableTrayIcon": "Enable Tray Icon",
-          "enableTraySpeed": "Трей скоростьне үстерү",
-          "pauseRenderTrafficStatsOnBlur": "Фокус югалганда трафик статистикасын сызуны туктатып тору"
-        },
-        "tooltips": {
-          "hoverNavigator": "Automatically scroll to the corresponding proxy group when hovering over alphabet letters",
-          "hoverNavigatorDelay": "Delay before auto scrolling when hovering, in milliseconds"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "Монохром",
-            "colorful": "Төсле",
-            "disable": "Сүндерү"
-          },
-          "toastPosition": {
-            "topLeft": "Top Left",
-            "topRight": "Top Right",
-            "bottomLeft": "Bottom Left",
-            "bottomRight": "Bottom Right"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "Default",
-            "inline": "Inline",
-            "disable": "Disable"
-          }
         }
       }
     }

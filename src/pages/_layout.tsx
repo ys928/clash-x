@@ -150,7 +150,6 @@ const Layout = () => {
   const { theme } = useCustomTheme()
   const { verge, mutateVerge, patchVerge } = useVerge()
   const { language } = verge ?? {}
-  const navCollapsed = verge?.collapse_navbar ?? false
   const { switchLanguage } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
@@ -288,11 +287,6 @@ const Layout = () => {
     setMenuContextPosition(null)
   }, [])
 
-  const handleToggleNavCollapsed = useCallback(() => {
-    setMenuContextPosition(null)
-    void patchVerge({ collapse_navbar: !navCollapsed })
-  }, [navCollapsed, patchVerge])
-
   useLoadingOverlay(themeReady)
 
   const handleNotice = useCallback(
@@ -371,9 +365,6 @@ const Layout = () => {
             }
           },
         ]}
-        title={
-          navCollapsed ? t('layout.components.navigation.tabs.more') : undefined
-        }
         aria-label={t('layout.components.navigation.tabs.more')}
         aria-expanded={moreExpanded}
       >
@@ -436,7 +427,7 @@ const Layout = () => {
   return (
     <ThemeProvider theme={theme}>
       {/* 左侧底部窗口控制按钮 */}
-      <NoticeManager position={verge?.notice_position} />
+      <NoticeManager />
       <ServiceMigrationDialog />
       <SysproxyPrivilegeDialog />
       <div
@@ -456,7 +447,7 @@ const Layout = () => {
       <Paper
         square
         elevation={0}
-        className={`${OS} layout${navCollapsed ? ' layout--nav-collapsed' : ''}`}
+        className={`${OS} layout`}
         style={{
           borderTopLeftRadius: '0px',
           borderTopRightRadius: '0px',
@@ -527,7 +518,7 @@ const Layout = () => {
                     {renderNavList(orderedPrimaryItems, true)}
                     {moreToggle}
                     <Collapse in={moreExpanded} timeout="auto" unmountOnExit>
-                      <List disablePadding sx={{ pl: navCollapsed ? 0 : 1 }}>
+                      <List disablePadding sx={{ pl: 1 }}>
                         {renderNavList(orderedMoreItems, false)}
                       </List>
                     </Collapse>
@@ -545,7 +536,7 @@ const Layout = () => {
                 {renderNavList(orderedPrimaryItems, false)}
                 {moreToggle}
                 <Collapse in={moreExpanded} timeout="auto" unmountOnExit>
-                  <List disablePadding sx={{ pl: navCollapsed ? 0 : 1 }}>
+                  <List disablePadding sx={{ pl: 1 }}>
                     {renderNavList(orderedMoreItems, false)}
                   </List>
                 </Collapse>
@@ -577,11 +568,6 @@ const Layout = () => {
                 },
               }}
             >
-              <MenuItem onClick={handleToggleNavCollapsed} dense>
-                {navCollapsed
-                  ? t('layout.components.navigation.menu.expandNavBar')
-                  : t('layout.components.navigation.menu.collapseNavBar')}
-              </MenuItem>
               <MenuItem
                 onClick={menuUnlocked ? handleLockMenu : handleUnlockMenu}
                 dense

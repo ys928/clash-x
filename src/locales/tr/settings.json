@@ -178,8 +178,6 @@
           "copyEnvType": "Env Tipini Kopyala",
           "startPage": "Başlangıç Sayfası",
           "startupScript": "Başlangıç Betiği",
-          "themeSetting": "Tema Ayarı",
-          "layoutSetting": "Düzen Ayarı",
           "misc": "Çeşitli",
           "hotkeySetting": "Kısayol Tuşu Ayarı"
         }
@@ -208,72 +206,6 @@
           "exit": "Çıkış",
           "exportDiagnostics": "Tanılama Bilgilerini Dışa Aktar",
           "vergeVersion": "Verge Sürümü"
-        }
-      },
-      "theme": {
-        "title": "Tema Ayarı",
-        "fields": {
-          "primaryColor": "Ana Renk",
-          "secondaryColor": "İkincil Renk",
-          "primaryText": "Ana Metin",
-          "secondaryText": "İkincil Metin",
-          "infoColor": "Bilgi Rengi",
-          "warningColor": "Uyarı Rengi",
-          "errorColor": "Hata Rengi",
-          "successColor": "Başarı Rengi",
-          "fontFamily": "Yazı Tipi Ailesi",
-          "cssInjection": "CSS Enjeksiyonu"
-        },
-        "actions": {
-          "editCss": "Edit CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "Edit CSS"
-        }
-      },
-      "layout": {
-        "title": "Düzen Ayarı",
-        "fields": {
-          "preferSystemTitlebar": "Prefer System Titlebar",
-          "trafficGraph": "Trafik Grafiği",
-          "memoryUsage": "Çekirdek Kullanımı",
-          "proxyGroupIcon": "Vekil Grup Simgesi",
-          "toastPosition": "Toast konumu",
-          "hoverNavigator": "Hover Jump Navigator",
-          "hoverNavigatorDelay": "Hover Jump Navigator Delay",
-          "navIcon": "Gezinme Simgesi",
-          "collapseNavBar": "Gezinme çubuğunu daralt",
-          "trayIcon": "Tepsi Simgesi",
-          "proxyGroupsDisplayMode": "Proxy Groups Display Mode",
-          "showOutboundModesInline": "Show Outbound Modes Inline",
-          "commonTrayIcon": "Genel Tepsi Simgesi",
-          "systemProxyTrayIcon": "Sistem Vekil Tepsi Simgesi",
-          "tunTrayIcon": "Tun Tepsi Simgesi",
-          "enableTrayIcon": "Tepsi Simgesini Etkinleştir",
-          "enableTraySpeed": "Tepsi Hızını Etkinleştir",
-          "pauseRenderTrafficStatsOnBlur": "Odak kaybolduğunda trafik istatistiklerinin işlenmesini duraklat"
-        },
-        "tooltips": {
-          "hoverNavigator": "Automatically scroll to the corresponding proxy group when hovering over alphabet letters",
-          "hoverNavigatorDelay": "Delay before auto scrolling when hovering, in milliseconds"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "Tek Renkli",
-            "colorful": "Renkli",
-            "disable": "Devre Dışı Bırak"
-          },
-          "toastPosition": {
-            "topLeft": "Sol üst",
-            "topRight": "Sağ üst",
-            "bottomLeft": "Sol alt",
-            "bottomRight": "Sağ alt"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "Default",
-            "inline": "Inline",
-            "disable": "Disable"
-          }
         }
       }
     }

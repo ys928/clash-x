@@ -16,7 +16,6 @@ import { ConfigViewer } from './mods/config-viewer'
 import { GuardState } from './mods/guard-state'
 import { HotkeyViewer } from './mods/hotkey-viewer'
 import { LanguageSelect } from './mods/language-select'
-import { LayoutViewer } from './mods/layout-viewer'
 import { MiscViewer } from './mods/misc-viewer'
 import { SettingItem, SettingList } from './mods/setting-comp'
 import { ThemeModeSwitch } from './mods/theme-mode-switch'
@@ -44,7 +43,6 @@ const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
   const configRef = useRef<DialogRef>(null)
   const hotkeyRef = useRef<DialogRef>(null)
   const miscRef = useRef<DialogRef>(null)
-  const layoutRef = useRef<DialogRef>(null)
   const backupRef = useRef<DialogRef>(null)
 
   const onChangeData = (patch: any) => {
@@ -72,7 +70,6 @@ const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
       <ConfigViewer ref={configRef} />
       <HotkeyViewer ref={hotkeyRef} />
       <MiscViewer ref={miscRef} />
-      <LayoutViewer ref={layoutRef} />
       <BackupViewer ref={backupRef} />
 
       {showEssentials && (
@@ -249,11 +246,6 @@ const SettingVergeBasic = ({ onError, mode = 'all' }: Props) => {
               ></Input>
             </GuardState>
           </SettingItem>
-
-          <SettingItem
-            onClick={() => layoutRef.current?.open()}
-            label={t('settings.components.verge.basic.fields.layoutSetting')}
-          />
 
           <SettingItem
             onClick={() => miscRef.current?.open()}

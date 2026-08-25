@@ -411,7 +411,6 @@ function NormalProxyGroups(props: { mode: string }) {
     showFocusChrome && viewMode === 'focus' ? focusedGroupName : null
 
   const {
-    verge,
     renderList,
     headStates,
     onProxies,
@@ -715,10 +714,8 @@ function NormalProxyGroups(props: { mode: string }) {
           <ProxyGroupNavigator
             proxyGroupNames={proxyGroupNames}
             onGroupLocation={handleGroupLocationByName}
-            enableHoverJump={verge?.enable_hover_jump_navigator ?? true}
-            hoverDelay={
-              verge?.hover_jump_navigator_delay ?? DEFAULT_HOVER_DELAY
-            }
+            enableHoverJump
+            hoverDelay={DEFAULT_HOVER_DELAY}
           />
         )}
       </div>

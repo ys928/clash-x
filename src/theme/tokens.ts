@@ -33,7 +33,6 @@ export const typographyScale = {
 export const layoutTokens = {
   pageHeaderHeight: 52,
   titlebarHeight: 40,
-  navCollapsedWidth: 72,
   pageContentGutter: 10,
   pageHeaderPaddingInline: 20,
 } as const

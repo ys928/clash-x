@@ -21,7 +21,6 @@ import { TrafficErrorBoundary } from '@/components/shared/traffic-error-boundary
 import { useConnectionSummaryData } from '@/hooks/use-connection-data'
 import { useMemoryData } from '@/hooks/use-memory-data'
 import { useTrafficData } from '@/hooks/use-traffic-data'
-import { useVerge } from '@/hooks/use-verge'
 import { useVisibility } from '@/hooks/use-visibility'
 import parseTraffic from '@/utils/parse-traffic'
 
@@ -141,13 +140,8 @@ CompactStatCard.displayName = 'CompactStatCard'
 export const EnhancedTrafficStats = () => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { verge } = useVerge()
   const trafficRef = useRef<EnhancedCanvasTrafficGraphRef>(null)
   const pageVisible = useVisibility()
-
-  // 是否显示流量图表
-  const trafficGraph = verge?.traffic_graph ?? true
-  const displayMemory = verge?.enable_memory_usage ?? true
 
   const {
     response: { data: traffic },
@@ -155,7 +149,7 @@ export const EnhancedTrafficStats = () => {
 
   const {
     response: { data: memory },
-  } = useMemoryData({ enabled: displayMemory && pageVisible })
+  } = useMemoryData({ enabled: pageVisible })
 
   const {
     response: { data: connectionSummary },
@@ -190,7 +184,7 @@ export const EnhancedTrafficStats = () => {
 
   // 渲染流量图表 - 使用useMemo缓存渲染结果
   const trafficGraphComponent = useMemo(() => {
-    if (!trafficGraph || !pageVisible) return null
+    if (!pageVisible) return null
 
     return (
       <Paper
@@ -209,7 +203,7 @@ export const EnhancedTrafficStats = () => {
         </div>
       </Paper>
     )
-  }, [trafficGraph, pageVisible, theme.palette.divider])
+  }, [pageVisible, theme.palette.divider])
 
   // 使用useMemo计算统计卡片配置
   const statCards = useMemo(() => {
@@ -249,20 +243,17 @@ export const EnhancedTrafficStats = () => {
         unit: parsedData.downloadTotalUnit,
         color: 'primary' as const,
       },
-    ]
-
-    if (displayMemory) {
-      cards.push({
+      {
         icon: <MemoryRounded fontSize="small" />,
         title: t('home.components.traffic.metrics.memoryUsage'),
         value: parsedData.inuse,
         unit: parsedData.inuseUnit,
         color: 'error' as const,
-      })
-    }
+      },
+    ]
 
     return cards
-  }, [t, parsedData, displayMemory])
+  }, [t, parsedData])
 
   return (
     <TrafficErrorBoundary
@@ -271,12 +262,10 @@ export const EnhancedTrafficStats = () => {
       }}
     >
       <Grid container spacing={1} columns={{ xs: 8, sm: 8, md: 12 }}>
-        {trafficGraph && (
-          <Grid size={12}>
-            {/* 流量图表区域 */}
-            {trafficGraphComponent}
-          </Grid>
-        )}
+        <Grid size={12}>
+          {/* 流量图表区域 */}
+          {trafficGraphComponent}
+        </Grid>
         {/* 统计卡片区域 */}
         {statCards.map((card) => (
           <Grid key={card.title} size={4}>

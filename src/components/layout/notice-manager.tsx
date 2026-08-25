@@ -7,7 +7,7 @@ import {
   Stack,
   type SnackbarOrigin,
 } from '@mui/material'
-import React, { useCallback, useMemo, useSyncExternalStore } from 'react'
+import React, { useCallback, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -19,31 +19,10 @@ import {
 } from '@/services/notice-service'
 import type { TranslationKey } from '@/types/generated/i18n-keys'
 
-type NoticePosition = NonNullable<IVergeConfig['notice_position']>
 type NoticeItem = ReturnType<typeof getSnapshotNotices>[number]
 type TranslationFn = ReturnType<typeof useTranslation>['t']
 
-const VALID_POSITIONS: NoticePosition[] = [
-  'top-left',
-  'top-right',
-  'bottom-left',
-  'bottom-right',
-]
-
-const resolvePosition = (position?: NoticePosition | null): NoticePosition => {
-  if (position && VALID_POSITIONS.includes(position)) {
-    return position
-  }
-  return 'top-right'
-}
-
-const getAnchorOrigin = (position: NoticePosition): SnackbarOrigin => {
-  const [vertical, horizontal] = position.split('-') as [
-    SnackbarOrigin['vertical'],
-    SnackbarOrigin['horizontal'],
-  ]
-  return { vertical, horizontal }
-}
+const ANCHOR_ORIGIN: SnackbarOrigin = { vertical: 'top', horizontal: 'right' }
 
 /** Resolve notice text, bounding display output but not clipboard content. */
 const resolveNoticeMessage = (
@@ -147,17 +126,8 @@ const resolveNoticeCopyText = (
   )
 }
 
-interface NoticeManagerProps {
-  position?: NoticePosition | null
-}
-
-export const NoticeManager: React.FC<NoticeManagerProps> = ({ position }) => {
+export const NoticeManager: React.FC = () => {
   const { t } = useTranslation()
-  const resolvedPosition = useMemo(() => resolvePosition(position), [position])
-  const anchorOrigin = useMemo(
-    () => getAnchorOrigin(resolvedPosition),
-    [resolvedPosition],
-  )
   const currentNotices = useSyncExternalStore(
     subscribeNotices,
     getSnapshotNotices,
@@ -188,10 +158,10 @@ export const NoticeManager: React.FC<NoticeManagerProps> = ({ position }) => {
     <Box
       sx={{
         position: 'fixed',
-        top: anchorOrigin.vertical === 'top' ? '20px' : 'auto',
-        bottom: anchorOrigin.vertical === 'bottom' ? '20px' : 'auto',
-        left: anchorOrigin.horizontal === 'left' ? '20px' : 'auto',
-        right: anchorOrigin.horizontal === 'right' ? '20px' : 'auto',
+        top: ANCHOR_ORIGIN.vertical === 'top' ? '20px' : 'auto',
+        bottom: ANCHOR_ORIGIN.vertical === 'bottom' ? '20px' : 'auto',
+        left: ANCHOR_ORIGIN.horizontal === 'left' ? '20px' : 'auto',
+        right: ANCHOR_ORIGIN.horizontal === 'right' ? '20px' : 'auto',
         zIndex: 1500,
         display: 'flex',
         flexDirection: 'column',
@@ -203,7 +173,7 @@ export const NoticeManager: React.FC<NoticeManagerProps> = ({ position }) => {
         <Snackbar
           key={notice.id}
           open={true}
-          anchorOrigin={anchorOrigin}
+          anchorOrigin={ANCHOR_ORIGIN}
           sx={{
             position: 'relative',
             transform: 'none',

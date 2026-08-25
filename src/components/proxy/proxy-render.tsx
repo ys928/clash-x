@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next'
 
 import { useAutoSwitchGroups } from '@/hooks/use-auto-switch-groups'
 import { useIconCache } from '@/hooks/use-icon-cache'
-import { useVerge } from '@/hooks/use-verge'
 import { useThemeMode } from '@/services/states'
 import type { ResolvedProxyMember } from '@/types/proxy-view'
 
@@ -56,17 +55,15 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
     isChainMode: _ = false,
   } = props
   const { type, group, headState, member, memberCol } = item
-  const { verge } = useVerge()
   const { enabledTargetGroups } = useAutoSwitchGroups()
   const autoSwitchActive = enabledTargetGroups.has(group.name)
-  const enable_group_icon = verge?.enable_group_icon ?? true
   const mode = useThemeMode()
   const itembackgroundcolor =
     mode === 'dark' ? 'var(--background-paper)' : 'var(--background-paper)'
   const iconCachePath = useIconCache({
     icon: group.icon,
     cacheKey: group.name.replaceAll(' ', ''),
-    enabled: enable_group_icon,
+    enabled: true,
   })
 
   const showType = headState?.showType
@@ -121,7 +118,7 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
         >
           <Box sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              {enable_group_icon && group.icon?.trim().startsWith('http') && (
+              {group.icon?.trim().startsWith('http') && (
                 <img
                   src={iconCachePath === '' ? group.icon : iconCachePath}
                   alt="group icon"
@@ -129,7 +126,7 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
                   style={{ marginRight: '12px', borderRadius: '6px' }}
                 />
               )}
-              {enable_group_icon && group.icon?.trim().startsWith('data') && (
+              {group.icon?.trim().startsWith('data') && (
                 <img
                   src={group.icon}
                   alt="group icon"
@@ -137,7 +134,7 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
                   style={{ marginRight: '12px', borderRadius: '6px' }}
                 />
               )}
-              {enable_group_icon && group.icon?.trim().startsWith('<svg') && (
+              {group.icon?.trim().startsWith('<svg') && (
                 <img
                   src={`data:image/svg+xml;base64,${btoa(group.icon)}`}
                   alt="group icon"

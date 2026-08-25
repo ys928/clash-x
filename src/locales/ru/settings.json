@@ -178,8 +178,6 @@
           "copyEnvType": "Скопировать тип Env",
           "startPage": "Главная страница",
           "startupScript": "Скрипт запуска",
-          "themeSetting": "Настройки темы",
-          "layoutSetting": "Настройки раскладки",
           "misc": "Расширенные настройки",
           "hotkeySetting": "Настройки сочетаний клавиш"
         }
@@ -208,72 +206,6 @@
           "exit": "Выход",
           "exportDiagnostics": "Экспорт диагностической информации",
           "vergeVersion": "Версия Clash Verge Rev"
-        }
-      },
-      "theme": {
-        "title": "Настройки темы",
-        "fields": {
-          "primaryColor": "Основной цвет",
-          "secondaryColor": "Вторичный цвет",
-          "primaryText": "Основной текст",
-          "secondaryText": "Дополнительный текст",
-          "infoColor": "Информационный цвет",
-          "warningColor": "Цвет предупреждения",
-          "errorColor": "Цвет ошибки",
-          "successColor": "Цвет успеха",
-          "fontFamily": "Семейство шрифтов",
-          "cssInjection": "Внедрение CSS"
-        },
-        "actions": {
-          "editCss": "Редактировать CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "Редактирование CSS"
-        }
-      },
-      "layout": {
-        "title": "Настройки раскладки",
-        "fields": {
-          "preferSystemTitlebar": "Использовать системную панель заголовка",
-          "trafficGraph": "График трафика",
-          "memoryUsage": "Использование памяти",
-          "proxyGroupIcon": "Значок группы прокси",
-          "toastPosition": "Расположение уведомлений",
-          "hoverNavigator": "Навигация по алфавиту при наведении",
-          "hoverNavigatorDelay": "Задержка навигации при наведении",
-          "navIcon": "Иконки навигации",
-          "collapseNavBar": "Свернуть панель навигации",
-          "trayIcon": "Значок в трее",
-          "proxyGroupsDisplayMode": "Режим отображения групп прокси",
-          "showOutboundModesInline": "Показывать режимы исходящих соединений в строку",
-          "commonTrayIcon": "Общий значок в трее",
-          "systemProxyTrayIcon": "Значок системного прокси в трее",
-          "tunTrayIcon": "Значок TUN в трее",
-          "enableTrayIcon": "Показывать значок в трее",
-          "enableTraySpeed": "Показывать скорость в трее",
-          "pauseRenderTrafficStatsOnBlur": "При потере фокуса приостанавливать отрисовку статистики трафика"
-        },
-        "tooltips": {
-          "hoverNavigator": "Автоматически прокручивает к группе прокси при наведении на буквы",
-          "hoverNavigatorDelay": "Задержка перед прокруткой при наведении (в миллисекундах)"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "Монохромные",
-            "colorful": "Цветные",
-            "disable": "Отключить"
-          },
-          "toastPosition": {
-            "topLeft": "Сверху слева",
-            "topRight": "Сверху справа",
-            "bottomLeft": "Снизу слева",
-            "bottomRight": "Снизу справа"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "По умолчанию",
-            "inline": "В строку",
-            "disable": "Отключено"
-          }
         }
       }
     }

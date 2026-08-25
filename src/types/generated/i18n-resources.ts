@@ -222,8 +222,6 @@ export interface TranslationResources {
       components: {
         navigation: {
           menu: {
-            collapseNavBar: string
-            expandNavBar: string
             lock: string
             reorderMode: string
             restoreDefaultOrder: string
@@ -821,12 +819,10 @@ export interface TranslationResources {
               copyEnvType: string
               hotkeySetting: string
               language: string
-              layoutSetting: string
               misc: string
               startPage: string
               startupScript: string
               themeMode: string
-              themeSetting: string
               trayClickEvent: string
             }
             title: string
@@ -835,72 +831,6 @@ export interface TranslationResources {
               showMainWindow: string
               showTrayMenu: string
             }
-          }
-          layout: {
-            fields: {
-              collapseNavBar: string
-              commonTrayIcon: string
-              enableTrayIcon: string
-              enableTraySpeed: string
-              hoverNavigator: string
-              hoverNavigatorDelay: string
-              memoryUsage: string
-              navIcon: string
-              pauseRenderTrafficStatsOnBlur: string
-              preferSystemTitlebar: string
-              proxyGroupIcon: string
-              proxyGroupsDisplayMode: string
-              showOutboundModesInline: string
-              systemProxyTrayIcon: string
-              toastPosition: string
-              trafficGraph: string
-              trayIcon: string
-              tunTrayIcon: string
-            }
-            options: {
-              icon: {
-                colorful: string
-                disable: string
-                monochrome: string
-              }
-              proxyGroupsDisplayMode: {
-                default: string
-                disable: string
-                inline: string
-              }
-              toastPosition: {
-                bottomLeft: string
-                bottomRight: string
-                topLeft: string
-                topRight: string
-              }
-            }
-            title: string
-            tooltips: {
-              hoverNavigator: string
-              hoverNavigatorDelay: string
-            }
-          }
-          theme: {
-            actions: {
-              editCss: string
-            }
-            dialogs: {
-              editCssTitle: string
-            }
-            fields: {
-              cssInjection: string
-              errorColor: string
-              fontFamily: string
-              infoColor: string
-              primaryColor: string
-              primaryText: string
-              secondaryColor: string
-              secondaryText: string
-              successColor: string
-              warningColor: string
-            }
-            title: string
           }
         }
       }

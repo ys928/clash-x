@@ -178,8 +178,6 @@
           "copyEnvType": "复制环境变量类型",
           "startPage": "启动页面",
           "startupScript": "启动脚本",
-          "themeSetting": "主题设置",
-          "layoutSetting": "界面设置",
           "misc": "杂项设置",
           "hotkeySetting": "热键设置"
         }
@@ -208,72 +206,6 @@
           "exit": "退出",
           "exportDiagnostics": "导出诊断信息",
           "vergeVersion": "Verge 版本"
-        }
-      },
-      "theme": {
-        "title": "主题设置",
-        "fields": {
-          "primaryColor": "主要颜色",
-          "secondaryColor": "次要颜色",
-          "primaryText": "文本主要颜色",
-          "secondaryText": "文本次要颜色",
-          "infoColor": "信息颜色",
-          "warningColor": "警告颜色",
-          "errorColor": "错误颜色",
-          "successColor": "成功颜色",
-          "fontFamily": "字体系列",
-          "cssInjection": "CSS 注入"
-        },
-        "actions": {
-          "editCss": "编辑 CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "编辑 CSS"
-        }
-      },
-      "layout": {
-        "title": "界面设置",
-        "fields": {
-          "preferSystemTitlebar": "优先使用系统标题栏",
-          "trafficGraph": "流量图显",
-          "memoryUsage": "内核占用",
-          "proxyGroupIcon": "代理组图标",
-          "toastPosition": "通知位置",
-          "hoverNavigator": "悬浮跳转导航",
-          "hoverNavigatorDelay": "悬浮跳转导航延迟",
-          "navIcon": "导航栏图标",
-          "collapseNavBar": "收起导航栏",
-          "trayIcon": "托盘图标",
-          "proxyGroupsDisplayMode": "托盘代理组显示模式",
-          "showOutboundModesInline": "将出站模式显示在托盘一级菜单",
-          "commonTrayIcon": "常规托盘图标",
-          "systemProxyTrayIcon": "系统代理托盘图标",
-          "tunTrayIcon": "TUN 模式托盘图标",
-          "enableTrayIcon": "启用托盘图标",
-          "enableTraySpeed": "启用托盘速率",
-          "pauseRenderTrafficStatsOnBlur": "失去焦点时暂停渲染流量统计"
-        },
-        "tooltips": {
-          "hoverNavigator": "鼠标悬停在字母上时自动滚动到对应代理组",
-          "hoverNavigatorDelay": "鼠标悬停后触发自动跳转前等待的毫秒数"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "单色图标",
-            "colorful": "彩色图标",
-            "disable": "禁用"
-          },
-          "toastPosition": {
-            "topLeft": "左上角",
-            "topRight": "右上角",
-            "bottomLeft": "左下角",
-            "bottomRight": "右下角"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "默认",
-            "inline": "一级菜单",
-            "disable": "禁用"
-          }
         }
       }
     }

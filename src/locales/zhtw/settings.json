@@ -178,8 +178,6 @@
           "copyEnvType": "複製環境變數類型",
           "startPage": "啟動頁面",
           "startupScript": "啟動指令碼",
-          "themeSetting": "主題設定",
-          "layoutSetting": "介面設定",
           "misc": "雜項設定",
           "hotkeySetting": "快速鍵設定"
         }
@@ -208,72 +206,6 @@
           "exit": "離開",
           "exportDiagnostics": "匯出診斷資訊",
           "vergeVersion": "Verge 版本"
-        }
-      },
-      "theme": {
-        "title": "主題設定",
-        "fields": {
-          "primaryColor": "主要顏色",
-          "secondaryColor": "次要顏色",
-          "primaryText": "文字主要顏色",
-          "secondaryText": "文字次要顏色",
-          "infoColor": "資訊顏色",
-          "warningColor": "警告顏色",
-          "errorColor": "錯誤顏色",
-          "successColor": "成功顏色",
-          "fontFamily": "字型系列",
-          "cssInjection": "CSS 注入"
-        },
-        "actions": {
-          "editCss": "編輯 CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "編輯 CSS"
-        }
-      },
-      "layout": {
-        "title": "介面設定",
-        "fields": {
-          "preferSystemTitlebar": "優先使用系統標題欄",
-          "trafficGraph": "流量圖表",
-          "memoryUsage": "內核佔用",
-          "proxyGroupIcon": "代理組圖示",
-          "toastPosition": "通知位置",
-          "hoverNavigator": "懸浮跳轉導航",
-          "hoverNavigatorDelay": "懸浮跳轉導航延遲",
-          "navIcon": "導覽列圖示",
-          "collapseNavBar": "收起導覽列",
-          "trayIcon": "系統匣圖示",
-          "proxyGroupsDisplayMode": "系統匣代理組顯示模式",
-          "showOutboundModesInline": "將出站模式顯示在系統匣一級選單",
-          "commonTrayIcon": "一般系統匣圖示",
-          "systemProxyTrayIcon": "系統代理系統匣圖示",
-          "tunTrayIcon": "虛擬網路介面卡模式系統匣圖示",
-          "enableTrayIcon": "啟用系統匣圖示",
-          "enableTraySpeed": "啟用系統匣速率",
-          "pauseRenderTrafficStatsOnBlur": "失去焦點時暫停渲染流量統計"
-        },
-        "tooltips": {
-          "hoverNavigator": "滑鼠懸停在字母上時自動捲動到對應代理組",
-          "hoverNavigatorDelay": "滑鼠懸停後觸發自動跳轉前等待的毫秒數"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "單色圖示",
-            "colorful": "彩色圖示",
-            "disable": "停用"
-          },
-          "toastPosition": {
-            "topLeft": "左上角",
-            "topRight": "右上角",
-            "bottomLeft": "左下角",
-            "bottomRight": "右下角"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "預設",
-            "inline": "一級選單",
-            "disable": "停用"
-          }
         }
       }
     }

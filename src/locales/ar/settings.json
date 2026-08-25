@@ -178,8 +178,6 @@
           "copyEnvType": "نسخ نوع البيئة",
           "startPage": "صفحة البدء",
           "startupScript": "سكريبت بدء التشغيل",
-          "themeSetting": "إعدادات السمة",
-          "layoutSetting": "إعدادات التخطيط",
           "misc": "متفرقات",
           "hotkeySetting": "إعدادات الاختصارات"
         }
@@ -208,72 +206,6 @@
           "exit": "خروج",
           "exportDiagnostics": "Export Diagnostic Info",
           "vergeVersion": "إصدار Verge"
-        }
-      },
-      "theme": {
-        "title": "إعدادات السمة",
-        "fields": {
-          "primaryColor": "اللون الأساسي",
-          "secondaryColor": "اللون الثانوي",
-          "primaryText": "النص الأساسي",
-          "secondaryText": "النص الثانوي",
-          "infoColor": "لون المعلومات",
-          "warningColor": "لون التحذير",
-          "errorColor": "لون الخطأ",
-          "successColor": "لون النجاح",
-          "fontFamily": "عائلة الخط",
-          "cssInjection": "حقن CSS"
-        },
-        "actions": {
-          "editCss": "Edit CSS"
-        },
-        "dialogs": {
-          "editCssTitle": "Edit CSS"
-        }
-      },
-      "layout": {
-        "title": "إعدادات التخطيط",
-        "fields": {
-          "preferSystemTitlebar": "Prefer System Titlebar",
-          "trafficGraph": "مخطط حركة المرور",
-          "memoryUsage": "استهلاك الذاكرة",
-          "proxyGroupIcon": "أيقونة مجموعة الوكلاء",
-          "toastPosition": "Toast Position",
-          "hoverNavigator": "Hover Jump Navigator",
-          "hoverNavigatorDelay": "Hover Jump Navigator Delay",
-          "navIcon": "أيقونة التنقل",
-          "collapseNavBar": "طي شريط التنقل",
-          "trayIcon": "أيقونة شريط المهام",
-          "proxyGroupsDisplayMode": "Proxy Groups Display Mode",
-          "showOutboundModesInline": "Show Outbound Modes Inline",
-          "commonTrayIcon": "أيقونة شريط مهام عامة",
-          "systemProxyTrayIcon": "أيقونة شريط المهام لوكيل النظام",
-          "tunTrayIcon": "أيقونة شريط المهام لـ TUN",
-          "enableTrayIcon": "Enable Tray Icon",
-          "enableTraySpeed": "تفعيل سرعة التراي",
-          "pauseRenderTrafficStatsOnBlur": "إيقاف عرض إحصاءات حركة المرور مؤقتًا عند فقدان التركيز"
-        },
-        "tooltips": {
-          "hoverNavigator": "Automatically scroll to the corresponding proxy group when hovering over alphabet letters",
-          "hoverNavigatorDelay": "Delay before auto scrolling when hovering, in milliseconds"
-        },
-        "options": {
-          "icon": {
-            "monochrome": "أحادي اللون",
-            "colorful": "ملون",
-            "disable": "تعطيل"
-          },
-          "toastPosition": {
-            "topLeft": "Top Left",
-            "topRight": "Top Right",
-            "bottomLeft": "Bottom Left",
-            "bottomRight": "Bottom Right"
-          },
-          "proxyGroupsDisplayMode": {
-            "default": "Default",
-            "inline": "Inline",
-            "disable": "Disable"
-          }
         }
       }
     }

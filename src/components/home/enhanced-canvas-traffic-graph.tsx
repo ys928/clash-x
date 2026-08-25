@@ -13,7 +13,6 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { useTrafficGraphDataEnhanced } from '@/hooks/use-traffic-monitor'
-import { useVerge } from '@/hooks/use-verge'
 import { debugLog } from '@/utils/debug'
 import parseTraffic from '@/utils/parse-traffic'
 import {
@@ -119,9 +118,6 @@ export const EnhancedCanvasTrafficGraph = memo(
   }: EnhancedCanvasTrafficGraphProps) {
     const theme = useTheme()
     const { t } = useTranslation()
-    const verge = useVerge()
-    const pause_render_traffic_stats_on_blur =
-      verge.verge?.pause_render_traffic_stats_on_blur ?? true
 
     const { dataPoints, requestRange, samplerStats } =
       useTrafficGraphDataEnhanced()
@@ -222,18 +218,15 @@ export const EnhancedCanvasTrafficGraph = memo(
       }
     }, [displayData])
 
-    const handleFocusStateChange = useCallback(
-      (focused: boolean) => {
-        isWindowFocusedRef.current = focused
+    const handleFocusStateChange = useCallback((focused: boolean) => {
+      isWindowFocusedRef.current = focused
 
-        if (focused || !pause_render_traffic_stats_on_blur) {
-          setCurrentFPS(GRAPH_CONFIG.targetFPS)
-        }
+      if (focused) {
+        setCurrentFPS(GRAPH_CONFIG.targetFPS)
+      }
 
-        scheduleDrawGraphRef.current()
-      },
-      [pause_render_traffic_stats_on_blur],
-    )
+      scheduleDrawGraphRef.current()
+    }, [])
 
     useEffect(() => {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -900,7 +893,7 @@ export const EnhancedCanvasTrafficGraph = memo(
     const shouldSkipGraphDraw = useCallback(() => {
       if (!isDocumentVisibleRef.current) return true
 
-      if (!isWindowFocusedRef.current && pause_render_traffic_stats_on_blur) {
+      if (!isWindowFocusedRef.current) {
         return true
       }
 
@@ -914,7 +907,7 @@ export const EnhancedCanvasTrafficGraph = memo(
       }
 
       return dataStaleRef.current
-    }, [pause_render_traffic_stats_on_blur])
+    }, [])
 
     const scheduleHoverDraw = useCallback(() => {
       if (hoverFrameRef.current !== undefined) return

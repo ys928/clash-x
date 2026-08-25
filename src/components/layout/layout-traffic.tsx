@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next'
 import { LightweightTrafficErrorBoundary } from '@/components/shared/traffic-error-boundary'
 import { useMemoryData } from '@/hooks/use-memory-data'
 import { useTrafficData } from '@/hooks/use-traffic-data'
-import { useVerge } from '@/hooks/use-verge'
 import { useVisibility } from '@/hooks/use-visibility'
 import parseTraffic from '@/utils/parse-traffic'
 
@@ -19,10 +18,6 @@ import { TrafficGraph, type TrafficRef } from './traffic-graph'
 
 export const LayoutTraffic = () => {
   const { t } = useTranslation()
-  const { verge } = useVerge()
-
-  const trafficGraph = verge?.traffic_graph ?? true
-  const displayMemory = verge?.enable_memory_usage ?? true
 
   const trafficRef = useRef<TrafficRef>(null)
   const pageVisible = useVisibility()
@@ -32,7 +27,7 @@ export const LayoutTraffic = () => {
   } = useTrafficData({ enabled: pageVisible })
   const {
     response: { data: memory },
-  } = useMemoryData({ enabled: displayMemory && pageVisible })
+  } = useMemoryData({ enabled: pageVisible })
 
   useEffect(() => {
     if (trafficRef.current) {
@@ -77,7 +72,7 @@ export const LayoutTraffic = () => {
   return (
     <LightweightTrafficErrorBoundary>
       <Box sx={{ position: 'relative' }}>
-        {trafficGraph && pageVisible && (
+        {pageVisible && (
           <div
             style={{ width: '100%', height: 60, marginBottom: 6 }}
             onClick={trafficRef.current?.toggleStyle}
@@ -121,22 +116,20 @@ export const LayoutTraffic = () => {
             <Typography {...unitStyle}>{downUnit}/s</Typography>
           </Box>
 
-          {displayMemory && (
-            <Box
-              title={`${t('home.components.traffic.metrics.memoryUsage')} `}
-              {...boxStyle}
-              sx={{
-                ...boxStyle.sx,
-                cursor: 'auto',
-              }}
-              color={'disabled'}
-              onClick={async () => {}}
-            >
-              <MemoryRounded {...iconStyle} />
-              <Typography {...valStyle}>{inuse}</Typography>
-              <Typography {...unitStyle}>{inuseUnit}</Typography>
-            </Box>
-          )}
+          <Box
+            title={`${t('home.components.traffic.metrics.memoryUsage')} `}
+            {...boxStyle}
+            sx={{
+              ...boxStyle.sx,
+              cursor: 'auto',
+            }}
+            color={'disabled'}
+            onClick={async () => {}}
+          >
+            <MemoryRounded {...iconStyle} />
+            <Typography {...valStyle}>{inuse}</Typography>
+            <Typography {...unitStyle}>{inuseUnit}</Typography>
+          </Box>
         </Box>
       </Box>
     </LightweightTrafficErrorBoundary>
