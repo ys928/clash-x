@@ -56,7 +56,9 @@ pub fn app_home_dir() -> Result<PathBuf> {
     }
 
     // Directory helpers can run before the Tauri handle is initialized.
-    let app_handle = handle::Handle::app_handle();
+    let Some(app_handle) = crate::APP_HANDLE.get() else {
+        return preinit_app_data_dir();
+    };
 
     match app_handle.path().data_dir() {
         Ok(dir) => Ok(dir.join(APP_ID)),
