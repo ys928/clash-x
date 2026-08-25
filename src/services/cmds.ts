@@ -257,10 +257,6 @@ export async function getUpdaterClashProxy() {
   return invoke<string | null>('get_updater_clash_proxy')
 }
 
-export async function getAppDir() {
-  return invoke<string>('get_app_dir')
-}
-
 export async function openAppDir() {
   return invoke<void>('open_app_dir').catch((err) => showNotice.error(err))
 }
