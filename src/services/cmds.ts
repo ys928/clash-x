@@ -96,10 +96,6 @@ export async function getRuntimeYaml() {
   return invoke<string | null>('get_runtime_yaml')
 }
 
-export async function getRuntimeLogs() {
-  return invoke<Record<string, [string, string][]>>('get_runtime_logs')
-}
-
 export async function patchClashConfig(payload: Partial<IConfigData>) {
   return invoke<void>('patch_clash_config', { payload })
 }

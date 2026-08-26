@@ -1,6 +1,6 @@
 use std::path::PathBuf;
-use std::process::Command;
 
+#[cfg(all(windows, not(feature = "clippy")))]
 const SIDECAR_BINARIES: &[&str] = &["verge-mihomo.exe", "verge-mihomo-alpha.exe"];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -53,6 +53,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// Windows and makes `tauri-build` panic with `PermissionDenied`.
 #[cfg(all(windows, not(feature = "clippy")))]
 fn unlock_sidecar_binaries() {
+    use std::process::Command;
+
     let profile = std::env::var("PROFILE").unwrap_or_else(|_| "debug".into());
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let target_dir = std::env::var("CARGO_TARGET_DIR")

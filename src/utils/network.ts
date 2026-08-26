@@ -2,7 +2,6 @@ import { ipv4, ipv6 } from 'cidr-block'
 import isFQDN from 'validator/es/lib/isFQDN'
 import isIP from 'validator/es/lib/isIP'
 import isPort from 'validator/es/lib/isPort'
-import isURL from 'validator/es/lib/isURL'
 
 const stripBrackets = (value: string) =>
   value.startsWith('[') && value.endsWith(']') ? value.slice(1, -1) : value
@@ -10,15 +9,6 @@ const stripBrackets = (value: string) =>
 const isIpv4 = (value: string) => isIP(value, 4)
 const isIpv6 = (value: string) => isIP(value, 6)
 const isHostname = (value: string) => isFQDN(value, { require_tld: false })
-
-export const isValidUrl = (value: string) =>
-  isURL(value.trim(), {
-    protocols: ['http', 'https'],
-    require_protocol: true,
-    require_valid_protocol: true,
-    require_host: true,
-    require_tld: false,
-  })
 
 export const isValidPort = (value: string) => isPort(value.trim())
 
