@@ -874,7 +874,7 @@ mod authoritative_field_tests {
 #[allow(clippy::expect_used)]
 #[cfg(test)]
 mod tests {
-    use super::{cleanup_proxy_groups, ensure_lan_bind_address, use_keys};
+    use super::{cleanup_proxy_groups, ensure_lan_bind_address};
 
     fn mapping(yaml: &str) -> serde_yaml_ng::Mapping {
         serde_yaml_ng::from_str(yaml).expect("test config should be valid")
