@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "編輯節點",
-      "placeholders": {
-        "multiUri": "多條網址，請使用換行分隔（支援 Base64 編碼）"
-      },
-      "actions": {
-        "prepend": "新增前置代理節點",
-        "append": "新增後置代理節點"
-      }
+      "title": "編輯節點"
     },
     "groupsEditor": {
       "title": "編輯代理組",

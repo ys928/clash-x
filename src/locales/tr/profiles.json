@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "Vekil'leri Düzenle",
-      "placeholders": {
-        "multiUri": "Birden fazla URI için yeni satırlar kullanın (Base64 kodlaması desteklenir)"
-      },
-      "actions": {
-        "prepend": "Vekil'in Başına Ekle",
-        "append": "Vekil'in Sonuna Ekle"
-      }
+      "title": "Vekil'leri Düzenle"
     },
     "groupsEditor": {
       "title": "Vekil Gruplarını Düzenle",

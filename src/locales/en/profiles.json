@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "Edit Proxies",
-      "placeholders": {
-        "multiUri": "Use newlines for multiple uri(Base64 encoding supported)"
-      },
-      "actions": {
-        "prepend": "Prepend Proxy",
-        "append": "Append Proxy"
-      }
+      "title": "Edit Proxies"
     },
     "groupsEditor": {
       "title": "Edit Proxy Groups",

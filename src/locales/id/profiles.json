@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "Ubah Proksi",
-      "placeholders": {
-        "multiUri": "Gunakan baris baru untuk beberapa URI (mendukung pengkodean Base64)"
-      },
-      "actions": {
-        "prepend": "Tambahkan Proksi di Awal",
-        "append": "Tambahkan Proksi di Akhir"
-      }
+      "title": "Ubah Proksi"
     },
     "groupsEditor": {
       "title": "Ubah Grup Proksi",

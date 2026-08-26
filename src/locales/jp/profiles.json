@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "ノードを編集",
-      "placeholders": {
-        "multiUri": "複数のURIは改行で区切ってください（Base64エンコードに対応）"
-      },
-      "actions": {
-        "prepend": "前置プロキシノードを追加",
-        "append": "後置プロキシノードを追加"
-      }
+      "title": "ノードを編集"
     },
     "groupsEditor": {
       "title": "プロキシグループを編集",

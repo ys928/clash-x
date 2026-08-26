@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "Editar nodos",
-      "placeholders": {
-        "multiUri": "Para múltiples URI, utilice saltos de línea (se admite la codificación Base64)"
-      },
-      "actions": {
-        "prepend": "Agregar nodo de proxy previo",
-        "append": "Agregar nodo de proxy posterior"
-      }
+      "title": "Editar nodos"
     },
     "groupsEditor": {
       "title": "Editar grupos de proxy",

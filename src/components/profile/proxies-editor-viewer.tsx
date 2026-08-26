@@ -13,10 +13,6 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import {
-  VerticalAlignBottomRounded,
-  VerticalAlignTopRounded,
-} from '@mui/icons-material'
-import {
   Box,
   Button,
   Dialog,
@@ -24,9 +20,6 @@ import {
   DialogContent,
   DialogTitle,
   List,
-  ListItem,
-  TextField,
-  styled,
 } from '@mui/material'
 import { useLockFn } from 'ahooks'
 import * as yaml from 'js-yaml'
@@ -47,7 +40,6 @@ import { showNotice } from '@/services/notice-service'
 import { useThemeMode } from '@/services/states'
 import type { MonacoEditorInstance } from '@/types/monaco'
 import getSystem from '@/utils/get-system'
-import parseUri from '@/utils/uri-parser'
 import { parseYamlSafe } from '@/utils/yaml'
 
 interface Props {
@@ -67,7 +59,6 @@ export const ProxiesEditorViewer = (props: Props) => {
   const [currData, setCurrData] = useState('')
   const [visualization, setVisualization] = useState(true)
   const [match, setMatch] = useState(() => (_: string) => true)
-  const [proxyUri, setProxyUri] = useState<string>('')
 
   const [proxyList, setProxyList] = useState<IProxyConfig[]>([])
   const [prependSeq, setPrependSeq] = useState<IProxyConfig[]>([])
@@ -228,52 +219,6 @@ export const ProxiesEditorViewer = (props: Props) => {
       }
     }
   }
-  // 优化：异步分片解析，避免主线程阻塞，解析完成后批量setState
-  const handleParseAsync = (cb: (proxies: IProxyConfig[]) => void) => {
-    const proxies: IProxyConfig[] = []
-    const names: string[] = []
-    let uris: string
-    try {
-      uris = atob(proxyUri)
-    } catch {
-      uris = proxyUri
-    }
-    const lines = uris.trim().split('\n')
-    let idx = 0
-    const batchSize = 50
-    let parseTimer: number | undefined
-
-    const parseBatch = () => {
-      const end = Math.min(idx + batchSize, lines.length)
-      for (; idx < end; idx++) {
-        const uri = lines[idx]
-        try {
-          const proxy = parseUri(uri.trim())
-          if (!names.includes(proxy.name)) {
-            proxies.push(proxy)
-            names.push(proxy.name)
-          }
-        } catch (err) {
-          console.warn(
-            '[ProxiesEditorViewer] parseUri failed for line:',
-            uri,
-            err,
-          )
-          // 不阻塞主流程
-        }
-      }
-      if (idx < lines.length) {
-        parseTimer = window.setTimeout(parseBatch, 0)
-      } else {
-        if (parseTimer !== undefined) {
-          clearTimeout(parseTimer)
-          parseTimer = undefined
-        }
-        cb(proxies)
-      }
-    }
-    parseBatch()
-  }
   const fetchProfile = useCallback(async () => {
     const data = await readProfileFile(profileUid)
 
@@ -425,82 +370,24 @@ export const ProxiesEditorViewer = (props: Props) => {
         sx={{ display: 'flex', width: 'auto', height: 'calc(100vh - 185px)' }}
       >
         {visualization ? (
-          <>
-            <List
-              sx={{
-                width: '50%',
-                padding: '0 10px',
-              }}
-            >
-              <Box
-                sx={{
-                  height: 'calc(100% - 80px)',
-                  overflowY: 'auto',
-                }}
-              >
-                <Item>
-                  <TextField
-                    autoComplete="new-password"
-                    placeholder={t(
-                      'profiles.modals.proxiesEditor.placeholders.multiUri',
-                    )}
-                    fullWidth
-                    rows={9}
-                    multiline
-                    size="small"
-                    onChange={(e) => setProxyUri(e.target.value)}
-                  />
-                </Item>
-              </Box>
-              <Item>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<VerticalAlignTopRounded />}
-                  onClick={() => {
-                    handleParseAsync((proxies) => {
-                      setPrependSeq((prev) => [...proxies, ...prev])
-                    })
-                  }}
-                >
-                  {t('profiles.modals.proxiesEditor.actions.prepend')}
-                </Button>
-              </Item>
-              <Item>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<VerticalAlignBottomRounded />}
-                  onClick={() => {
-                    handleParseAsync((proxies) => {
-                      setAppendSeq((prev) => [...prev, ...proxies])
-                    })
-                  }}
-                >
-                  {t('profiles.modals.proxiesEditor.actions.append')}
-                </Button>
-              </Item>
-            </List>
-
-            <List
-              sx={{
-                width: '50%',
-                padding: '0 10px',
-              }}
-            >
-              <BaseSearchBox onSearch={(match) => setMatch(() => match)} />
-              <VirtualList
-                count={
-                  filteredProxyList.length +
-                  (filteredPrependSeq.length > 0 ? 1 : 0) +
-                  (filteredAppendSeq.length > 0 ? 1 : 0)
-                }
-                estimateSize={56}
-                renderItem={renderItem}
-                style={{ height: 'calc(100% - 24px)', marginTop: '8px' }}
-              />
-            </List>
-          </>
+          <List
+            sx={{
+              width: '100%',
+              padding: '0 10px',
+            }}
+          >
+            <BaseSearchBox onSearch={(match) => setMatch(() => match)} />
+            <VirtualList
+              count={
+                filteredProxyList.length +
+                (filteredPrependSeq.length > 0 ? 1 : 0) +
+                (filteredAppendSeq.length > 0 ? 1 : 0)
+              }
+              estimateSize={56}
+              renderItem={renderItem}
+              style={{ height: 'calc(100% - 24px)', marginTop: '8px' }}
+            />
+          </List>
         ) : (
           <MonacoEditor
             height="100%"
@@ -547,7 +434,3 @@ export const ProxiesEditorViewer = (props: Props) => {
     </Dialog>
   )
 }
-
-const Item = styled(ListItem)(() => ({
-  padding: '5px 2px',
-}))

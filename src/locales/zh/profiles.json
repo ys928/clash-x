@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "编辑节点",
-      "placeholders": {
-        "multiUri": "多条 URI 请使用换行分隔（支持 Base64 编码）"
-      },
-      "actions": {
-        "prepend": "添加前置代理节点",
-        "append": "添加后置代理节点"
-      }
+      "title": "编辑节点"
     },
     "groupsEditor": {
       "title": "编辑代理组",

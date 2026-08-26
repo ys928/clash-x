@@ -151,14 +151,7 @@
       }
     },
     "proxiesEditor": {
-      "title": "Knoten bearbeiten",
-      "placeholders": {
-        "multiUri": "Für mehrere URI verwenden Sie Zeilenumbrüche (Base64-Codierung wird unterstützt)"
-      },
-      "actions": {
-        "prepend": "Vorherigen Proxy-Knoten hinzufügen",
-        "append": "Nachfolgenden Proxy-Knoten hinzufügen"
-      }
+      "title": "Knoten bearbeiten"
     },
     "groupsEditor": {
       "title": "Proxy-Gruppen bearbeiten",

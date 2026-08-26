@@ -420,13 +420,6 @@ export interface TranslationResources {
           }
         }
         proxiesEditor: {
-          actions: {
-            append: string
-            prepend: string
-          }
-          placeholders: {
-            multiUri: string
-          }
           title: string
         }
         qrViewer: {
