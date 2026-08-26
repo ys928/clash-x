@@ -1159,21 +1159,6 @@ export interface TranslationResources {
           }
           title: string
         }
-        webUI: {
-          actions: {
-            openUrl: string
-          }
-          errors: {
-            clashInfoUnavailable: string
-            invalidServer: string
-            openFailed: string
-          }
-          messages: {
-            placeholderInstruction: string
-            supportedPlaceholders: string
-          }
-          title: string
-        }
       }
       page: {
         actions: {
@@ -1201,7 +1186,6 @@ export interface TranslationResources {
               allowLan: string
               clashCore: string
               dnsOverwrite: string
-              external: string
               ipv6: string
               logLevel: string
               openUwpTool: string
@@ -1232,7 +1216,6 @@ export interface TranslationResources {
               }
               unifiedDelay: string
               updateGeoData: string
-              webUI: string
             }
             options: {
               logLevel: {
@@ -1251,47 +1234,6 @@ export interface TranslationResources {
             }
           }
           title: string
-        }
-        externalController: {
-          fields: {
-            address: string
-            enable: string
-            secret: string
-          }
-          messages: {
-            addressRequired: string
-            controllerCopied: string
-            copyFailed: string
-            secretCopied: string
-            secretRequired: string
-          }
-          placeholders: {
-            address: string
-            secret: string
-          }
-          title: string
-          tooltips: {
-            copy: string
-          }
-        }
-        externalCors: {
-          actions: {
-            add: string
-          }
-          fields: {
-            allowedOrigins: string
-            allowPrivateNetwork: string
-          }
-          messages: {
-            alwaysIncluded: string
-          }
-          placeholders: {
-            origin: string
-          }
-          title: string
-          tooltips: {
-            open: string
-          }
         }
         proxyControl: {
           actions: {

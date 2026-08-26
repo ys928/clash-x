@@ -55,47 +55,6 @@
         "installedProxyRestored": "The service is installed, the core is running through it, and your system proxy change has been applied."
       }
     },
-    "externalController": {
-      "title": "External Controller",
-      "fields": {
-        "enable": "Enable External Controller",
-        "address": "External Controller",
-        "secret": "Core Secret"
-      },
-      "placeholders": {
-        "address": "Required",
-        "secret": "Recommended"
-      },
-      "tooltips": {
-        "copy": "Copy to clipboard"
-      },
-      "messages": {
-        "addressRequired": "Controller address cannot be empty",
-        "secretRequired": "Secret cannot be empty",
-        "copyFailed": "Failed to copy",
-        "controllerCopied": "Controller address copied to clipboard",
-        "secretCopied": "Secret copied to clipboard"
-      }
-    },
-    "externalCors": {
-      "title": "External Cors Configuration",
-      "fields": {
-        "allowPrivateNetwork": "Allow private network access",
-        "allowedOrigins": "Allowed Origins"
-      },
-      "placeholders": {
-        "origin": "Please enter a valid url"
-      },
-      "actions": {
-        "add": "Add"
-      },
-      "messages": {
-        "alwaysIncluded": "Always included origins: {{urls}}"
-      },
-      "tooltips": {
-        "open": "External Cors Settings"
-      }
-    },
     "appearance": {
       "light": "Light",
       "dark": "Dark",
@@ -111,8 +70,6 @@
           "unifiedDelay": "Unified Delay",
           "logLevel": "Log Level",
           "portConfig": "Port Config",
-          "external": "External",
-          "webUI": "Web UI",
           "clashCore": "Clash Core",
           "openUwpTool": "Open UWP tool",
           "updateGeoData": "Update GeoData",
@@ -534,21 +491,6 @@
       "errors": {
         "invalid": "Invalid configuration",
         "invalidYaml": "Invalid YAML format"
-      }
-    },
-    "webUI": {
-      "actions": {
-        "openUrl": "Open URL"
-      },
-      "title": "Web UI",
-      "messages": {
-        "supportedPlaceholders": "Support %host, %port, %secret",
-        "placeholderInstruction": "Replace host, port, secret with %host, %port, %secret"
-      },
-      "errors": {
-        "clashInfoUnavailable": "Core connection information is unavailable",
-        "invalidServer": "The core server address \"{{server}}\" is invalid",
-        "openFailed": "Failed to open Web UI"
       }
     },
     "hotkey": {

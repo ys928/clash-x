@@ -55,47 +55,6 @@
         "installedProxyRestored": "服务已安装，内核已通过服务运行，刚才的系统代理改动已重新应用。"
       }
     },
-    "externalController": {
-      "title": "外部控制器监听地址",
-      "fields": {
-        "enable": "启用外部控制器",
-        "address": "外部控制器监听地址",
-        "secret": "API 访问密钥"
-      },
-      "placeholders": {
-        "address": "必填",
-        "secret": "建议设置"
-      },
-      "tooltips": {
-        "copy": "复制到剪贴板"
-      },
-      "messages": {
-        "addressRequired": "控制器地址不能为空",
-        "secretRequired": "访问密钥不能为空",
-        "copyFailed": "复制失败",
-        "controllerCopied": "控制器地址已复制到剪贴板",
-        "secretCopied": "访问密钥已复制到剪贴板"
-      }
-    },
-    "externalCors": {
-      "title": "外部控制跨域设置",
-      "fields": {
-        "allowPrivateNetwork": "允许专用网络访问",
-        "allowedOrigins": "允许的来源"
-      },
-      "placeholders": {
-        "origin": "请输入有效的网址"
-      },
-      "actions": {
-        "add": "添加"
-      },
-      "messages": {
-        "alwaysIncluded": "始终包含来源：{{urls}}"
-      },
-      "tooltips": {
-        "open": "外部控制跨域设置"
-      }
-    },
     "appearance": {
       "light": "浅色",
       "dark": "深色",
@@ -111,8 +70,6 @@
           "unifiedDelay": "统一延迟",
           "logLevel": "日志等级",
           "portConfig": "端口设置",
-          "external": "外部控制",
-          "webUI": "网页界面",
           "clashCore": "Clash 内核",
           "openUwpTool": "UWP 工具",
           "updateGeoData": "更新 GeoData",
@@ -534,21 +491,6 @@
       "errors": {
         "invalid": "配置无效",
         "invalidYaml": "YAML 格式无效"
-      }
-    },
-    "webUI": {
-      "actions": {
-        "openUrl": "打开链接"
-      },
-      "title": "网页界面",
-      "messages": {
-        "supportedPlaceholders": "支持 %host, %port, %secret",
-        "placeholderInstruction": "使用 %host, %port, %secret 表示 主机, 端口, 访问密钥"
-      },
-      "errors": {
-        "clashInfoUnavailable": "内核连接信息暂不可用",
-        "invalidServer": "内核服务地址“{{server}}”无效",
-        "openFailed": "打开 Web UI 失败"
       }
     },
     "hotkey": {

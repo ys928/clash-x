@@ -55,47 +55,6 @@
         "installedProxyRestored": "服務已安裝，核心已透過服務執行，剛才的系統代理變更已重新套用。"
       }
     },
-    "externalController": {
-      "title": "外部控制器監聽位址",
-      "fields": {
-        "enable": "啟用外部控制器",
-        "address": "外部控制器監聽位址",
-        "secret": "API 存取金鑰"
-      },
-      "placeholders": {
-        "address": "必填",
-        "secret": "建議設定"
-      },
-      "tooltips": {
-        "copy": "複製到剪貼簿"
-      },
-      "messages": {
-        "addressRequired": "控制器位址不能為空",
-        "secretRequired": "存取金鑰不能為空",
-        "copyFailed": "複製失敗",
-        "controllerCopied": "API 連接埠已複製到剪貼簿",
-        "secretCopied": "API 金鑰已複製到剪貼簿"
-      }
-    },
-    "externalCors": {
-      "title": "外部跨來源資源共享設定",
-      "fields": {
-        "allowPrivateNetwork": "允許專用網路存取",
-        "allowedOrigins": "允許的來源"
-      },
-      "placeholders": {
-        "origin": "請輸入有效的網址"
-      },
-      "actions": {
-        "add": "新增"
-      },
-      "messages": {
-        "alwaysIncluded": "始終包含來源：{{urls}}"
-      },
-      "tooltips": {
-        "open": "外部跨來源資源共享設定"
-      }
-    },
     "appearance": {
       "light": "淺色",
       "dark": "深色",
@@ -111,8 +70,6 @@
           "unifiedDelay": "統一延遲",
           "logLevel": "日誌等級",
           "portConfig": "連接埠設定",
-          "external": "外部控制",
-          "webUI": "網頁介面",
           "clashCore": "Clash 內核",
           "openUwpTool": "UWP 工具",
           "updateGeoData": "更新 GeoData",
@@ -534,21 +491,6 @@
       "errors": {
         "invalid": "無效的設定",
         "invalidYaml": "YAML 格式無效"
-      }
-    },
-    "webUI": {
-      "actions": {
-        "openUrl": "開啟網址"
-      },
-      "title": "網頁介面",
-      "messages": {
-        "supportedPlaceholders": "支援 %host, %port, %secret",
-        "placeholderInstruction": "使用 %host, %port, %secret 表示 主機, 連接埠, 存取金鑰"
-      },
-      "errors": {
-        "clashInfoUnavailable": "內核連線資訊暫時無法取得",
-        "invalidServer": "內核伺服器位址「{{server}}」無效",
-        "openFailed": "開啟 Web UI 失敗"
       }
     },
     "hotkey": {
