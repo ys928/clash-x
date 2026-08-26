@@ -24,7 +24,7 @@ body:
     id: language
     attributes:
       label: 相关语言 / Language
-      description: 例如 zh, en, jp, ru, ... / e.g. zh, en, jp, ru, ...
+      description: 例如 zh, zhtw, en / e.g. zh, zhtw, en
     validations:
       required: true
 
@@ -45,7 +45,6 @@ body:
         - label: 翻译错误 / Translation error
         - label: 翻译缺失 / Missing translation
         - label: 建议优化 / Suggestion
-        - label: 新增语言 / New language
     validations:
       required: true
 

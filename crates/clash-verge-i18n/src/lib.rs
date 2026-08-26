@@ -10,7 +10,6 @@ static SUPPORTED_LOCALES: LazyLock<Vec<Cow<'static, str>>> = LazyLock::new(|| ru
 #[inline]
 fn locale_alias(locale: &str) -> Option<&'static str> {
     match locale {
-        "ja" | "ja-jp" | "jp" => Some("jp"),
         "zh" | "zh-cn" | "zh-hans" | "zh-sg" | "zh-my" | "zh-chs" => Some("zh"),
         "zh-tw" | "zh-hk" | "zh-hant" | "zh-mo" | "zh-cht" => Some("zhtw"),
         _ => None,

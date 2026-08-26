@@ -6,17 +6,7 @@ import { supportedLanguages } from '@/services/i18n'
 
 const LANGUAGE_LABELS: Record<string, string> = {
   en: 'English',
-  ru: 'Русский',
   zh: '简体中文',
-  fa: 'فارسی',
-  tt: 'Татар',
-  id: 'Bahasa Indonesia',
-  ar: 'العربية',
-  ko: '한국어',
-  tr: 'Türkçe',
-  de: 'Deutsch',
-  es: 'Español',
-  jp: '日本語',
   zhtw: '繁體中文',
 }
 
