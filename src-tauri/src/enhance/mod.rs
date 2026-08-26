@@ -1,25 +1,20 @@
 mod chain;
 pub mod direct_domain;
 pub mod field;
-mod merge;
-mod script;
 pub mod seq;
 mod tun;
 
 use self::{
     chain::{AsyncChainItemFrom as _, ChainItem, ChainType},
     direct_domain::{apply_direct_domain_dns, extract_direct_domains},
-    field::{use_keys, use_lowercase, use_sort},
-    merge::use_merge,
-    script::use_script,
+    field::{use_keys, use_sort},
     seq::{SeqMap, use_seq},
     tun::use_tun,
 };
-use crate::utils::dirs;
 use crate::{
     config::{Config, IProfiles, IVerge, PrfItem},
     constants,
-    utils::tmpl,
+    utils::dirs,
 };
 use anyhow::{Context as _, Result};
 use clash_verge_logging::{Type, logging};
@@ -32,9 +27,7 @@ type ResultLog = Vec<(String, String)>;
 #[derive(Debug)]
 struct ConfigValues {
     clash_config: Mapping,
-    clash_core: Option<String>,
     enable_tun: bool,
-    enable_builtin: bool,
     socks_enabled: bool,
     http_enabled: bool,
     enable_dns_settings: bool,
@@ -48,30 +41,16 @@ struct ConfigValues {
 #[derive(Debug)]
 struct ProfileItems {
     config: Mapping,
-    merge_item: ChainItem,
-    script_item: ChainItem,
     rules_item: ChainItem,
     proxies_item: ChainItem,
     groups_item: ChainItem,
-    global_merge: ChainItem,
-    global_script: ChainItem,
     global_rules: ChainItem,
-    profile_name: String,
 }
 
 impl Default for ProfileItems {
     fn default() -> Self {
         Self {
             config: Default::default(),
-            profile_name: Default::default(),
-            merge_item: ChainItem {
-                uid: "".into(),
-                data: ChainType::Merge(Mapping::new()),
-            },
-            script_item: ChainItem {
-                uid: "".into(),
-                data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
-            },
             rules_item: ChainItem {
                 uid: "".into(),
                 data: ChainType::Rules(SeqMap::default()),
@@ -83,14 +62,6 @@ impl Default for ProfileItems {
             groups_item: ChainItem {
                 uid: "".into(),
                 data: ChainType::Groups(SeqMap::default()),
-            },
-            global_merge: ChainItem {
-                uid: "Merge".into(),
-                data: ChainType::Merge(Mapping::new()),
-            },
-            global_script: ChainItem {
-                uid: "Script".into(),
-                data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
             },
             global_rules: ChainItem {
                 uid: "Rules".into(),
@@ -120,7 +91,6 @@ async fn get_config_values() -> ConfigValues {
     let verge_arc = verge.latest_arc();
     let IVerge {
         ref enable_tun_mode,
-        ref enable_builtin_enhanced,
         ref verge_socks_enabled,
         ref verge_http_enabled,
         ref enable_dns_settings,
@@ -129,10 +99,8 @@ async fn get_config_values() -> ConfigValues {
     } = **verge_arc;
     let enable_external_controller = enable_external_controller.unwrap_or(false);
 
-    let (clash_core, enable_tun, enable_builtin, socks_enabled, http_enabled, enable_dns_settings) = (
-        Some(verge_arc.get_valid_clash_core()),
+    let (enable_tun, socks_enabled, http_enabled, enable_dns_settings) = (
         enable_tun_mode.unwrap_or(false) && !Config::tun_suppressed_for_session(),
-        enable_builtin_enhanced.unwrap_or(true),
         verge_socks_enabled.unwrap_or(false),
         verge_http_enabled.unwrap_or(false),
         enable_dns_settings.unwrap_or(false),
@@ -149,9 +117,7 @@ async fn get_config_values() -> ConfigValues {
 
     ConfigValues {
         clash_config,
-        clash_core,
         enable_tun,
-        enable_builtin,
         socks_enabled,
         http_enabled,
         enable_dns_settings,
@@ -168,23 +134,12 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
     let current_profile_uid = match profiles.current.clone() {
         Some(uid) => uid,
         None => {
-            let (global_merge, global_script, global_rules) = tokio::join!(
-                chain_item_or_default(profiles.get_item("Merge").ok(), || ChainItem {
-                    uid: "Merge".into(),
-                    data: ChainType::Merge(Mapping::new()),
-                },),
-                chain_item_or_default(profiles.get_item("Script").ok(), || ChainItem {
-                    uid: "Script".into(),
-                    data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
-                },),
-                chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
-                    uid: "Rules".into(),
-                    data: ChainType::Rules(SeqMap::default()),
-                },),
-            );
+            let global_rules = chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
+                uid: "Rules".into(),
+                data: ChainType::Rules(SeqMap::default()),
+            })
+            .await;
             return Ok(ProfileItems {
-                global_merge,
-                global_script,
                 global_rules,
                 ..ProfileItems::default()
             });
@@ -203,11 +158,6 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         }
     };
 
-    let merge_uid = current_item.current_merge().cloned().unwrap_or_else(|| "Merge".into());
-    let script_uid = current_item
-        .current_script()
-        .cloned()
-        .unwrap_or_else(|| "Script".into());
     // Profile rules use a dedicated sidecar UID; never fall back to the global "Rules" item.
     let rules_uid = current_item.current_rules().cloned();
     let proxies_uid = current_item
@@ -219,17 +169,7 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         .cloned()
         .unwrap_or_else(|| "Groups".into());
 
-    let name = current_item.name.clone().unwrap_or_default();
-
-    let (merge_item, script_item, rules_item, proxies_item, groups_item, global_merge, global_script, global_rules) = tokio::join!(
-        chain_item_or_default(profiles.get_item(&merge_uid).ok(), || ChainItem {
-            uid: "".into(),
-            data: ChainType::Merge(Mapping::new()),
-        },),
-        chain_item_or_default(profiles.get_item(&script_uid).ok(), || ChainItem {
-            uid: "".into(),
-            data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
-        },),
+    let (rules_item, proxies_item, groups_item, global_rules) = tokio::join!(
         chain_item_or_default(rules_uid.as_ref().and_then(|uid| profiles.get_item(uid).ok()), || {
             ChainItem {
                 uid: "".into(),
@@ -244,14 +184,6 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
             uid: "".into(),
             data: ChainType::Groups(SeqMap::default()),
         },),
-        chain_item_or_default(profiles.get_item("Merge").ok(), || ChainItem {
-            uid: "Merge".into(),
-            data: ChainType::Merge(Mapping::new()),
-        },),
-        chain_item_or_default(profiles.get_item("Script").ok(), || ChainItem {
-            uid: "Script".into(),
-            data: ChainType::Script(tmpl::ITEM_SCRIPT.into()),
-        },),
         chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
             uid: "Rules".into(),
             data: ChainType::Rules(SeqMap::default()),
@@ -260,45 +192,11 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
 
     Ok(ProfileItems {
         config: current,
-        merge_item,
-        script_item,
         rules_item,
         proxies_item,
         groups_item,
-        global_merge,
-        global_script,
         global_rules,
-        profile_name: name,
     })
-}
-
-async fn process_global_items(
-    mut config: Mapping,
-    mut exists_keys: Vec<String>,
-    mut result_map: HashMap<String, ResultLog>,
-    global_merge: ChainItem,
-    global_script: ChainItem,
-    profile_name: &String,
-) -> (Mapping, Vec<String>, HashMap<String, ResultLog>) {
-    if let ChainType::Merge(merge) = global_merge.data {
-        exists_keys.extend(use_keys(&merge));
-        config = use_merge(&merge, config);
-    }
-
-    if let ChainType::Script(script) = global_script.data {
-        let mut logs = vec![];
-        match use_script(script, config.clone(), profile_name.clone()).await {
-            Ok((res_config, res_logs)) => {
-                extend_changed_keys(&mut exists_keys, &config, &res_config);
-                config = res_config;
-                logs.extend(res_logs);
-            }
-            Err(err) => logs.push(("exception".into(), err.to_string().into())),
-        }
-        result_map.insert(global_script.uid, logs);
-    }
-
-    (config, exists_keys, result_map)
 }
 
 fn process_seq_items(
@@ -331,20 +229,6 @@ fn process_global_rules(mut config: Mapping, global_rules: ChainItem) -> Mapping
         config = apply_direct_domain_dns(config, &direct_domains);
     }
     config
-}
-
-fn extend_changed_keys(exists_keys: &mut Vec<String>, config: &Mapping, res_config: &Mapping) {
-    exists_keys.extend(res_config.iter().filter_map(|(key, value)| {
-        if config.get(key) == Some(value) {
-            return None;
-        }
-
-        key.as_str().map(|key| {
-            let mut key: String = key.into();
-            key.make_ascii_lowercase();
-            key
-        })
-    }));
 }
 
 /// App 权威的顶层控制面键:核心连接、监听端口、UI/托盘开关。
@@ -479,35 +363,6 @@ fn ensure_lan_bind_address(mut config: Mapping) -> Mapping {
     config
 }
 
-async fn process_profile_items(
-    mut config: Mapping,
-    mut exists_keys: Vec<String>,
-    mut result_map: HashMap<String, ResultLog>,
-    merge_item: ChainItem,
-    script_item: ChainItem,
-    profile_name: &String,
-) -> (Mapping, Vec<String>, HashMap<String, ResultLog>) {
-    if let ChainType::Merge(merge) = merge_item.data {
-        exists_keys.extend(use_keys(&merge));
-        config = use_merge(&merge, config);
-    }
-
-    if let ChainType::Script(script) = script_item.data {
-        let mut logs = vec![];
-        match use_script(script, config.clone(), profile_name.clone()).await {
-            Ok((res_config, res_logs)) => {
-                extend_changed_keys(&mut exists_keys, &config, &res_config);
-                config = res_config;
-                logs.extend(res_logs);
-            }
-            Err(err) => logs.push(("exception".into(), err.to_string().into())),
-        }
-        result_map.insert(script_item.uid, logs);
-    }
-
-    (config, exists_keys, result_map)
-}
-
 /// Merge the Application Merge Config over the profile's own configuration.
 ///
 /// Every switch it consults is a parameter: it used to read `enable_external_controller`
@@ -576,31 +431,6 @@ fn merge_default_config(
                 }
             } else {
                 config.insert(key, value);
-            }
-        }
-    }
-
-    config
-}
-
-async fn apply_builtin_scripts(mut config: Mapping, clash_core: Option<String>, enable_builtin: bool) -> Mapping {
-    if enable_builtin {
-        let items: Vec<_> = ChainItem::builtin()
-            .into_iter()
-            .filter(|(s, _)| s.is_support(clash_core.as_ref()))
-            .map(|(_, c)| c)
-            .collect();
-        for item in items {
-            logging!(debug, Type::Core, "run builtin script {}", item.uid);
-            if let ChainType::Script(script) = item.data {
-                match use_script(script, config.clone(), String::from("")).await {
-                    Ok((res_config, _)) => {
-                        config = res_config;
-                    }
-                    Err(err) => {
-                        logging!(error, Type::Core, "builtin script error `{err}`");
-                    }
-                }
             }
         }
     }
@@ -747,14 +577,12 @@ async fn apply_dns_settings(mut config: Mapping, enable_dns_settings: bool) -> M
     config
 }
 
-/// Returns the enhanced profile, its original keys, and script logs.
+/// Returns the enhanced profile, its original keys, and legacy script logs (always empty).
 pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, HashMap<String, ResultLog>)> {
     let cfg_vals = get_config_values().await;
     let ConfigValues {
         clash_config,
-        clash_core,
         enable_tun,
-        enable_builtin,
         socks_enabled,
         http_enabled,
         enable_dns_settings,
@@ -767,17 +595,10 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
 
     let profile = collect_profile_items(profiles).await?;
     let config = profile.config;
-    let merge_item = profile.merge_item;
-    let script_item = profile.script_item;
     let rules_item = profile.rules_item;
     let proxies_item = profile.proxies_item;
     let groups_item = profile.groups_item;
-    let global_merge = profile.global_merge;
-    let global_script = profile.global_script;
     let global_rules = profile.global_rules;
-    let profile_name = profile.profile_name;
-
-    let result_map = HashMap::new();
 
     let config = process_seq_items(config, rules_item, proxies_item, groups_item);
     let exists_keys = use_keys(&config).collect::<Vec<_>>();
@@ -794,24 +615,10 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
         tproxy_enabled,
     );
 
-    let config = apply_builtin_scripts(config, clash_core, enable_builtin).await;
     let config = use_tun(config, enable_tun);
     let config = apply_dns_settings(config, enable_dns_settings).await;
 
     let authoritative = AuthoritativeFields::capture(&config, enable_dns_settings);
-
-    let (config, exists_keys, result_map) = process_global_items(
-        config,
-        exists_keys,
-        result_map,
-        global_merge,
-        global_script,
-        &profile_name,
-    )
-    .await;
-
-    let (config, exists_keys, result_map) =
-        process_profile_items(config, exists_keys, result_map, merge_item, script_item, &profile_name).await;
 
     // Global rules run last so prepend DIRECT/bypass always wins across subscriptions.
     let config = process_global_rules(config, global_rules);
@@ -825,7 +632,7 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
     let mut exists_keys_set = HashSet::new();
     exists_keys_set.extend(exists_keys);
 
-    Ok((config, exists_keys_set, result_map))
+    Ok((config, exists_keys_set, HashMap::new()))
 }
 
 #[cfg(test)]
@@ -1290,92 +1097,10 @@ mod authoritative_field_tests {
 #[allow(clippy::expect_used)]
 #[cfg(test)]
 mod tests {
-    use super::{
-        ChainItem, ChainType, cleanup_proxy_groups, ensure_lan_bind_address, process_global_items,
-        process_profile_items, use_keys,
-    };
-    use std::collections::HashMap;
+    use super::{cleanup_proxy_groups, ensure_lan_bind_address, use_keys};
 
     fn mapping(yaml: &str) -> serde_yaml_ng::Mapping {
         serde_yaml_ng::from_str(yaml).expect("test config should be valid")
-    }
-
-    #[tokio::test]
-    async fn manual_overrides_follow_expected_priority() {
-        let mut config = mapping(
-            r"{global-merge-wins: other, global-script-wins: other, profile-merge-wins: other,
-               profile-script-wins: other, nested: {winner: other}, dns: {enable: true}, tun: {enable: true}}",
-        );
-        let exists_keys = use_keys(&config).collect();
-        config.insert("application-only".into(), true.into());
-
-        let global_merge = ChainItem {
-            uid: "Merge".into(),
-            data: ChainType::Merge(mapping(
-                r"{global-merge-wins: global-merge, global-script-wins: global-merge,
-                   profile-merge-wins: global-merge, profile-script-wins: global-merge,
-                   nested: {winner: global-merge}, dns: {enable: false}, tun: {enable: false}}",
-            )),
-        };
-        let global_script = ChainItem::to_script(
-            "Script",
-            r#"function main(config) {
-              config["global-script-wins"] = "global-script";
-              config["profile-merge-wins"] = "global-script";
-              config["profile-script-wins"] = "global-script";
-              config.nested.winner = "global-script";
-              return config;
-            }"#,
-        );
-        let profile_merge = ChainItem {
-            uid: "profile-merge".into(),
-            data: ChainType::Merge(mapping(
-                r"{profile-merge-wins: profile-merge, profile-script-wins: profile-merge,
-                   nested: {winner: profile-merge}}",
-            )),
-        };
-        let profile_script = ChainItem::to_script(
-            "profile-script",
-            r#"function main(config) {
-              config["profile-script-wins"] = "profile-script";
-              config.nested.winner = "profile-script";
-              return config;
-            }"#,
-        );
-
-        let profile_name = "test-profile".into();
-        let (config, exists_keys, result_map) = process_global_items(
-            config,
-            exists_keys,
-            HashMap::new(),
-            global_merge,
-            global_script,
-            &profile_name,
-        )
-        .await;
-        let (config, exists_keys, _) = process_profile_items(
-            config,
-            exists_keys,
-            result_map,
-            profile_merge,
-            profile_script,
-            &profile_name,
-        )
-        .await;
-
-        let string_value = |key| config.get(key).and_then(serde_yaml_ng::Value::as_str);
-        assert_eq!(string_value("global-merge-wins"), Some("global-merge"));
-        assert_eq!(string_value("global-script-wins"), Some("global-script"));
-        assert_eq!(string_value("profile-merge-wins"), Some("profile-merge"));
-        assert_eq!(string_value("profile-script-wins"), Some("profile-script"));
-        assert_eq!(
-            config
-                .get("nested")
-                .and_then(|value| value.get("winner"))
-                .and_then(serde_yaml_ng::Value::as_str),
-            Some("profile-script")
-        );
-        assert!(!exists_keys.contains(&"application-only".into()));
     }
 
     #[test]

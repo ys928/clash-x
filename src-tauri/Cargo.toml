@@ -64,7 +64,6 @@ rfd = { version = "0.16.0", default-features = false, features = ["common-contro
 dunce = "1.0.5"
 nanoid = "0.5"
 chrono = { workspace = true }
-boa_engine = "0.21.1"
 once_cell = { version = "1.21.4", features = ["parking_lot"] }
 percent-encoding = "2.3.2"
 reqwest = { workspace = true }

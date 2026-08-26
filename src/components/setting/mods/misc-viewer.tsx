@@ -25,7 +25,6 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
     appLogMaxSize: 8,
     appLogMaxCount: 12,
     autoCloseConnection: true,
-    enableBuiltinEnhanced: true,
     proxyLayoutColumn: 6,
     enableAutoDelayDetection: false,
     autoDelayDetectionIntervalMinutes: 5,
@@ -42,7 +41,6 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
         appLogMaxSize: verge?.app_log_max_size ?? 128,
         appLogMaxCount: verge?.app_log_max_count ?? 8,
         autoCloseConnection: verge?.auto_close_connection ?? true,
-        enableBuiltinEnhanced: verge?.enable_builtin_enhanced ?? true,
         proxyLayoutColumn: verge?.proxy_layout_column || 6,
         enableAutoDelayDetection: verge?.enable_auto_delay_detection ?? false,
         autoDelayDetectionIntervalMinutes:
@@ -62,7 +60,6 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
         app_log_max_size: values.appLogMaxSize,
         app_log_max_count: values.appLogMaxCount,
         auto_close_connection: values.autoCloseConnection,
-        enable_builtin_enhanced: values.enableBuiltinEnhanced,
         proxy_layout_column: values.proxyLayoutColumn,
         enable_auto_delay_detection: values.enableAutoDelayDetection,
         auto_delay_detection_interval_minutes:
@@ -190,25 +187,6 @@ export const MiscViewer = forwardRef<DialogRef>((props, ref) => {
             checked={values.autoCloseConnection}
             onChange={(_, c) =>
               setValues((v) => ({ ...v, autoCloseConnection: c }))
-            }
-            sx={{ marginLeft: 'auto' }}
-          />
-        </ListItem>
-
-        <ListItem sx={{ padding: '5px 2px' }}>
-          <ListItemText
-            primary={t('settings.modals.misc.fields.enableBuiltinEnhanced')}
-            sx={{ maxWidth: 'fit-content' }}
-          />
-          <TooltipIcon
-            title={t('settings.modals.misc.tooltips.enableBuiltinEnhanced')}
-            sx={{ opacity: '0.7' }}
-          />
-          <Switch
-            edge="end"
-            checked={values.enableBuiltinEnhanced}
-            onChange={(_, c) =>
-              setValues((v) => ({ ...v, enableBuiltinEnhanced: c }))
             }
             sx={{ marginLeft: 'auto' }}
           />

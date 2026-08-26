@@ -3,9 +3,7 @@ use crate::{
     config::PrfItem,
     utils::{dirs, help},
 };
-use serde_yaml_ng::Mapping;
 use smartstring::alias::String;
-use tokio::fs;
 
 #[derive(Debug, Clone)]
 pub struct ChainItem {
@@ -15,17 +13,9 @@ pub struct ChainItem {
 
 #[derive(Debug, Clone)]
 pub enum ChainType {
-    Merge(Mapping),
-    Script(String),
     Rules(SeqMap),
     Proxies(SeqMap),
     Groups(SeqMap),
-}
-
-#[derive(Debug, Clone)]
-pub enum ChainSupport {
-    ClashMeta,
-    ClashMetaAlpha,
 }
 
 // Helper trait to allow async conversion
@@ -45,14 +35,6 @@ impl AsyncChainItemFrom for Option<ChainItem> {
         }
 
         match itype {
-            "script" => Some(ChainItem {
-                uid,
-                data: ChainType::Script(fs::read_to_string(path).await.ok()?.into()),
-            }),
-            "merge" => Some(ChainItem {
-                uid,
-                data: ChainType::Merge(help::read_mapping(&path).await.ok()?),
-            }),
             "rules" => {
                 let seq_map = help::read_yaml::<SeqMap>(&path).await.ok()?;
                 Some(ChainItem {
@@ -74,49 +56,8 @@ impl AsyncChainItemFrom for Option<ChainItem> {
                     data: ChainType::Groups(seq_map),
                 })
             }
+            // merge/script items are ignored (legacy compatibility)
             _ => None,
-        }
-    }
-}
-impl ChainItem {
-    /// 内建支持一些脚本
-    pub fn builtin() -> Vec<(ChainSupport, Self)> {
-        // meta 的一些处理
-        let meta_guard = Self::to_script("verge_meta_guard", include_str!("./builtin/meta_guard.js"));
-
-        // meta 1.13.2 alpn string 转 数组
-        let hy_alpn = Self::to_script("verge_hy_alpn", include_str!("./builtin/meta_hy_alpn.js"));
-
-        // meta 的一些处理
-        let meta_guard_alpha = Self::to_script("verge_meta_guard", include_str!("./builtin/meta_guard.js"));
-
-        // meta 1.13.2 alpn string 转 数组
-        let hy_alpn_alpha = Self::to_script("verge_hy_alpn", include_str!("./builtin/meta_hy_alpn.js"));
-
-        vec![
-            (ChainSupport::ClashMeta, hy_alpn),
-            (ChainSupport::ClashMeta, meta_guard),
-            (ChainSupport::ClashMetaAlpha, hy_alpn_alpha),
-            (ChainSupport::ClashMetaAlpha, meta_guard_alpha),
-        ]
-    }
-
-    pub fn to_script<U: Into<String>, D: Into<String>>(uid: U, data: D) -> Self {
-        Self {
-            uid: uid.into(),
-            data: ChainType::Script(data.into()),
-        }
-    }
-}
-
-impl ChainSupport {
-    pub fn is_support(&self, core: Option<&String>) -> bool {
-        match core {
-            Some(core) => matches!(
-                (self, core.as_str()),
-                (Self::ClashMeta, "verge-mihomo") | (Self::ClashMetaAlpha, "verge-mihomo-alpha")
-            ),
-            None => true,
         }
     }
 }

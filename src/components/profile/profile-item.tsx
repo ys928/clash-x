@@ -286,32 +286,14 @@ const ProfileItemBase = (props: ProfileItemProps) => {
   const [rulesOpen, setRulesOpen] = useState(false)
   const [proxiesOpen, setProxiesOpen] = useState(false)
   const [groupsOpen, setGroupsOpen] = useState(false)
-  const [mergeOpen, setMergeOpen] = useState(false)
-  const [scriptOpen, setScriptOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
 
   const loadProfileDocument = useCallback(() => readProfileFile(uid), [uid])
-  const loadMergeDocument = useCallback(
-    () => readProfileFile(option?.merge ?? ''),
-    [option?.merge],
-  )
-  const loadScriptDocument = useCallback(
-    () => readProfileFile(option?.script ?? ''),
-    [option?.script],
-  )
 
   const profileDocument = useEditorDocument({
     open: fileOpen,
     load: loadProfileDocument,
-  })
-  const mergeDocument = useEditorDocument({
-    open: mergeOpen,
-    load: loadMergeDocument,
-  })
-  const scriptDocument = useEditorDocument({
-    open: scriptOpen,
-    load: loadScriptDocument,
   })
 
   const onOpenHome = () => {
@@ -348,16 +330,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
   const onEditGroups = () => {
     setAnchorEl(null)
     setGroupsOpen(true)
-  }
-
-  const onEditMerge = () => {
-    setAnchorEl(null)
-    setMergeOpen(true)
-  }
-
-  const onEditScript = () => {
-    setAnchorEl(null)
-    setScriptOpen(true)
   }
 
   const onForceSelect = () => {
@@ -421,8 +393,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     editRules: 'profiles.components.menu.editRules',
     editProxies: 'profiles.components.menu.editProxies',
     editGroups: 'profiles.components.menu.editGroups',
-    extendConfig: 'profiles.components.menu.extendConfig',
-    extendScript: 'profiles.components.menu.extendScript',
     openFile: 'profiles.components.menu.openFile',
     update: 'profiles.components.menu.update',
     updateViaProxy: 'profiles.components.menu.updateViaProxy',
@@ -473,16 +443,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       label: menuLabels.editGroups,
       handler: onEditGroups,
       disabled: !option?.groups,
-    },
-    {
-      label: menuLabels.extendConfig,
-      handler: onEditMerge,
-      disabled: !option?.merge,
-    },
-    {
-      label: menuLabels.extendScript,
-      handler: onEditScript,
-      disabled: !option?.script,
     },
     {
       label: menuLabels.openFile,
@@ -546,16 +506,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       disabled: !option?.groups,
     },
     {
-      label: menuLabels.extendConfig,
-      handler: onEditMerge,
-      disabled: !option?.merge,
-    },
-    {
-      label: menuLabels.extendScript,
-      handler: onEditScript,
-      disabled: !option?.script,
-    },
-    {
       label: menuLabels.openFile,
       handler: onOpenFile,
       disabled: false,
@@ -591,28 +541,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     }
     onSave?.(profileDocument.savedValue, currentValue)
     profileDocument.markSaved(currentValue)
-  })
-
-  const handleSaveMergeDocument = useLockFn(async () => {
-    const mergeUid = option?.merge ?? ''
-    const currentValue = mergeDocument.value
-    if (!(await saveProfileFile(mergeUid, currentValue))) {
-      await mergeDocument.reload()
-      return
-    }
-    onSave?.(mergeDocument.savedValue, currentValue)
-    mergeDocument.markSaved(currentValue)
-  })
-
-  const handleSaveScriptDocument = useLockFn(async () => {
-    const scriptUid = option?.script ?? ''
-    const currentValue = scriptDocument.value
-    if (!(await saveProfileFile(scriptUid, currentValue))) {
-      await scriptDocument.reload()
-      return
-    }
-    onSave?.(scriptDocument.savedValue, currentValue)
-    scriptDocument.markSaved(currentValue)
   })
 
   return (
@@ -902,32 +830,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
           onClose={() => {
             setGroupsOpen(false)
           }}
-        />
-      )}
-      {mergeOpen && (
-        <EditorViewer
-          open={true}
-          value={mergeDocument.value}
-          language="yaml"
-          path={`merge:${option?.merge ?? ''}.yaml`}
-          loading={mergeDocument.loading}
-          dirty={mergeDocument.dirty}
-          onChange={mergeDocument.setValue}
-          onSave={handleSaveMergeDocument}
-          onClose={() => setMergeOpen(false)}
-        />
-      )}
-      {scriptOpen && (
-        <EditorViewer
-          open={true}
-          value={scriptDocument.value}
-          language="javascript"
-          path={`script:${option?.script ?? ''}.js`}
-          loading={scriptDocument.loading}
-          dirty={scriptDocument.dirty}
-          onChange={scriptDocument.setValue}
-          onSave={handleSaveScriptDocument}
-          onClose={() => setScriptOpen(false)}
         />
       )}
 

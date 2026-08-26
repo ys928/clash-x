@@ -197,8 +197,6 @@ mod app_init {
             cmd::read_profile_file,
             cmd::save_profile_file,
             cmd::get_next_update_time,
-            cmd::script_validate_notice,
-            cmd::validate_script_file,
             cmd::create_local_backup,
             cmd::list_local_backup,
             cmd::delete_local_backup,

@@ -51,7 +51,6 @@ import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
 import { type DialogRef } from '@/components/base'
 import { GlobalRulesMore } from '@/components/profile/global-rules-more'
-import { ProfileMore } from '@/components/profile/profile-more'
 import {
   ProfileViewer,
   type ProfileViewerRef,
@@ -67,18 +66,13 @@ import {
   enhanceProfiles,
   getProfiles,
   //restartCore,
-  getRuntimeLogs,
   importProfile,
   reorderProfile,
   updateProfile,
 } from '@/services/cmds'
 import { subscribeVergeEvents } from '@/services/events'
 import { errorDetail, showNotice } from '@/services/notice-service'
-import {
-  fetchCacheData,
-  revalidateQueries,
-  useQuery,
-} from '@/services/query-client'
+import { fetchCacheData, revalidateQueries } from '@/services/query-client'
 import {
   useLoadingCache,
   useSetLoadingCache,
@@ -266,7 +260,7 @@ const ProfilePage = () => {
 
     try {
       // 只失效 profiles 相关 query，不影响 WS 订阅、IP 缓存等其他 query
-      await revalidateQueries([['getProfiles'], ['getRuntimeLogs']])
+      await revalidateQueries([['getProfiles']])
 
       // 强制重新获取配置数据
       await mutateProfiles()
@@ -288,14 +282,6 @@ const ProfilePage = () => {
       )
     }
   })
-
-  const { data: chainLogs = {}, refetch: refetchLogs } = useQuery({
-    queryKey: ['getRuntimeLogs'],
-    queryFn: getRuntimeLogs,
-  })
-  const refetchLogsRef = useRef(refetchLogs)
-  refetchLogsRef.current = refetchLogs
-  const mutateLogs = useCallback(() => refetchLogsRef.current(), [])
 
   const viewerRef = useRef<ProfileViewerRef>(null)
   const configRef = useRef<DialogRef>(null)
@@ -444,7 +430,6 @@ const ProfilePage = () => {
 
         if (outcome.status === 'valid') {
           currentProfileRef.current = profile
-          void mutateLogs().catch(() => {})
           void closeAllConnections().catch(() => {})
 
           if (
@@ -468,7 +453,7 @@ const ProfilePage = () => {
         debugProfileSwitch('SWITCH_END', profile)
       }
     },
-    [mutateLogs, patchProfiles],
+    [patchProfiles],
   )
 
   const runProfileSwitchQueue = useCallback(async () => {
@@ -572,7 +557,6 @@ const ProfilePage = () => {
 
     try {
       if (!(await enhanceProfiles())) return
-      mutateLogs()
       if (notifySuccess) {
         showNotice.success(
           'profiles.page.feedback.notifications.profileReactivated',
@@ -592,7 +576,6 @@ const ProfilePage = () => {
       setActivatings([...(current ? currentActivatings() : []), uid])
       await deleteProfile(uid)
       mutateProfiles()
-      mutateLogs()
       if (current) {
         await onEnhance(false)
       }
@@ -782,7 +765,6 @@ const ProfilePage = () => {
       }
 
       await mutateProfiles()
-      await mutateLogs()
 
       // If any deleted profile was current, enhance profiles
       if (currentActivating.length > 0) {
@@ -1055,27 +1037,6 @@ const ProfilePage = () => {
               <Grid container spacing={{ xs: 1, lg: 1 }}>
                 <Grid size={{ xs: 12, sm: 12, md: 4, lg: 4 }}>
                   <GlobalRulesMore
-                    onSave={async (prev, curr) => {
-                      if (prev !== curr) {
-                        await onEnhance(false)
-                      }
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                  <ProfileMore
-                    id="Merge"
-                    onSave={async (prev, curr) => {
-                      if (prev !== curr) {
-                        await onEnhance(false)
-                      }
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                  <ProfileMore
-                    id="Script"
-                    logInfo={chainLogs['Script']}
                     onSave={async (prev, curr) => {
                       if (prev !== curr) {
                         await onEnhance(false)

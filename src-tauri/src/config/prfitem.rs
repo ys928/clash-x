@@ -505,14 +505,6 @@ impl PrfItem {
 }
 
 impl PrfItem {
-    pub(crate) fn current_merge(&self) -> Option<&String> {
-        self.option.as_ref().and_then(|o| o.merge.as_ref())
-    }
-
-    pub(crate) fn current_script(&self) -> Option<&String> {
-        self.option.as_ref().and_then(|o| o.script.as_ref())
-    }
-
     pub(crate) fn current_rules(&self) -> Option<&String> {
         self.option.as_ref().and_then(|o| o.rules.as_ref())
     }

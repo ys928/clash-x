@@ -212,54 +212,6 @@ impl CoreConfigValidator {
         }
     }
 
-    async fn validate_script_file_outcome(path: &str) -> Result<ValidationOutcome> {
-        let content = match fs::read_to_string(path).await {
-            Ok(content) => content,
-            Err(err) => {
-                let error_msg: String = format!("Failed to read script file: {err}").into();
-                logging!(warn, Type::Validate, "脚本语法错误: {}", err);
-                return Ok(ValidationOutcome::invalid_from_message(error_msg));
-            }
-        };
-
-        logging!(debug, Type::Validate, "验证脚本文件: {}", path);
-
-        use boa_engine::{Context, Source};
-
-        let mut context = Context::default();
-        let _ = context.eval(Source::from_bytes(
-            "var console = Object.freeze({
-              log(...data){},
-              info(...data){},
-              error(...data){},
-              debug(...data){},
-            });",
-        ));
-        let result = context.eval(Source::from_bytes(&content));
-
-        match result {
-            Ok(_) => {
-                logging!(debug, Type::Validate, "脚本语法验证通过: {}", path);
-
-                if !content.contains("function main")
-                    && !content.contains("const main")
-                    && !content.contains("let main")
-                {
-                    let error_msg = "Script must contain a main function";
-                    logging!(warn, Type::Validate, "脚本缺少main函数: {}", path);
-                    return Ok(ValidationOutcome::invalid_from_message(error_msg));
-                }
-
-                Ok(ValidationOutcome::Valid)
-            }
-            Err(err) => {
-                let error_msg: String = format!("Script syntax error: {err}").into();
-                logging!(warn, Type::Validate, "脚本语法错误: {}", err);
-                Ok(ValidationOutcome::invalid_from_message(error_msg))
-            }
-        }
-    }
-
     pub async fn validate_config_file_outcome(
         config_path: &str,
         is_merge_file: Option<bool>,
@@ -293,10 +245,10 @@ impl CoreConfigValidator {
             logging!(
                 info,
                 Type::Validate,
-                "检测到脚本文件，使用JavaScript验证: {}",
+                "Legacy script file ignored (enhancement scripts removed): {}",
                 config_path
             );
-            return Self::validate_script_file_outcome(config_path).await;
+            return Ok(ValidationOutcome::Valid);
         }
 
         logging!(info, Type::Validate, "使用Clash内核验证配置文件: {}", config_path);
