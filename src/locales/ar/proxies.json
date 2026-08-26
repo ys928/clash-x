@@ -6,11 +6,6 @@
       "direct": "Direct"
     },
     "actions": {
-      "toggleChain": "بروكسي السلسلة",
-      "connect": "Connect",
-      "disconnect": "Disconnect",
-      "connecting": "Connecting...",
-      "clearChainConfig": "Delete Chain Config",
       "more": "More"
     },
     "provider": {
@@ -82,19 +77,6 @@
         "openLogs": "فتح مجلد السجلات"
       }
     },
-    "chain": {
-      "header": "Chain Proxy Config",
-      "warning": "Chain proxy will significantly reduce network speed. If you do not have a clear business need, or do not understand this configuration, keep it disabled.",
-      "empty": "Chain proxy will significantly reduce network speed. If you do not have a clear business need, or do not understand this configuration, keep it disabled.",
-      "instruction": "Click nodes in order to add to proxy chain",
-      "minimumNodes": "Chain proxy requires at least 2 nodes",
-      "minimumNodesHint": "Chain proxy requires at least 2 nodes. Please add one more node.",
-      "connectFailed": "Failed to connect to proxy chain",
-      "disconnectFailed": "Failed to disconnect from proxy chain",
-      "duplicateNode": "Proxy node already exists in chain",
-      "entryNode": "مدخل",
-      "exitNode": "مخرج"
-    },
     "autoSwitch": {
       "title": "Smart Switch",
       "subtitle": "Curated node sets with latency-based auto switching",
@@ -145,8 +127,7 @@
       "directMode": "الوضع المباشر"
     },
     "title": {
-      "default": "مجموعات الوكلاء",
-      "chainMode": "Proxy Chain Mode"
+      "default": "مجموعات الوكلاء"
     }
   },
   "feedback": {

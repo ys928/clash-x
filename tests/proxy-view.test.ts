@@ -11,8 +11,6 @@ import {
   rebindMemberOccurrence,
   rebindNode,
   resolveMember,
-  selectGlobalChainNodes,
-  selectRuleChainMembers,
   toMemberOccurrenceBinding,
 } from '@/types/proxy-view'
 
@@ -140,30 +138,6 @@ test('rebinds a node semantically when its response-scoped id moves', () => {
     }),
     undefined,
   )
-})
-
-test('does not expose global-chain candidates without GLOBAL', () => {
-  const runtimeOnly = {
-    ...node,
-    recordId: 'c:0',
-    name: 'runtime-only',
-    source: { kind: 'core', proxyName: 'runtime-only' },
-  }
-  const globalMissingView = {
-    ...view,
-    global: null,
-    records: { 'c:0': runtimeOnly },
-    standalone: ['c:0'],
-  }
-
-  assert.deepEqual(
-    selectGlobalChainNodes(globalMissingView, [{ name: 'runtime-only' }]),
-    [],
-  )
-})
-
-test('does not fall back to global nodes when a selected rule group disappears', () => {
-  assert.deepEqual(selectRuleChainMembers(view, 'removed-group'), [])
 })
 
 test('uses the current backend group selection after ids and now change', () => {

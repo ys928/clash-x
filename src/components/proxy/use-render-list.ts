@@ -1,20 +1,15 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 
-import { useRuntimeConfig } from '@/hooks/use-clash'
 import { useGroupsDelays } from '@/hooks/use-group-delays'
 import { useVerge } from '@/hooks/use-verge'
 import { useAppRefreshers, useProxiesData } from '@/providers/app-data-context'
-import delayManager, { type DelaySnapshot } from '@/services/delay'
+import { type DelaySnapshot } from '@/services/delay'
 import {
-  isInteractableMember,
   resolveMember,
-  selectGlobalChainNodes,
-  selectRuleChainMembers,
   type ProxyGroupView,
   type ProxyViewV1,
   type ResolvedProxyMember,
 } from '@/types/proxy-view'
-import { debugLog } from '@/utils/debug'
 
 import { filterSort } from './use-filter-sort'
 import {
@@ -46,11 +41,6 @@ export interface IRenderItem {
 /**
  * Whether the list about to be drawn contains anything a user would call content.
  *
- * Derived from the list itself rather than predicted beside it. The prediction that used to
- * live in the empty-state model asked a different question in chain mode — whether any
- * Selector or URLTest group existed — which is unrelated to what the chain list is actually
- * built from, so both a false "empty" and a false "not empty" were reachable.
- *
  * A group header alone counts only when the group is visible; every other row is content by
  * definition, including the members of a group that is hidden but expanded.
  */
@@ -71,8 +61,6 @@ type GroupCache = {
   delays: DelaySnapshot | undefined
   items: IRenderItem[]
 }
-
-type RuntimeConfigWithProxySequence = IConfigData & { proxies?: unknown }
 
 const resolveOccurrences = (view: ProxyViewV1, group: ProxyGroupView) =>
   group.members.map((member, memberIndex) => ({
@@ -107,122 +95,31 @@ const groupOccurrences = <T>(list: T[], size: number): T[][] =>
     return acc
   }, [])
 
-const CHAIN_DELAY_GROUP = 'chain-mode'
-
-const virtualGroup = (members: ProxyGroupView['members']): ProxyGroupView => ({
-  name: CHAIN_DELAY_GROUP,
-  type: 'Selector',
-  alive: true,
-  udp: false,
-  xudp: false,
-  tfo: false,
-  mptcp: false,
-  smux: false,
-  history: [],
-  members,
-})
-
-export const useRenderList = (
-  mode: string,
-  isChainMode?: boolean,
-  selectedGroup?: string | null,
-) => {
+export const useRenderList = (mode: string, selectedGroup?: string | null) => {
   const { proxyView } = useProxiesData()
   const { refreshProxy } = useAppRefreshers()
   const { verge } = useVerge()
   const { width } = useWindowWidth()
   const [headStates, setHeadState] = useHeadStateNew()
   const latencyTimeout = verge?.default_latency_timeout
-  const { data: runtimeConfig } = useRuntimeConfig(!!isChainMode)
-  const runtimeProxies = (
-    runtimeConfig as RuntimeConfigWithProxySequence | null
-  )?.proxies
 
   const col = useMemo(
     () => calculateColumns(width, verge?.proxy_layout_column || 6),
     [width, verge?.proxy_layout_column],
   )
 
-  const chainOccurrences = useMemo(() => {
-    if (!proxyView || !isChainMode) return []
-    if (mode === 'rule' && selectedGroup) {
-      return selectRuleChainMembers(proxyView, selectedGroup)
-    }
-    if (!runtimeConfig) return []
-    return selectGlobalChainNodes(proxyView, runtimeProxies).map(
-      (node, memberIndex) => ({
-        memberIndex,
-        member: {
-          kind: 'node' as const,
-          ref: {
-            kind: 'node' as const,
-            name: node.name,
-            recordId: node.recordId,
-          },
-          node,
-        },
-      }),
-    )
-  }, [
-    isChainMode,
-    mode,
-    proxyView,
-    runtimeConfig,
-    runtimeProxies,
-    selectedGroup,
-  ])
-
-  const chainOccurrencesRef = useRef(chainOccurrences)
-  chainOccurrencesRef.current = chainOccurrences
-  const chainDelayGroup =
-    mode === 'rule' && selectedGroup ? selectedGroup : CHAIN_DELAY_GROUP
-  const chainDelayKey = chainOccurrences
-    .map(({ member }) => {
-      if (member.kind !== 'node') return `${member.kind}:${member.ref.name}`
-      const source = member.node.source
-      return source.kind === 'provider'
-        ? `provider:${source.providerName}:${source.proxyName}`
-        : `core:${source.proxyName}`
-    })
-    .join('\u0000')
-
-  useEffect(() => {
-    if (!isChainMode || !chainDelayKey) return
-    const interactable = chainOccurrencesRef.current
-      .map(({ member }) => member)
-      .filter(isInteractableMember)
-    if (interactable.length === 0) return
-
-    const handle = setTimeout(() => {
-      const timeout = verge?.default_latency_timeout || 10000
-      debugLog(`[ChainMode] 开始计算 ${interactable.length} 个节点的延迟`)
-      void delayManager.checkListDelay(interactable, chainDelayGroup, timeout)
-    }, 100)
-
-    return () => {
-      clearTimeout(handle)
-    }
-  }, [
-    chainDelayGroup,
-    chainDelayKey,
-    isChainMode,
-    verge?.default_latency_timeout,
-  ])
-
   // Every group this list draws, so a test settling in any of them re-sorts that group.
   const renderedGroupNames = useMemo(() => {
     if (!proxyView) return []
-    if (isChainMode)
-      return selectedGroup ? [selectedGroup] : [CHAIN_DELAY_GROUP]
     const useRule = mode === 'rule' || mode === 'script'
-    // Focus mode (rule + selectedGroup, not chain): only the active group is on screen.
+    // Focus mode (rule + selectedGroup): only the active group is on screen.
     if (useRule && selectedGroup) return [selectedGroup]
     return useRule
       ? proxyView.groups.map(({ name }) => name)
       : proxyView.global
         ? [proxyView.global.name]
         : []
-  }, [isChainMode, mode, proxyView, selectedGroup])
+  }, [mode, proxyView, selectedGroup])
   const groupDelays = useGroupsDelays(renderedGroupNames)
 
   const groupCacheRef = useRef<Map<string, GroupCache>>(new Map())
@@ -230,38 +127,6 @@ export const useRenderList = (
 
   const renderList = useMemo<IRenderItem[]>(() => {
     if (!proxyView) return []
-
-    if (isChainMode) {
-      const selected =
-        mode === 'rule'
-          ? proxyView.groups.find(({ name }) => name === selectedGroup)
-          : undefined
-      const group = selected ?? virtualGroup([])
-      const occurrences = filterSort(
-        chainOccurrences,
-        selected?.name ?? CHAIN_DELAY_GROUP,
-        '',
-        0,
-        latencyTimeout,
-      )
-      if (col > 1) {
-        return groupOccurrences(occurrences, col).map((memberCol) => ({
-          type: 4,
-          key: `chain-col:${memberKey(group, memberCol[0])}`,
-          group,
-          headState: DEFAULT_STATE,
-          col,
-          memberCol,
-        }))
-      }
-      return occurrences.map((member) => ({
-        type: 2,
-        key: `chain:${memberKey(group, member)}`,
-        group,
-        member,
-        headState: DEFAULT_STATE,
-      }))
-    }
 
     const useRule = mode === 'rule' || mode === 'script'
     // Single-group focus: same flat node picker as global mode, but for one rule group.
@@ -373,11 +238,9 @@ export const useRenderList = (
     prevListRef.current = filtered
     return filtered
   }, [
-    chainOccurrences,
     col,
     groupDelays,
     headStates,
-    isChainMode,
     latencyTimeout,
     mode,
     proxyView,

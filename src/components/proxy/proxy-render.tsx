@@ -31,7 +31,6 @@ import type { IRenderItem } from './use-render-list'
 interface RenderProps {
   item: IRenderItem
   stickyed?: boolean
-  isChainMode?: boolean
   onLocation: (group: IRenderItem['group']) => void
   onCheckAll: (groupName: string) => void
   onHeadState: (groupName: string, patch: Partial<HeadState>) => void
@@ -52,7 +51,6 @@ export const ProxyRender = memo(function ProxyRender(props: RenderProps) {
     onHeadState,
     onChangeProxy,
     onGroupToggle,
-    isChainMode: _ = false,
   } = props
   const { type, group, headState, member, memberCol } = item
   const { enabledTargetGroups } = useAutoSwitchGroups()

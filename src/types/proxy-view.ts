@@ -178,52 +178,6 @@ export function findCurrentGroupMember(
 export const providerNameOf = (node: ProxyNodeView) =>
   node.source.kind === 'provider' ? node.source.providerName : undefined
 
-const resolveStandaloneNodes = (view: ProxyViewV1) =>
-  view.standalone.map((recordId) => {
-    const node = getRecord(view, recordId)
-    if (!node) throw new Error('Proxy view record not found: ' + recordId)
-    return node
-  })
-
-const selectRuntimeStandaloneNodes = (
-  view: ProxyViewV1,
-  runtimeProxies: unknown,
-) => {
-  const runtimeProxyNames = new Set(
-    (Array.isArray(runtimeProxies) ? runtimeProxies : []).flatMap((proxy) => {
-      const name =
-        typeof proxy === 'object' && proxy !== null && 'name' in proxy
-          ? proxy.name
-          : undefined
-      return typeof name === 'string' && name.length > 0 ? [name] : []
-    }),
-  )
-  return resolveStandaloneNodes(view).filter(
-    (node) =>
-      node.source.kind === 'core' &&
-      runtimeProxyNames.has(node.source.proxyName),
-  )
-}
-
-export const selectGlobalChainNodes = (
-  view: ProxyViewV1,
-  runtimeProxies: unknown,
-) =>
-  view.global === null ? [] : selectRuntimeStandaloneNodes(view, runtimeProxies)
-
-export const selectRuleChainMembers = (
-  view: ProxyViewV1,
-  groupName: string,
-): Array<{ memberIndex: number; member: ResolvedProxyMember }> => {
-  const group = view.groups.find(({ name }) => name === groupName)
-  if (!group) return []
-
-  return group.members.flatMap((memberRef, memberIndex) => {
-    const member = resolveMember(view, memberRef)
-    return member.kind === 'group' ? [] : [{ memberIndex, member }]
-  })
-}
-
 const sameSource = (
   left: ProxyNodeView['source'],
   right: ProxyNodeView['source'],

@@ -520,12 +520,7 @@ export interface TranslationResources {
       }
       page: {
         actions: {
-          clearChainConfig: string
-          connect: string
-          connecting: string
-          disconnect: string
           more: string
-          toggleChain: string
         }
         autoSwitch: {
           activeTooltip: string
@@ -572,19 +567,6 @@ export interface TranslationResources {
           thresholdAlways: string
           thresholdMs: string
           title: string
-        }
-        chain: {
-          connectFailed: string
-          disconnectFailed: string
-          duplicateNode: string
-          empty: string
-          entryNode: string
-          exitNode: string
-          header: string
-          instruction: string
-          minimumNodes: string
-          minimumNodesHint: string
-          warning: string
         }
         empty: {
           actions: {
@@ -652,7 +634,6 @@ export interface TranslationResources {
           title: string
         }
         title: {
-          chainMode: string
           default: string
         }
         tooltips: {
