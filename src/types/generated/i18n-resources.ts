@@ -3,46 +3,6 @@
 
 export interface TranslationResources {
   translation: {
-    connections: {
-      components: {
-        actions: {
-          active: string
-          closeConnection: string
-          closed: string
-          hideClosed: string
-          showClosed: string
-        }
-        columnManager: {
-          dragHandle: string
-          hint: string
-          title: string
-        }
-        fields: {
-          chains: string
-          destination: string
-          destinationPort: string
-          dlSpeed: string
-          host: string
-          process: string
-          rule: string
-          source: string
-          time: string
-          type: string
-          ulSpeed: string
-        }
-        order: {
-          default: string
-          downloadSpeed: string
-          uploadSpeed: string
-        }
-      }
-      page: {
-        actions: {
-          more: string
-        }
-        title: string
-      }
-    }
     home: {
       components: {
         clashInfo: {
@@ -228,7 +188,6 @@ export interface TranslationResources {
             unlock: string
           }
           tabs: {
-            connections: string
             home: string
             more: string
             profiles: string
