@@ -45,19 +45,15 @@ impl Default for ProfileItems {
         Self {
             config: Default::default(),
             rules_item: ChainItem {
-                uid: "".into(),
                 data: ChainType::Rules(SeqMap::default()),
             },
             proxies_item: ChainItem {
-                uid: "".into(),
                 data: ChainType::Proxies(SeqMap::default()),
             },
             groups_item: ChainItem {
-                uid: "".into(),
                 data: ChainType::Groups(SeqMap::default()),
             },
             global_rules: ChainItem {
-                uid: "Rules".into(),
                 data: ChainType::Rules(SeqMap::default()),
             },
         }
@@ -125,7 +121,6 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         Some(uid) => uid,
         None => {
             let global_rules = chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
-                uid: "Rules".into(),
                 data: ChainType::Rules(SeqMap::default()),
             })
             .await;
@@ -162,20 +157,16 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
     let (rules_item, proxies_item, groups_item, global_rules) = tokio::join!(
         chain_item_or_default(rules_uid.as_ref().and_then(|uid| profiles.get_item(uid).ok()), || {
             ChainItem {
-                uid: "".into(),
                 data: ChainType::Rules(SeqMap::default()),
             }
         },),
         chain_item_or_default(profiles.get_item(&proxies_uid).ok(), || ChainItem {
-            uid: "".into(),
             data: ChainType::Proxies(SeqMap::default()),
         },),
         chain_item_or_default(profiles.get_item(&groups_uid).ok(), || ChainItem {
-            uid: "".into(),
             data: ChainType::Groups(SeqMap::default()),
         },),
         chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
-            uid: "Rules".into(),
             data: ChainType::Rules(SeqMap::default()),
         },),
     );

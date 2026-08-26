@@ -89,11 +89,11 @@ impl Logger {
                     Cleanup::KeepLogFiles(log_max_count),
                 );
 
-            let mut filter_modules = vec!["wry", "tokio_tungstenite", "tungstenite"];
+            let mut filter_modules = vec!["wry", "tokio_tungstenite", "tungstenite", "kode_bridge"];
             #[cfg(not(feature = "tracing"))]
             filter_modules.push("tauri");
             #[cfg(feature = "tracing")]
-            filter_modules.extend(["tauri_plugin_mihomo", "kode_bridge"]);
+            filter_modules.push("tauri_plugin_mihomo");
             let logger = logger.filter(Box::new(clash_verge_logging::ModuleFilter::new(
                 filter_modules,
                 Some(vec!["tauri_plugin_mihomo"]),

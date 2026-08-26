@@ -1,7 +1,6 @@
 use super::{CmdResult, CommandFailure, WithErrorCode as _, proxy_aware_coded_error};
 use crate::feat;
 use crate::{
-    cmd::StringifyErr as _,
     config::{ClashInfo, Config, profiles::profiles_save_file_safe},
     core::{CoreManager, handle},
 };

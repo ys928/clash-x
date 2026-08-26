@@ -57,22 +57,18 @@ pub(crate) fn resolve_setup_async() {
         init_startup_script().await;
         init_service_manager().await;
         let config_initialized = init_verge_config_before_window().await;
-        init_window().await;
         feat::reconcile_startup_tun_availability().await;
         init_resources().await;
         if config_initialized {
             init_verge_config().await;
         }
         Config::verify_config_initialization().await;
-
-        let core_init = AsyncHandler::spawn(|| async {
-            init_core_manager().await;
-        });
+        init_core_manager().await;
+        init_window().await;
 
         init_update_checker();
 
         let _ = futures::join!(
-            core_init,
             init_tray(),
             init_timer(),
             init_hotkey(),

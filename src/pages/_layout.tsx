@@ -12,27 +12,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ExpandLess, ExpandMore, MoreHorizOutlined } from '@mui/icons-material'
-import {
-  Box,
-  Collapse,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Paper,
-  ThemeProvider,
-  alpha,
-} from '@mui/material'
+import { Box, List, Menu, MenuItem, Paper, ThemeProvider } from '@mui/material'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { Outlet, useNavigate } from 'react-router'
 import { MihomoWebSocket } from 'tauri-plugin-mihomo-api'
 
 import { BaseErrorBoundary } from '@/components/base'
@@ -57,13 +43,7 @@ import {
   usePendingFailures,
 } from './_layout/hooks'
 import { handleNoticeMessage } from './_layout/utils'
-import {
-  moreNavItems,
-  navItems,
-  primaryNavItems,
-  settingsNavItem,
-} from './_navigation'
-import { moreNavPathSet } from './_navigation-meta'
+import { navItems, primaryNavItems, settingsNavItem } from './_navigation'
 
 import 'dayjs/locale/ru'
 import 'dayjs/locale/zh-cn'
@@ -152,7 +132,6 @@ const Layout = () => {
   const { language } = verge ?? {}
   const { switchLanguage } = useI18n()
   const navigate = useNavigate()
-  const location = useLocation()
   const themeReady = useMemo(() => Boolean(theme), [theme])
 
   // 开发环境下检测 MihomoWebSocket 的所有实例
@@ -176,18 +155,6 @@ const Layout = () => {
   const [menuUnlocked, setMenuUnlocked] = useState(false)
   const [menuContextPosition, setMenuContextPosition] =
     useState<MenuContextPosition | null>(null)
-  const moreRouteActive = moreNavPathSet.has(location.pathname)
-  const [moreExpanded, setMoreExpanded] = useState(moreRouteActive)
-  const [prevMoreRouteActive, setPrevMoreRouteActive] =
-    useState(moreRouteActive)
-
-  // Expand "More" when navigating into a nested route; allow manual collapse after.
-  if (moreRouteActive !== prevMoreRouteActive) {
-    setPrevMoreRouteActive(moreRouteActive)
-    if (moreRouteActive) {
-      setMoreExpanded(true)
-    }
-  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -215,48 +182,18 @@ const Layout = () => {
     [patchVerge],
   )
 
-  // Persist a combined order: primary (reorderable) + more (stable relative) for compatibility.
   const { menuOrder, handleMenuDragEnd, isDefaultOrder, resetMenuOrder } =
     useNavMenuOrder({
       enabled: menuUnlocked,
       items: primaryNavItems,
       storedOrder: verge?.menu_order,
-      onOptimisticUpdate: (primaryOrder) => {
-        const moreOrder = (verge?.menu_order ?? []).filter((path) =>
-          moreNavPathSet.has(path),
-        )
-        const missingMore = moreNavItems
-          .map((item) => item.path)
-          .filter((path) => !moreOrder.includes(path))
-        handleMenuOrderOptimisticUpdate([
-          ...primaryOrder,
-          ...moreOrder,
-          ...missingMore,
-        ])
-      },
-      onPersist: async (primaryOrder) => {
-        const moreOrder = (verge?.menu_order ?? []).filter((path) =>
-          moreNavPathSet.has(path),
-        )
-        const missingMore = moreNavItems
-          .map((item) => item.path)
-          .filter((path) => !moreOrder.includes(path))
-        await handleMenuOrderPersist([
-          ...primaryOrder,
-          ...moreOrder,
-          ...missingMore,
-        ])
-      },
+      onOptimisticUpdate: handleMenuOrderOptimisticUpdate,
+      onPersist: handleMenuOrderPersist,
     })
 
   const orderedPrimaryItems = useMemo(
     () => filterOrderedItems(menuOrder, primaryNavItems),
     [menuOrder],
-  )
-
-  const orderedMoreItems = useMemo(
-    () => filterOrderedItems(verge?.menu_order ?? [], moreNavItems),
-    [verge?.menu_order],
   )
 
   const handleMenuContextMenu = useCallback(
@@ -329,84 +266,6 @@ const Layout = () => {
     ))
   }
 
-  const moreToggle = (
-    <ListItem sx={{ py: 0.5, maxWidth: 250, mx: 'auto', padding: '4px 0px' }}>
-      <ListItemButton
-        selected={moreRouteActive && !moreExpanded}
-        onClick={() => setMoreExpanded((open) => !open)}
-        sx={[
-          {
-            position: 'relative',
-            borderRadius: 2,
-            marginLeft: 1.25,
-            paddingLeft: 1,
-            paddingRight: 1,
-            marginRight: 1.25,
-            '& .MuiListItemText-primary': {
-              color: 'text.primary',
-              fontWeight: 600,
-            },
-          },
-          ({ palette: { mode: paletteMode, primary } }) => {
-            const selectedBg = alpha(
-              primary.main,
-              paletteMode === 'light' ? 0.1 : 0.14,
-            )
-            return {
-              '&:hover': {
-                backgroundColor: 'var(--background-elevated)',
-              },
-              '&.Mui-selected': {
-                bgcolor: selectedBg,
-                borderLeft: `3px solid ${primary.main}`,
-                marginLeft: '7px',
-                paddingLeft: '5px',
-              },
-            }
-          },
-        ]}
-        aria-label={t('layout.components.navigation.tabs.more')}
-        aria-expanded={moreExpanded}
-      >
-        <ListItemIcon
-          sx={{
-            color: moreRouteActive ? 'primary.main' : 'text.secondary',
-            marginLeft: '6px',
-          }}
-        >
-          <MoreHorizOutlined />
-        </ListItemIcon>
-        <ListItemText
-          sx={{
-            textAlign: 'center',
-            pr: 3.25,
-          }}
-          primary={t('layout.components.navigation.tabs.more')}
-        />
-        <Box
-          className="nav-more-chevron"
-          aria-hidden
-          sx={{
-            position: 'absolute',
-            right: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            color: 'text.secondary',
-            pointerEvents: 'none',
-          }}
-        >
-          {moreExpanded ? (
-            <ExpandLess fontSize="small" />
-          ) : (
-            <ExpandMore fontSize="small" />
-          )}
-        </Box>
-      </ListItemButton>
-    </ListItem>
-  )
-
   if (!themeReady) {
     return (
       <div
@@ -448,10 +307,6 @@ const Layout = () => {
         square
         elevation={0}
         className={`${OS} layout`}
-        style={{
-          borderTopLeftRadius: '0px',
-          borderTopRightRadius: '0px',
-        }}
         onContextMenu={(e) => {
           if (
             OS === 'windows' &&
@@ -516,12 +371,6 @@ const Layout = () => {
                     onContextMenu={handleMenuContextMenu}
                   >
                     {renderNavList(orderedPrimaryItems, true)}
-                    {moreToggle}
-                    <Collapse in={moreExpanded} timeout="auto" unmountOnExit>
-                      <List disablePadding sx={{ pl: 1 }}>
-                        {renderNavList(orderedMoreItems, false)}
-                      </List>
-                    </Collapse>
                     <LayoutItem
                       to={settingsNavItem.path}
                       icon={settingsNavItem.icon}
@@ -534,12 +383,6 @@ const Layout = () => {
             ) : (
               <List className="the-menu" onContextMenu={handleMenuContextMenu}>
                 {renderNavList(orderedPrimaryItems, false)}
-                {moreToggle}
-                <Collapse in={moreExpanded} timeout="auto" unmountOnExit>
-                  <List disablePadding sx={{ pl: 1 }}>
-                    {renderNavList(orderedMoreItems, false)}
-                  </List>
-                </Collapse>
                 <LayoutItem
                   to={settingsNavItem.path}
                   icon={settingsNavItem.icon}

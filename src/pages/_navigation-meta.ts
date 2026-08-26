@@ -15,12 +15,5 @@ export const navigationItems = {
   },
 } as const
 
-/** Primary sidebar entries above “More”. */
-export const primaryNavKeys = ['home', 'proxies', 'profiles'] as const
-
-/** Nested under the “More” group. */
-export const moreNavKeys = ['rules'] as const
-
-export const moreNavPathSet = new Set<string>(
-  moreNavKeys.map((key) => navigationItems[key].path),
-)
+/** Primary sidebar entries (settings is rendered separately). */
+export const primaryNavKeys = ['home', 'proxies', 'profiles', 'rules'] as const

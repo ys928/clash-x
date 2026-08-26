@@ -11,11 +11,7 @@ import ProxiesSvg from '@/assets/image/itemicon/proxies.svg?react'
 import RulesSvg from '@/assets/image/itemicon/rules.svg?react'
 import SettingsSvg from '@/assets/image/itemicon/settings.svg?react'
 
-import {
-  moreNavKeys,
-  navigationItems,
-  primaryNavKeys,
-} from './_navigation-meta'
+import { navigationItems, primaryNavKeys } from './_navigation-meta'
 import HomePage from './home'
 import ProfilePage from './profiles'
 import ProxyPage from './proxies'
@@ -67,10 +63,6 @@ export const navItems: NavigationItem[] = [
 ]
 
 export const primaryNavItems: NavigationItem[] = primaryNavKeys.map(
-  (key) => pageByKey[key],
-)
-
-export const moreNavItems: NavigationItem[] = moreNavKeys.map(
   (key) => pageByKey[key],
 )
 
