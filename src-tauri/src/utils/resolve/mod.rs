@@ -60,9 +60,6 @@ pub(crate) fn resolve_setup_async() {
         init_window().await;
         feat::reconcile_startup_tun_availability().await;
         init_resources().await;
-        if let Err(e) = init::init_dns_config().await {
-            logging!(warn, Type::Setup, "DNS config initialization failed: {}", e);
-        }
         if config_initialized {
             init_verge_config().await;
         }

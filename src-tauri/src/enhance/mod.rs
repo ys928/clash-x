@@ -11,17 +11,11 @@ use self::{
     seq::{SeqMap, use_seq},
     tun::use_tun,
 };
-use crate::{
-    config::{Config, IProfiles, IVerge, PrfItem},
-    constants,
-    utils::dirs,
-};
+use crate::config::{Config, IProfiles, IVerge, PrfItem};
 use anyhow::{Context as _, Result};
-use clash_verge_logging::{Type, logging};
 use serde_yaml_ng::{Mapping, Value};
 use smartstring::alias::String;
 use std::collections::{HashMap, HashSet};
-use tokio::fs;
 
 type ResultLog = Vec<(String, String)>;
 #[derive(Debug)]
@@ -30,7 +24,6 @@ struct ConfigValues {
     enable_tun: bool,
     socks_enabled: bool,
     http_enabled: bool,
-    enable_dns_settings: bool,
     enable_external_controller: bool,
     #[cfg(not(target_os = "windows"))]
     redir_enabled: bool,
@@ -93,17 +86,15 @@ async fn get_config_values() -> ConfigValues {
         ref enable_tun_mode,
         ref verge_socks_enabled,
         ref verge_http_enabled,
-        ref enable_dns_settings,
         ref enable_external_controller,
         ..
     } = **verge_arc;
     let enable_external_controller = enable_external_controller.unwrap_or(false);
 
-    let (enable_tun, socks_enabled, http_enabled, enable_dns_settings) = (
+    let (enable_tun, socks_enabled, http_enabled) = (
         enable_tun_mode.unwrap_or(false) && !Config::tun_suppressed_for_session(),
         verge_socks_enabled.unwrap_or(false),
         verge_http_enabled.unwrap_or(false),
-        enable_dns_settings.unwrap_or(false),
     );
 
     #[cfg(not(target_os = "windows"))]
@@ -120,7 +111,6 @@ async fn get_config_values() -> ConfigValues {
         enable_tun,
         socks_enabled,
         http_enabled,
-        enable_dns_settings,
         enable_external_controller,
         #[cfg(not(target_os = "windows"))]
         redir_enabled,
@@ -264,21 +254,17 @@ const CONTROL_PLANE_KEYS: &[&str] = &[
 /// override. As four separate calls that contract lived only in comments.
 struct AuthoritativeFields {
     control_plane: Mapping,
-    /// Only tracked when the DNS page owns it; otherwise overrides may set `dns.ipv6` freely.
-    dns_ipv6: Option<Value>,
 }
 
 impl AuthoritativeFields {
-    fn capture(config: &Mapping, enable_dns_settings: bool) -> Self {
+    fn capture(config: &Mapping) -> Self {
         Self {
             control_plane: snapshot_control_plane(config),
-            dns_ipv6: enable_dns_settings.then(|| snapshot_dns_ipv6(config)).flatten(),
         }
     }
 
     fn enforce(self, config: Mapping) -> Mapping {
-        let config = enforce_control_plane(config, self.control_plane);
-        enforce_dns_ipv6(config, self.dns_ipv6)
+        enforce_control_plane(config, self.control_plane)
     }
 }
 
@@ -303,21 +289,6 @@ fn enforce_control_plane(mut config: Mapping, snapshot: Mapping) -> Mapping {
         }
     }
     config.extend(snapshot);
-    config
-}
-
-/// DNS 页权威的嵌套开关;只在 `enable_dns_settings` 时快照。
-fn snapshot_dns_ipv6(config: &Mapping) -> Option<Value> {
-    config.get("dns")?.get("ipv6").cloned()
-}
-
-/// 恢复 `dns.ipv6`,但不创建缺失的 `dns` 块。
-fn enforce_dns_ipv6(mut config: Mapping, dns_ipv6: Option<Value>) -> Mapping {
-    if let Some(dns_ipv6) = dns_ipv6
-        && let Some(Value::Mapping(dns)) = config.get_mut("dns")
-    {
-        dns.insert(Value::from("ipv6"), dns_ipv6);
-    }
     config
 }
 
@@ -518,65 +489,6 @@ fn cleanup_proxy_groups(mut config: Mapping) -> Mapping {
     config
 }
 
-/// 当 DNS 处于 fake-ip 模式且启用 IPv6 时，补充缺失的 `fake-ip-range6`，
-/// 否则 AAAA 查询无法获得 fake-ip，导致 IPv6 解析失败（见 issue #7373）。
-/// 兼容旧版本生成的、缺少该字段的 dns_config.yaml。
-fn ensure_fake_ip_range6(dns: &mut Mapping) {
-    use serde_yaml_ng::Value;
-
-    let ipv6_enabled = dns.get("ipv6").and_then(|v| v.as_bool()).unwrap_or(false);
-    let is_fake_ip = dns
-        .get("enhanced-mode")
-        .and_then(|v| v.as_str())
-        .map(|m| m == "fake-ip")
-        .unwrap_or(true);
-
-    // Hand-edited YAML may leave the key present but empty.
-    let range6_missing = dns
-        .get("fake-ip-range6")
-        .and_then(|v| v.as_str())
-        .map(|s| s.trim().is_empty())
-        .unwrap_or(true);
-
-    if ipv6_enabled && is_fake_ip && range6_missing {
-        dns.insert(Value::from("fake-ip-range6"), Value::from("2001:2::0/64"));
-    }
-}
-
-async fn apply_dns_settings(mut config: Mapping, enable_dns_settings: bool) -> Mapping {
-    if enable_dns_settings && let Ok(app_dir) = dirs::app_home_dir() {
-        let dns_path = app_dir.join(constants::files::DNS_CONFIG);
-
-        if dns_path.exists()
-            && let Ok(dns_yaml) = fs::read_to_string(&dns_path).await
-            && let Ok(dns_config) = serde_yaml_ng::from_str::<serde_yaml_ng::Mapping>(&dns_yaml)
-        {
-            if let Some(hosts_value) = dns_config.get("hosts")
-                && hosts_value.is_mapping()
-            {
-                config.insert("hosts".into(), hosts_value.clone());
-                logging!(info, Type::Core, "apply hosts configuration");
-            }
-
-            if let Some(dns_value) = dns_config.get("dns") {
-                if let Some(dns_mapping) = dns_value.as_mapping() {
-                    let mut dns_mapping = dns_mapping.clone();
-                    ensure_fake_ip_range6(&mut dns_mapping);
-                    config.insert("dns".into(), dns_mapping.into());
-                    logging!(info, Type::Core, "apply dns_config.yaml (dns section)");
-                }
-            } else {
-                let mut dns_config = dns_config;
-                ensure_fake_ip_range6(&mut dns_config);
-                config.insert("dns".into(), dns_config.into());
-                logging!(info, Type::Core, "apply dns_config.yaml");
-            }
-        }
-    }
-
-    config
-}
-
 /// Returns the enhanced profile, its original keys, and legacy script logs (always empty).
 pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, HashMap<String, ResultLog>)> {
     let cfg_vals = get_config_values().await;
@@ -585,7 +497,6 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
         enable_tun,
         socks_enabled,
         http_enabled,
-        enable_dns_settings,
         enable_external_controller,
         #[cfg(not(target_os = "windows"))]
         redir_enabled,
@@ -616,9 +527,8 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
     );
 
     let config = use_tun(config, enable_tun);
-    let config = apply_dns_settings(config, enable_dns_settings).await;
 
-    let authoritative = AuthoritativeFields::capture(&config, enable_dns_settings);
+    let authoritative = AuthoritativeFields::capture(&config);
 
     // Global rules run last so prepend DIRECT/bypass always wins across subscriptions.
     let config = process_global_rules(config, global_rules);
@@ -633,91 +543,6 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
     exists_keys_set.extend(exists_keys);
 
     Ok((config, exists_keys_set, HashMap::new()))
-}
-
-#[cfg(test)]
-#[allow(clippy::expect_used, clippy::panic, reason = "tests assert by panicking")]
-mod fake_ip_tests {
-    use super::{Mapping, Value, ensure_fake_ip_range6};
-
-    fn dns(pairs: &[(&str, Value)]) -> Mapping {
-        let mut map = Mapping::new();
-        for (key, value) in pairs {
-            map.insert(Value::from(*key), value.clone());
-        }
-        map
-    }
-
-    const RANGE6: &str = "2001:2::0/64";
-
-    #[test]
-    fn an_ipv6_fake_ip_setup_missing_its_range_gets_one() {
-        let mut config = dns(&[("ipv6", Value::from(true)), ("enhanced-mode", Value::from("fake-ip"))]);
-
-        ensure_fake_ip_range6(&mut config);
-
-        assert_eq!(config.get(Value::from("fake-ip-range6")), Some(&Value::from(RANGE6)));
-    }
-
-    #[test]
-    fn fake_ip_is_the_assumed_mode_when_unstated() {
-        let mut config = dns(&[("ipv6", Value::from(true))]);
-
-        ensure_fake_ip_range6(&mut config);
-
-        assert_eq!(config.get(Value::from("fake-ip-range6")), Some(&Value::from(RANGE6)));
-    }
-
-    #[test]
-    fn a_hand_edited_empty_range_counts_as_missing() {
-        // The reason this is not just a `contains_key` check: YAML edited by hand often
-        // leaves the key present with nothing after the colon.
-        for blank in ["", "   "] {
-            let mut config = dns(&[
-                ("ipv6", Value::from(true)),
-                ("enhanced-mode", Value::from("fake-ip")),
-                ("fake-ip-range6", Value::from(blank)),
-            ]);
-
-            ensure_fake_ip_range6(&mut config);
-
-            assert_eq!(
-                config.get(Value::from("fake-ip-range6")),
-                Some(&Value::from(RANGE6)),
-                "blank range {blank:?} should be filled in"
-            );
-        }
-    }
-
-    #[test]
-    fn an_existing_range_is_never_overwritten() {
-        let mut config = dns(&[
-            ("ipv6", Value::from(true)),
-            ("enhanced-mode", Value::from("fake-ip")),
-            ("fake-ip-range6", Value::from("fc00::1/64")),
-        ]);
-
-        ensure_fake_ip_range6(&mut config);
-
-        assert_eq!(
-            config.get(Value::from("fake-ip-range6")),
-            Some(&Value::from("fc00::1/64"))
-        );
-    }
-
-    #[test]
-    fn nothing_is_added_without_ipv6_or_outside_fake_ip() {
-        let mut without_ipv6 = dns(&[("enhanced-mode", Value::from("fake-ip"))]);
-        ensure_fake_ip_range6(&mut without_ipv6);
-        assert!(!without_ipv6.contains_key(Value::from("fake-ip-range6")));
-
-        let mut redir_host = dns(&[
-            ("ipv6", Value::from(true)),
-            ("enhanced-mode", Value::from("redir-host")),
-        ]);
-        ensure_fake_ip_range6(&mut redir_host);
-        assert!(!redir_host.contains_key(Value::from("fake-ip-range6")));
-    }
 }
 
 #[cfg(test)]
@@ -1019,17 +844,10 @@ mod authoritative_field_tests {
         config
     }
 
-    fn dns_with_ipv6(enabled: bool) -> Value {
-        let mut dns = Mapping::new();
-        dns.insert(Value::from("ipv6"), Value::from(enabled));
-        dns.insert(Value::from("enable"), Value::from(true));
-        Value::Mapping(dns)
-    }
-
     #[test]
     fn an_override_cannot_change_a_field_the_app_owns() {
         let derived = config_with(&[("mode", Value::from("rule")), ("secret", Value::from("ours"))]);
-        let authoritative = AuthoritativeFields::capture(&derived, false);
+        let authoritative = AuthoritativeFields::capture(&derived);
 
         let overridden = config_with(&[("mode", Value::from("global")), ("secret", Value::from("theirs"))]);
         let result = authoritative.enforce(overridden);
@@ -1042,7 +860,7 @@ mod authoritative_field_tests {
     fn an_override_cannot_introduce_a_field_the_app_left_out() {
         // The app decided not to expose the external controller; a profile must not re-add it.
         let derived = Mapping::new();
-        let authoritative = AuthoritativeFields::capture(&derived, false);
+        let authoritative = AuthoritativeFields::capture(&derived);
 
         let overridden = config_with(&[("external-controller", Value::from("0.0.0.0:9090"))]);
         let result = authoritative.enforce(overridden);
@@ -1053,44 +871,12 @@ mod authoritative_field_tests {
     #[test]
     fn fields_the_app_does_not_own_survive_an_override() {
         let derived = config_with(&[("mode", Value::from("rule"))]);
-        let authoritative = AuthoritativeFields::capture(&derived, false);
+        let authoritative = AuthoritativeFields::capture(&derived);
 
         let overridden = config_with(&[("mode", Value::from("global")), ("profile-key", Value::from(1))]);
         let result = authoritative.enforce(overridden);
 
         assert_eq!(result.get(Value::from("profile-key")), Some(&Value::from(1)));
-    }
-
-    #[test]
-    fn dns_ipv6_is_only_reclaimed_when_the_dns_page_owns_it() {
-        let derived = config_with(&[("dns", dns_with_ipv6(true))]);
-
-        let owned = AuthoritativeFields::capture(&derived, true);
-        let restored = owned.enforce(config_with(&[("dns", dns_with_ipv6(false))]));
-        assert_eq!(
-            restored.get(Value::from("dns")).and_then(|dns| dns.get("ipv6")),
-            Some(&Value::from(true)),
-            "with the DNS page on, the app's value wins"
-        );
-
-        let unowned = AuthoritativeFields::capture(&derived, false);
-        let left_alone = unowned.enforce(config_with(&[("dns", dns_with_ipv6(false))]));
-        assert_eq!(
-            left_alone.get(Value::from("dns")).and_then(|dns| dns.get("ipv6")),
-            Some(&Value::from(false)),
-            "with the DNS page off, an override may set it"
-        );
-    }
-
-    #[test]
-    fn restoring_dns_ipv6_never_invents_a_dns_block() {
-        let derived = config_with(&[("dns", dns_with_ipv6(true))]);
-        let authoritative = AuthoritativeFields::capture(&derived, true);
-
-        // An override removed DNS entirely; reinstating just `ipv6` would be a half-config.
-        let result = authoritative.enforce(Mapping::new());
-
-        assert!(!result.contains_key(Value::from("dns")));
     }
 }
 
@@ -1218,32 +1004,6 @@ mod tests {
         assert_eq!(
             result.get("mixed-port").and_then(serde_yaml_ng::Value::as_u64),
             Some(7890)
-        );
-    }
-
-    #[test]
-    fn dns_ipv6_follows_ui_but_other_dns_stays_overridable() {
-        let app_config = mapping(r#"{dns: {ipv6: false, proxy-server-nameserver: ["1.1.1.1"]}}"#);
-        let dns_ipv6 = super::snapshot_dns_ipv6(&app_config);
-
-        let hijacked = mapping(r#"{dns: {ipv6: true, proxy-server-nameserver: ["8.8.8.8"]}}"#);
-        let result = super::enforce_dns_ipv6(hijacked, dns_ipv6);
-
-        assert_eq!(
-            result
-                .get("dns")
-                .and_then(|value| value.get("ipv6"))
-                .and_then(serde_yaml_ng::Value::as_bool),
-            Some(false)
-        );
-        assert_eq!(
-            result
-                .get("dns")
-                .and_then(|value| value.get("proxy-server-nameserver"))
-                .and_then(serde_yaml_ng::Value::as_sequence)
-                .and_then(|seq| seq.first())
-                .and_then(serde_yaml_ng::Value::as_str),
-            Some("8.8.8.8")
         );
     }
 

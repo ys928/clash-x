@@ -888,102 +888,6 @@ export interface TranslationResources {
           }
           title: string
         }
-        dns: {
-          dialog: {
-            title: string
-            warning: string
-          }
-          errors: {
-            invalid: string
-            invalidYaml: string
-          }
-          fields: {
-            defaultNameserver: {
-              description: string
-              label: string
-            }
-            directNameserver: {
-              description: string
-              label: string
-            }
-            directPolicy: {
-              description: string
-              label: string
-            }
-            enable: string
-            enhancedMode: string
-            fakeIpFilter: {
-              description: string
-              label: string
-            }
-            fakeIpFilterMode: string
-            fakeIpRange: string
-            fakeIpRange6: string
-            fallback: {
-              description: string
-              label: string
-            }
-            fallbackDomain: {
-              description: string
-              label: string
-            }
-            fallbackIpCidr: {
-              description: string
-              label: string
-            }
-            geoipCode: string
-            geoipFiltering: {
-              description: string
-              label: string
-            }
-            hosts: {
-              description: string
-              label: string
-            }
-            ipv6: {
-              description: string
-              label: string
-            }
-            listen: string
-            nameserver: {
-              description: string
-              label: string
-            }
-            nameserverPolicy: {
-              description: string
-              label: string
-            }
-            preferH3: {
-              description: string
-              label: string
-            }
-            proxy: {
-              description: string
-              label: string
-            }
-            respectRules: {
-              description: string
-              label: string
-            }
-            useHosts: {
-              description: string
-              label: string
-            }
-            useSystemHosts: {
-              description: string
-              label: string
-            }
-          }
-          messages: {
-            configError: string
-            saved: string
-          }
-          sections: {
-            fallbackFilter: string
-            general: string
-            hosts: string
-          }
-        }
         hotkey: {
           functions: {
             direct: string
@@ -1155,7 +1059,6 @@ export interface TranslationResources {
             fields: {
               allowLan: string
               clashCore: string
-              dnsOverwrite: string
               ipv6: string
               logLevel: string
               openUwpTool: string

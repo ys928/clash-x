@@ -883,7 +883,6 @@ interface IVergeConfig {
   enable_silent_start?: boolean
   enable_system_proxy?: boolean
   enable_global_hotkey?: boolean
-  enable_dns_settings?: boolean
   proxy_auto_config?: boolean
   pac_file_content?: string
   proxy_host?: string

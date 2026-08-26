@@ -77,9 +77,6 @@ pub struct IVerge {
 
     pub enable_bypass_check: Option<bool>,
 
-    /// enable dns settings - this controls whether dns_config.yaml is applied
-    pub enable_dns_settings: Option<bool>,
-
     pub use_default_bypass: Option<bool>,
 
     pub system_proxy_bypass: Option<String>,
@@ -342,7 +339,6 @@ impl IVerge {
             enable_global_hotkey: Some(true),
             enable_auto_light_weight_mode: Some(false),
             auto_light_weight_minutes: Some(10),
-            enable_dns_settings: Some(false),
             home_cards: None,
             enable_external_controller: Some(false),
             ..Self::default()
@@ -434,7 +430,6 @@ impl IVerge {
         patch!(tray_inline_outbound_modes);
         patch!(enable_auto_light_weight_mode);
         patch!(auto_light_weight_minutes);
-        patch!(enable_dns_settings);
         patch!(home_cards);
         patch!(enable_external_controller);
     }

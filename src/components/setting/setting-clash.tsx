@@ -1,22 +1,18 @@
 import { LanRounded, SettingsRounded } from '@mui/icons-material'
 import { MenuItem, Select, TextField, Typography } from '@mui/material'
-import { invoke } from '@tauri-apps/api/core'
-import { useLockFn } from 'ahooks'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { updateGeo } from 'tauri-plugin-mihomo-api'
 
 import { DialogRef, Switch, TooltipIcon } from '@/components/base'
 import { useClash } from '@/hooks/use-clash'
 import { useDisplayedMixedPort } from '@/hooks/use-displayed-mixed-port'
-import { useVerge } from '@/hooks/use-verge'
 import { invoke_uwp_tool } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import getSystem from '@/utils/get-system'
 
 import { ClashCoreViewer } from './mods/clash-core-viewer'
 import { ClashPortViewer } from './mods/clash-port-viewer'
-import { DnsViewer } from './mods/dns-viewer'
 import { GuardState } from './mods/guard-state'
 import { NetworkInterfaceViewer } from './mods/network-interface-viewer'
 import { SettingItem, SettingList } from './mods/setting-comp'
@@ -32,7 +28,6 @@ const SettingClash = ({ onError }: Props) => {
   const { t } = useTranslation()
 
   const { clash, version, mutateClash, patchClash } = useClash()
-  const { verge, patchVerge } = useVerge()
   const displayedMixedPort = useDisplayedMixedPort()
 
   const {
@@ -42,15 +37,9 @@ const SettingClash = ({ onError }: Props) => {
     'unified-delay': unifiedDelay,
   } = clash ?? {}
 
-  // 独立跟踪DNS设置开关状态
-  const [dnsSettingsEnabled, setDnsSettingsEnabled] = useState(() => {
-    return verge?.enable_dns_settings ?? false
-  })
-
   const portRef = useRef<DialogRef>(null)
   const coreRef = useRef<DialogRef>(null)
   const networkRef = useRef<DialogRef>(null)
-  const dnsRef = useRef<DialogRef>(null)
   const tunnelRef = useRef<DialogRef>(null)
 
   const onSwitchFormat = (_e: any, value: boolean) => value
@@ -66,29 +55,11 @@ const SettingClash = ({ onError }: Props) => {
     }
   }
 
-  // 实现DNS设置开关处理函数
-  const handleDnsToggle = useLockFn(async (enable: boolean) => {
-    try {
-      setDnsSettingsEnabled(enable)
-      await patchVerge({ enable_dns_settings: enable })
-      await invoke('apply_dns_config', { apply: enable })
-      setTimeout(() => {
-        mutateClash()
-      }, 500)
-    } catch (err: any) {
-      setDnsSettingsEnabled(!enable)
-      showNotice.error(err)
-      await patchVerge({ enable_dns_settings: !enable }).catch(() => {})
-      throw err
-    }
-  })
-
   return (
     <SettingList title={t('settings.sections.clash.title')}>
       <ClashPortViewer ref={portRef} />
       <ClashCoreViewer ref={coreRef} />
       <NetworkInterfaceViewer ref={networkRef} />
-      <DnsViewer ref={dnsRef} />
       <TunnelsViewer ref={tunnelRef} />
       <SettingItem
         label={t('settings.sections.clash.form.fields.allowLan')}
@@ -113,22 +84,6 @@ const SettingClash = ({ onError }: Props) => {
         >
           <Switch edge="end" />
         </GuardState>
-      </SettingItem>
-
-      <SettingItem
-        label={t('settings.sections.clash.form.fields.dnsOverwrite')}
-        extra={
-          <TooltipIcon
-            icon={SettingsRounded}
-            onClick={() => dnsRef.current?.open()}
-          />
-        }
-      >
-        <Switch
-          edge="end"
-          checked={dnsSettingsEnabled}
-          onChange={(_, checked) => handleDnsToggle(checked)}
-        />
       </SettingItem>
 
       <SettingItem label={t('settings.sections.clash.form.fields.ipv6')}>
