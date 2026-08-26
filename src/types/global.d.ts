@@ -926,27 +926,12 @@ interface IVergeConfig {
   auto_delay_detection_interval_minutes?: number
   enable_builtin_enhanced?: boolean
   auto_log_clean?: 0 | 1 | 2 | 3 | 4
-  enable_auto_backup_schedule?: boolean
-  auto_backup_interval_hours?: number
-  auto_backup_on_change?: boolean
   proxy_layout_column?: number
   test_list?: IVergeTestItem[]
-  webdav_url?: string
-  webdav_username?: string
-  webdav_password?: string
   home_cards?: Record<string, boolean>
   enable_hover_jump_navigator?: boolean
   hover_jump_navigator_delay?: number
   enable_external_controller?: boolean
-}
-
-interface IWebDavFile {
-  filename: string
-  href: string
-  last_modified: string
-  content_length: number
-  content_type: string
-  tag: string
 }
 
 interface ILocalBackupFile {
@@ -954,12 +939,6 @@ interface ILocalBackupFile {
   path: string
   last_modified: string
   content_length: number
-}
-
-interface IWebDavConfig {
-  url: string
-  username: string
-  password: string
 }
 
 // Traffic monitor types

@@ -4,12 +4,12 @@ use crate::{
         CoreManager, autostart, handle, hotkey, logger::Logger, proxy_control, proxy_control::SystemProxyStateUnknown,
         tray,
     },
-    module::{auto_backup::AutoBackupManager, lightweight},
+    module::lightweight,
 };
 use anyhow::Result;
 use bitflags::bitflags;
 use clash_verge_draft::{DraftTransaction, SharedDraft};
-use clash_verge_logging::{Type, logging, logging_error};
+use clash_verge_logging::{Type, logging};
 use serde_yaml_ng::Mapping;
 use tokio::sync::MutexGuard;
 
@@ -331,7 +331,6 @@ pub(super) async fn apply_verge_patch_locked(
     transaction.commit();
     announce_verge_change();
 
-    logging_error!(Type::Backup, AutoBackupManager::global().refresh_settings().await);
     if !not_save_file {
         // 分离数据获取和异步调用
         let verge_data = verge.data_arc();

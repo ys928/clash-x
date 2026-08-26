@@ -10,7 +10,6 @@ use crate::{
 use anyhow::{Result, anyhow};
 use chrono::Utc;
 use clash_verge_logging::{Type, logging};
-use reqwest_dav::list_cmd::ListFile;
 use serde::Serialize;
 use smartstring::alias::String;
 use std::path::PathBuf;
@@ -24,17 +23,9 @@ pub struct LocalBackupFile {
     pub content_length: u64,
 }
 
-/// Reloads restored configs into memory while preserving WebDAV credentials.
-async fn finalize_restored_verge_config(
-    webdav_url: Option<String>,
-    webdav_username: Option<String>,
-    webdav_password: Option<String>,
-) -> Result<()> {
+async fn finalize_restored_verge_config() -> Result<()> {
     // A broken restored `verge.yaml` is a restore failure, not a reason to load defaults.
-    let mut restored = help::read_yaml::<IVerge>(&verge_path()?).await?;
-    restored.webdav_url = webdav_url;
-    restored.webdav_username = webdav_username;
-    restored.webdav_password = webdav_password;
+    let restored = help::read_yaml::<IVerge>(&verge_path()?).await?;
     restored.save_file().await?;
 
     let restored_clash = IClashTemp::new().await;
@@ -86,70 +77,6 @@ async fn finalize_restored_verge_config(
         }
     }
     Ok(())
-}
-
-pub async fn create_backup_and_upload_webdav() -> Result<()> {
-    let (file_name, temp_file_path) = backup::create_backup().await.map_err(|err| {
-        logging!(error, Type::Backup, "Failed to create backup: {err:#?}");
-        err
-    })?;
-
-    if let Err(err) = backup::WebDavClient::global()
-        .upload(temp_file_path.clone(), file_name)
-        .await
-    {
-        logging!(error, Type::Backup, "Failed to upload to WebDAV: {err:#?}");
-        backup::WebDavClient::global().reset();
-        return Err(err);
-    }
-
-    if let Err(err) = temp_file_path.remove_if_exists().await {
-        logging!(warn, Type::Backup, "Failed to remove temp file: {err:#?}");
-    }
-
-    Ok(())
-}
-
-pub async fn list_wevdav_backup() -> Result<Vec<ListFile>> {
-    backup::WebDavClient::global().list().await.map_err(|err| {
-        logging!(error, Type::Backup, "Failed to list WebDAV backup files: {err:#?}");
-        err
-    })
-}
-
-pub async fn delete_webdav_backup(filename: String) -> Result<()> {
-    backup::WebDavClient::global().delete(filename).await.map_err(|err| {
-        logging!(error, Type::Backup, "Failed to delete WebDAV backup file: {err:#?}");
-        err
-    })
-}
-
-pub async fn restore_webdav_backup(filename: String) -> Result<()> {
-    let verge = Config::verge().await;
-    let verge_data = verge.latest_arc();
-    let webdav_url = verge_data.webdav_url.clone();
-    let webdav_username = verge_data.webdav_username.clone();
-    let webdav_password = verge_data.webdav_password.clone();
-
-    let backup_storage_path = app_home_dir()
-        .map_err(|e| anyhow::anyhow!("Failed to get app home dir: {e}"))?
-        .join(filename.as_str());
-    backup::WebDavClient::global()
-        .download(filename, backup_storage_path.clone())
-        .await
-        .map_err(|err| {
-            logging!(error, Type::Backup, "Failed to download WebDAV backup file: {err:#?}");
-            err
-        })?;
-
-    let value = backup_storage_path.clone();
-    let file = AsyncHandler::spawn_blocking(move || std::fs::File::open(&value)).await??;
-    let mut zip = zip::ZipArchive::new(file)?;
-    let _profile_write = crate::config::profiles::PROFILE_WRITE_LOCK.lock().await;
-    zip.extract(app_home_dir()?)?;
-    let res = finalize_restored_verge_config(webdav_url, webdav_username, webdav_password).await;
-    let _ = backup_storage_path.remove_if_exists().await;
-    res
 }
 
 pub async fn create_local_backup() -> Result<()> {
@@ -309,21 +236,11 @@ pub async fn restore_local_backup(filename: String) -> Result<()> {
         return Err(anyhow!("Backup file not found: {}", filename));
     }
 
-    let (webdav_url, webdav_username, webdav_password) = {
-        let verge = Config::verge().await;
-        let verge = verge.latest_arc();
-        (
-            verge.webdav_url.clone(),
-            verge.webdav_username.clone(),
-            verge.webdav_password.clone(),
-        )
-    };
-
     let file = AsyncHandler::spawn_blocking(move || std::fs::File::open(&target_path)).await??;
     let mut zip = zip::ZipArchive::new(file)?;
     let _profile_write = crate::config::profiles::PROFILE_WRITE_LOCK.lock().await;
     zip.extract(app_home_dir()?)?;
-    finalize_restored_verge_config(webdav_url, webdav_username, webdav_password).await?;
+    finalize_restored_verge_config().await?;
     Ok(())
 }
 

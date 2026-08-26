@@ -109,7 +109,6 @@ pub mod updater;
 pub mod uwp;
 pub mod validate;
 pub mod verge;
-pub mod webdav;
 
 // Re-export all command functions for backwards compatibility
 pub use app::*;
@@ -129,7 +128,6 @@ pub use updater::*;
 pub use uwp::*;
 pub use validate::*;
 pub use verge::*;
-pub use webdav::*;
 
 pub trait StringifyErr<T> {
     fn stringify_err(self) -> CmdResult<T>;

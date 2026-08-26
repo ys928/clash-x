@@ -142,7 +142,7 @@
       "advanced": {
         "title": "Verge 進階設定",
         "tooltips": {
-          "backupInfo": "支援本機或 WebDAV 方式備份配置檔案",
+          "backupInfo": "支援本機方式備份配置檔案",
           "openConfDir": "如果軟體執行異常，!備份!並刪除此資料夾下的所有檔案，重新啟動軟體",
           "liteMode": "關閉圖形介面，僅保留內核執行"
         },
@@ -217,8 +217,7 @@
     "backup": {
       "title": "備份設定",
       "tabs": {
-        "local": "本機備份",
-        "webdav": "WebDAV 備份"
+        "local": "本機備份"
       },
       "actions": {
         "selectTarget": "選擇備份目標",
@@ -232,19 +231,9 @@
         "viewHistory": "檢視紀錄"
       },
       "fields": {
-        "webdavUrl": "WebDAV 伺服器位址 http(s)://",
-        "username": "使用者名稱",
         "info": "在應用程式資料目錄中建立本機備份，您可以透過下方列表進行還原或刪除。"
       },
       "messages": {
-        "webdavUrlRequired": "WebDAV 伺服器位址不能為空",
-        "invalidWebdavUrl": "無效的 WebDAV 伺服器位址格式",
-        "usernameRequired": "使用者名稱不能為空",
-        "passwordRequired": "密碼不能為空",
-        "webdavConfigSaved": "WebDAV 配置儲存成功",
-        "webdavConfigSaveFailed": "儲存 WebDAV 設定檔失敗: {{error}}",
-        "backupCreated": "備份建立成功",
-        "backupFailed": "備份失敗: {{error}}",
         "localBackupCreated": "本機備份建立成功",
         "localBackupFailed": "本機備份失敗",
         "restoreSuccess": "還原成功，應用程式將在 1 秒後重啟",
@@ -252,28 +241,12 @@
         "localBackupExportFailed": "本機備份匯出失敗",
         "localBackupImported": "本機備份匯入成功",
         "localBackupImportFailed": "本機備份匯入失敗：{{error}}",
-        "webdavRefreshSuccess": "WebDAV 更新成功",
-        "webdavRefreshFailed": "WebDAV 更新失敗: {{error}}",
         "confirmDelete": "確認是否刪除此備份檔案嗎？",
         "confirmRestore": "確認還原此份檔案嗎？"
       },
-      "auto": {
-        "title": "自動備份",
-        "scheduleLabel": "啟用定時備份",
-        "scheduleHelper": "依設定頻率在背景建立本機備份檔案。",
-        "intervalLabel": "備份頻率",
-        "changeLabel": "關鍵變更時自動備份",
-        "changeHelper": "Global Extend Config/Script 變更後自動備份。",
-        "options": {
-          "hours": "每 {{n}} 小時",
-          "days": "每 {{n}} 天"
-        }
-      },
       "manual": {
         "title": "手動備份",
-        "local": "在本機應用資料資料夾建立備份檔。",
-        "webdav": "設定 WebDAV 後，可直接上傳備份至伺服器。",
-        "configureWebdav": "設定 WebDAV"
+        "local": "在本機應用資料資料夾建立備份檔。"
       },
       "history": {
         "title": "備份紀錄",
@@ -281,9 +254,6 @@
         "empty": "尚無備份紀錄",
         "unknownPlatform": "未知",
         "unknownTime": "未知時間"
-      },
-      "webdav": {
-        "title": "WebDAV 設定"
       },
       "table": {
         "filename": "檔案名稱",

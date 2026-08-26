@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::{
-    config::{DEFAULT_PAC, deserialize_encrypted, serialize_encrypted},
+    config::DEFAULT_PAC,
     constants::network,
     utils::{dirs, help},
 };
@@ -128,13 +128,6 @@ pub struct IVerge {
     /// 0: 不清理; 1: 1天；2: 7天; 3: 30天; 4: 90天
     pub auto_log_clean: Option<i32>,
 
-    pub enable_auto_backup_schedule: Option<bool>,
-
-    /// Automatic backup interval in hours
-    pub auto_backup_interval_hours: Option<u64>,
-
-    pub auto_backup_on_change: Option<bool>,
-
     /// verge 的各种 port 用于覆盖 clash 的各种 port
     #[cfg(not(target_os = "windows"))]
     pub verge_redir_port: Option<u16>,
@@ -157,30 +150,6 @@ pub struct IVerge {
     pub verge_port: Option<u16>,
 
     pub verge_http_enabled: Option<bool>,
-
-    #[serde(
-        serialize_with = "serialize_encrypted",
-        deserialize_with = "deserialize_encrypted",
-        skip_serializing_if = "Option::is_none",
-        default
-    )]
-    pub webdav_url: Option<String>,
-
-    #[serde(
-        serialize_with = "serialize_encrypted",
-        deserialize_with = "deserialize_encrypted",
-        skip_serializing_if = "Option::is_none",
-        default
-    )]
-    pub webdav_username: Option<String>,
-
-    #[serde(
-        serialize_with = "serialize_encrypted",
-        deserialize_with = "deserialize_encrypted",
-        skip_serializing_if = "Option::is_none",
-        default
-    )]
-    pub webdav_password: Option<String>,
 
     #[cfg(target_os = "macos")]
     pub enable_tray_speed: Option<bool>,
@@ -366,12 +335,6 @@ impl IVerge {
             proxy_guard_duration: Some(30),
             auto_close_connection: Some(true),
             auto_log_clean: Some(2), // 1: 1天, 2: 7天, 3: 30天, 4: 90天
-            enable_auto_backup_schedule: Some(false),
-            auto_backup_interval_hours: Some(24),
-            auto_backup_on_change: Some(true),
-            webdav_url: None,
-            webdav_username: None,
-            webdav_password: None,
             #[cfg(target_os = "macos")]
             enable_tray_speed: Some(false),
             tray_proxy_groups_display_mode: Some("default".into()),
@@ -465,13 +428,6 @@ impl IVerge {
         patch!(proxy_layout_column);
         patch!(test_list);
         patch!(auto_log_clean);
-        patch!(enable_auto_backup_schedule);
-        patch!(auto_backup_interval_hours);
-        patch!(auto_backup_on_change);
-
-        patch!(webdav_url);
-        patch!(webdav_username);
-        patch!(webdav_password);
         #[cfg(target_os = "macos")]
         patch!(enable_tray_speed);
         patch!(tray_proxy_groups_display_mode);

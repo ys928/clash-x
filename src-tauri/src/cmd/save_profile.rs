@@ -7,7 +7,6 @@ use crate::{
         CoreManager, handle,
         validate::{CoreConfigValidator, ValidationOutcome},
     },
-    module::auto_backup::{AutoBackupManager, AutoBackupTrigger},
     utils::dirs,
 };
 use clash_verge_logging::{Type, logging};
@@ -20,13 +19,6 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     let file_data = match file_data {
         Some(d) => d,
         None => return Ok(ValidationOutcome::Valid),
-    };
-
-    let backup_trigger = match index.as_str() {
-        "Merge" => Some(AutoBackupTrigger::GlobalMerge),
-        "Script" => Some(AutoBackupTrigger::GlobalScript),
-        "Rules" => Some(AutoBackupTrigger::GlobalRules),
-        _ => None,
     };
 
     // 在异步操作前获取必要元数据并释放锁
@@ -85,12 +77,6 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
         affects_runtime,
     )
     .await?;
-
-    if changes_applied.is_valid()
-        && let Some(trigger) = backup_trigger
-    {
-        AutoBackupManager::trigger_backup(trigger);
-    }
 
     // Global DIRECT domain rules also feed the OS proxy bypass list; refresh when Rules change.
     if changes_applied.is_valid()

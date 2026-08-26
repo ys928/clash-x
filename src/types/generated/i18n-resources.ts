@@ -823,22 +823,8 @@ export interface TranslationResources {
             selectTarget: string
             viewHistory: string
           }
-          auto: {
-            changeHelper: string
-            changeLabel: string
-            intervalLabel: string
-            options: {
-              days: string
-              hours: string
-            }
-            scheduleHelper: string
-            scheduleLabel: string
-            title: string
-          }
           fields: {
             info: string
-            username: string
-            webdavUrl: string
           }
           history: {
             empty: string
@@ -848,31 +834,19 @@ export interface TranslationResources {
             unknownTime: string
           }
           manual: {
-            configureWebdav: string
             local: string
             title: string
-            webdav: string
           }
           messages: {
-            backupCreated: string
-            backupFailed: string
             confirmDelete: string
             confirmRestore: string
-            invalidWebdavUrl: string
             localBackupCreated: string
             localBackupExported: string
             localBackupExportFailed: string
             localBackupFailed: string
             localBackupImported: string
             localBackupImportFailed: string
-            passwordRequired: string
             restoreSuccess: string
-            usernameRequired: string
-            webdavConfigSaved: string
-            webdavConfigSaveFailed: string
-            webdavRefreshFailed: string
-            webdavRefreshSuccess: string
-            webdavUrlRequired: string
           }
           table: {
             actions: string
@@ -883,12 +857,8 @@ export interface TranslationResources {
           }
           tabs: {
             local: string
-            webdav: string
           }
           title: string
-          webdav: {
-            title: string
-          }
         }
         clashCore: {
           variants: {

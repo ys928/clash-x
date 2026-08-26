@@ -8,73 +8,44 @@ import {
 } from '@mui/material'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
 import { useLockFn } from 'ahooks'
-import type { ReactNode, Ref } from 'react'
-import { useCallback, useImperativeHandle, useState } from 'react'
+import type { Ref } from 'react'
+import { useImperativeHandle, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BaseDialog, DialogRef } from '@/components/base'
-import { useVerge } from '@/hooks/use-verge'
-import {
-  createLocalBackup,
-  createWebdavBackup,
-  importLocalBackup,
-} from '@/services/cmds'
+import { createLocalBackup, importLocalBackup } from '@/services/cmds'
 import { errorDetail, showNotice } from '@/services/notice-service'
-import { buildWebdavSignature, setWebdavStatus } from '@/services/webdav-status'
 
-import { AutoBackupSettings } from './auto-backup-settings'
 import { BackupHistoryViewer } from './backup-history-viewer'
-import { BackupWebdavDialog } from './backup-webdav-dialog'
-
-type BackupSource = 'local' | 'webdav'
 
 export function BackupViewer({ ref }: { ref?: Ref<DialogRef> }) {
   const { t } = useTranslation()
-  const { verge } = useVerge()
   const [open, setOpen] = useState(false)
-  const [busyAction, setBusyAction] = useState<BackupSource | null>(null)
+  const [busyAction, setBusyAction] = useState(false)
   const [localImporting, setLocalImporting] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [historySource, setHistorySource] = useState<BackupSource>('local')
   const [historyPage, setHistoryPage] = useState(0)
-  const [webdavDialogOpen, setWebdavDialogOpen] = useState(false)
-  const webdavSignature = buildWebdavSignature(verge)
 
   useImperativeHandle(ref, () => ({
     open: () => setOpen(true),
     close: () => setOpen(false),
   }))
 
-  const openHistory = (target: BackupSource) => {
-    setHistorySource(target)
+  const openHistory = () => {
     setHistoryPage(0)
     setHistoryOpen(true)
   }
 
-  const handleBackup = useLockFn(async (target: BackupSource) => {
+  const handleBackup = useLockFn(async () => {
     try {
-      setBusyAction(target)
-      if (target === 'local') {
-        await createLocalBackup()
-        showNotice.success('settings.modals.backup.messages.localBackupCreated')
-      } else {
-        await createWebdavBackup()
-        showNotice.success('settings.modals.backup.messages.backupCreated')
-        setWebdavStatus(webdavSignature, 'ready')
-      }
+      setBusyAction(true)
+      await createLocalBackup()
+      showNotice.success('settings.modals.backup.messages.localBackupCreated')
     } catch (error) {
       console.error(error)
-      showNotice.error(
-        target === 'local'
-          ? 'settings.modals.backup.messages.localBackupFailed'
-          : 'settings.modals.backup.messages.backupFailed',
-        target === 'local' ? undefined : { error: errorDetail(error) },
-      )
-      if (target === 'webdav') {
-        setWebdavStatus(webdavSignature, 'failed')
-      }
+      showNotice.error('settings.modals.backup.messages.localBackupFailed')
     } finally {
-      setBusyAction(null)
+      setBusyAction(false)
     }
   })
 
@@ -88,7 +59,7 @@ export function BackupViewer({ ref }: { ref?: Ref<DialogRef> }) {
       setLocalImporting(true)
       await importLocalBackup(selected)
       showNotice.success('settings.modals.backup.messages.localBackupImported')
-      openHistory('local')
+      openHistory()
     } catch (error) {
       console.error(error)
       showNotice.error(
@@ -100,14 +71,7 @@ export function BackupViewer({ ref }: { ref?: Ref<DialogRef> }) {
     }
   })
 
-  const setWebdavBusy = useCallback(
-    (loading: boolean) => {
-      setBusyAction(loading ? 'webdav' : null)
-    },
-    [setBusyAction],
-  )
-
-  const isLocalBusy = busyAction === 'local' || localImporting
+  const isLocalBusy = busyAction || localImporting
 
   return (
     <BaseDialog
@@ -129,137 +93,60 @@ export function BackupViewer({ ref }: { ref?: Ref<DialogRef> }) {
           }}
         >
           <Typography variant="subtitle1">
-            {t('settings.modals.backup.auto.title')}
-          </Typography>
-          <List disablePadding sx={{ '.MuiListItem-root': { px: 0 } }}>
-            <AutoBackupSettings />
-          </List>
-        </Stack>
-
-        <Stack
-          spacing={1}
-          sx={{
-            border: (theme) => `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            p: 2,
-          }}
-        >
-          <Typography variant="subtitle1">
             {t('settings.modals.backup.manual.title')}
           </Typography>
           <List disablePadding sx={{ '.MuiListItem-root': { px: 0 } }}>
-            {(
-              [
-                {
-                  key: 'local' as BackupSource,
-                  title: t('settings.modals.backup.tabs.local'),
-                  description: t('settings.modals.backup.manual.local'),
-                  actions: [
-                    <Button
-                      key="backup"
-                      variant="contained"
-                      size="small"
-                      loading={busyAction === 'local'}
-                      disabled={localImporting}
-                      onClick={() => handleBackup('local')}
-                    >
-                      {t('settings.modals.backup.actions.backup')}
-                    </Button>,
-                    <Button
-                      key="history"
-                      variant="outlined"
-                      size="small"
-                      disabled={isLocalBusy}
-                      onClick={() => openHistory('local')}
-                    >
-                      {t('settings.modals.backup.actions.viewHistory')}
-                    </Button>,
-                    <Button
-                      key="import"
-                      variant="text"
-                      size="small"
-                      loading={localImporting}
-                      disabled={busyAction === 'local'}
-                      onClick={() => handleImport()}
-                    >
-                      {t('settings.modals.backup.actions.importBackup')}
-                    </Button>,
-                  ],
-                },
-                {
-                  key: 'webdav' as BackupSource,
-                  title: t('settings.modals.backup.tabs.webdav'),
-                  description: t('settings.modals.backup.manual.webdav'),
-                  actions: [
-                    <Button
-                      key="backup"
-                      variant="contained"
-                      size="small"
-                      loading={busyAction === 'webdav'}
-                      onClick={() => handleBackup('webdav')}
-                    >
-                      {t('settings.modals.backup.actions.backup')}
-                    </Button>,
-                    <Button
-                      key="history"
-                      variant="outlined"
-                      size="small"
-                      onClick={() => openHistory('webdav')}
-                    >
-                      {t('settings.modals.backup.actions.viewHistory')}
-                    </Button>,
-                    <Button
-                      key="configure"
-                      variant="text"
-                      size="small"
-                      onClick={() => setWebdavDialogOpen(true)}
-                    >
-                      {t('settings.modals.backup.manual.configureWebdav')}
-                    </Button>,
-                  ],
-                },
-              ] satisfies Array<{
-                key: BackupSource
-                title: string
-                description: string
-                actions: ReactNode[]
-              }>
-            ).map((item, idx) => (
-              <ListItem key={item.key} disableGutters divider={idx === 0}>
-                <Stack spacing={1} sx={{ width: '100%' }}>
-                  <ListItemText
-                    primary={item.title}
-                    slotProps={{ secondary: { component: 'span' } }}
-                    secondary={item.description}
-                  />
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    useFlexGap
-                    sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+            <ListItem disableGutters>
+              <Stack spacing={1} sx={{ width: '100%' }}>
+                <ListItemText
+                  primary={t('settings.modals.backup.tabs.local')}
+                  slotProps={{ secondary: { component: 'span' } }}
+                  secondary={t('settings.modals.backup.manual.local')}
+                />
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  useFlexGap
+                  sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+                >
+                  <Button
+                    variant="contained"
+                    size="small"
+                    loading={busyAction}
+                    disabled={localImporting}
+                    onClick={() => handleBackup()}
                   >
-                    {item.actions}
-                  </Stack>
+                    {t('settings.modals.backup.actions.backup')}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    disabled={isLocalBusy}
+                    onClick={() => openHistory()}
+                  >
+                    {t('settings.modals.backup.actions.viewHistory')}
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    loading={localImporting}
+                    disabled={busyAction}
+                    onClick={() => handleImport()}
+                  >
+                    {t('settings.modals.backup.actions.importBackup')}
+                  </Button>
                 </Stack>
-              </ListItem>
-            ))}
+              </Stack>
+            </ListItem>
           </List>
         </Stack>
       </Stack>
 
       <BackupHistoryViewer
         open={historyOpen}
-        source={historySource}
         page={historyPage}
-        onSourceChange={setHistorySource}
         onPageChange={setHistoryPage}
         onClose={() => setHistoryOpen(false)}
-      />
-      <BackupWebdavDialog
-        open={webdavDialogOpen}
-        onClose={() => setWebdavDialogOpen(false)}
-        onBackupSuccess={() => openHistory('webdav')}
-        setBusy={setWebdavBusy}
       />
     </BaseDialog>
   )
