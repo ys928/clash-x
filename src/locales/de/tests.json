@@ -43,18 +43,5 @@
       "unsupportedRegion": "Nicht unterstütztes Land/Region",
       "failedNetwork": "Failed (Network Connection)"
     }
-  },
-  "unlock": {
-    "page": {
-      "actions": {
-        "testing": "Wird getestet..."
-      },
-      "empty": "No unlock test items",
-      "messages": {
-        "detectionFailedWithName": "Erkennung für {{name}} fehlgeschlagen",
-        "detectionTimeout": "Detection timeout or failed"
-      },
-      "title": "Entsperrungstest"
-    }
   }
 }

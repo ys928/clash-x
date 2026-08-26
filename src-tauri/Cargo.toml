@@ -32,7 +32,6 @@ tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 clash-verge-draft = { workspace = true }
-clash-verge-media-unlock = { workspace = true }
 clash-verge-logging = { workspace = true }
 clash-verge-signal = { workspace = true }
 clash-verge-i18n = { workspace = true }

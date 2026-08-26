@@ -13,10 +13,6 @@ export const navigationItems = {
     path: '/connections',
   },
   rules: { label: 'layout.components.navigation.tabs.rules', path: '/rules' },
-  unlock: {
-    label: 'layout.components.navigation.tabs.unlock',
-    path: '/unlock',
-  },
   settings: {
     label: 'layout.components.navigation.tabs.settings',
     path: '/settings',
@@ -27,7 +23,7 @@ export const navigationItems = {
 export const primaryNavKeys = ['home', 'proxies', 'profiles'] as const
 
 /** Nested under the “More” group. */
-export const moreNavKeys = ['connections', 'rules', 'unlock'] as const
+export const moreNavKeys = ['connections', 'rules'] as const
 
 export const moreNavPathSet = new Set<string>(
   moreNavKeys.map((key) => navigationItems[key].path),

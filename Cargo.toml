@@ -2,7 +2,6 @@
 members = [
   "src-tauri",
   "crates/clash-verge-draft",
-  "crates/clash-verge-media-unlock",
   "crates/clash-verge-logging",
   "crates/clash-verge-signal",
   "crates/tauri-plugin-clash-verge-sysinfo",
@@ -48,7 +47,6 @@ split-debuginfo = "unpacked"
 
 [workspace.dependencies]
 clash-verge-draft = { path = "crates/clash-verge-draft" }
-clash-verge-media-unlock = { path = "crates/clash-verge-media-unlock" }
 clash-verge-logging = { path = "crates/clash-verge-logging" }
 clash-verge-signal = { path = "crates/clash-verge-signal" }
 clash-verge-i18n = { path = "crates/clash-verge-i18n" }
@@ -71,7 +69,6 @@ flexi_logger = "0.31.10"
 log = "0.4.33"
 regex = "1.13.1"
 reqwest = { version = "0.13.4", features = ["json", "cookies", "gzip", "rustls", "form"] }
-rust_iso3166 = "0.2.0"
 
 smartstring = { version = "1.0.1" }
 compact_str = { version = "0.10.0", features = ["serde"] }

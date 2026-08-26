@@ -130,7 +130,6 @@ export const translationKeys = [
   'layout.components.navigation.tabs.profiles',
   'layout.components.navigation.tabs.connections',
   'layout.components.navigation.tabs.rules',
-  'layout.components.navigation.tabs.unlock',
   'layout.components.navigation.tabs.settings',
   'layout.components.navigation.tabs.more',
   'layout.components.navigation.menu.reorderMode',
@@ -933,11 +932,6 @@ export const translationKeys = [
   'tests.statuses.test.noDisney',
   'tests.statuses.test.unsupportedRegion',
   'tests.statuses.test.failedNetwork',
-  'tests.unlock.page.actions.testing',
-  'tests.unlock.page.empty',
-  'tests.unlock.page.messages.detectionFailedWithName',
-  'tests.unlock.page.messages.detectionTimeout',
-  'tests.unlock.page.title',
 ] as const
 
 export type TranslationKey = (typeof translationKeys)[number]

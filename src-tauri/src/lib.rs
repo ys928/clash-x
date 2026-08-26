@@ -206,9 +206,6 @@ mod app_init {
             cmd::list_webdav_backup,
             cmd::delete_webdav_backup,
             cmd::restore_webdav_backup,
-            cmd::get_unlock_items,
-            cmd::check_media_unlock,
-            cmd::check_media_unlock_item,
             cmd::get_update_status,
             cmd::get_updater_clash_proxy,
         ]

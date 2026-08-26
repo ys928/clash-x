@@ -235,7 +235,6 @@ export interface TranslationResources {
             proxies: string
             rules: string
             settings: string
-            unlock: string
           }
         }
         serviceMigration: {
@@ -1575,19 +1574,6 @@ export interface TranslationResources {
           pending: string
           unsupportedRegion: string
           yes: string
-        }
-      }
-      unlock: {
-        page: {
-          actions: {
-            testing: string
-          }
-          empty: string
-          messages: {
-            detectionFailedWithName: string
-            detectionTimeout: string
-          }
-          title: string
         }
       }
     }

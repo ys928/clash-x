@@ -43,18 +43,5 @@
       "unsupportedRegion": "País/región no soportado",
       "failedNetwork": "Failed (Network Connection)"
     }
-  },
-  "unlock": {
-    "page": {
-      "actions": {
-        "testing": "Probando..."
-      },
-      "empty": "No unlock test items",
-      "messages": {
-        "detectionFailedWithName": "Fallo en la detección para {{name}}",
-        "detectionTimeout": "Detection timeout or failed"
-      },
-      "title": "Prueba de desbloqueo"
-    }
   }
 }
