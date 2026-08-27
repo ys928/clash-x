@@ -31,17 +31,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { BaseDialog } from '@/components/base'
-import { EditorViewer } from '@/components/profile/editor-viewer'
-import { GroupsEditorViewer } from '@/components/profile/groups-editor-viewer'
-import { RulesEditorViewer } from '@/components/profile/rules-editor-viewer'
-import { useEditorDocument } from '@/hooks/use-editor-document'
-import {
-  getNextUpdateTime,
-  readProfileFile,
-  saveProfileFile,
-  updateProfile,
-  viewProfile,
-} from '@/services/cmds'
+import { getNextUpdateTime, updateProfile, viewProfile } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import { useLoadingCache, useSetLoadingCache } from '@/services/states'
 import type { TranslationKey } from '@/types/generated/i18n-keys'
@@ -50,7 +40,6 @@ import { openExternalUrl } from '@/utils/open-external-url'
 import parseTraffic from '@/utils/parse-traffic'
 
 import { ProfileBox } from './profile-box'
-import { ProxiesEditorViewer } from './proxies-editor-viewer'
 import { QrViewer } from './qr-viewer'
 const round = keyframes`
   from { transform: rotate(0deg); }
@@ -64,7 +53,6 @@ export interface ProfileItemProps {
   mutateProfiles: () => Promise<void>
   onSelect: (force: boolean) => void
   onEdit: () => void
-  onSave?: (prev?: string, curr?: string) => void
   onDelete: () => void
   batchMode?: boolean
   isSelected?: boolean
@@ -84,7 +72,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     mutateProfiles,
     onSelect,
     onEdit,
-    onSave,
     onDelete,
     batchMode,
     isSelected,
@@ -123,7 +110,7 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     [itemData.uid, setLoadingCache],
   )
 
-  const { uid, name = 'Profile', extra, updated = 0, option } = itemData
+  const { name = 'Profile', extra, updated = 0 } = itemData
 
   const fetchNextUpdateTimeCallback = useCallback(
     async (forceRefresh = false) => {
@@ -282,19 +269,8 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     }
   }, [forceRefresh, hasUrl, updated])
 
-  const [fileOpen, setFileOpen] = useState(false)
-  const [rulesOpen, setRulesOpen] = useState(false)
-  const [proxiesOpen, setProxiesOpen] = useState(false)
-  const [groupsOpen, setGroupsOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
-
-  const loadProfileDocument = useCallback(() => readProfileFile(uid), [uid])
-
-  const profileDocument = useEditorDocument({
-    open: fileOpen,
-    load: loadProfileDocument,
-  })
 
   const onOpenHome = () => {
     setAnchorEl(null)
@@ -310,26 +286,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
   const onShareQrCode = () => {
     setAnchorEl(null)
     setQrOpen(true)
-  }
-
-  const onEditFile = () => {
-    setAnchorEl(null)
-    setFileOpen(true)
-  }
-
-  const onEditRules = () => {
-    setAnchorEl(null)
-    setRulesOpen(true)
-  }
-
-  const onEditProxies = () => {
-    setAnchorEl(null)
-    setProxiesOpen(true)
-  }
-
-  const onEditGroups = () => {
-    setAnchorEl(null)
-    setGroupsOpen(true)
   }
 
   const onForceSelect = () => {
@@ -389,10 +345,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     select: 'profiles.components.menu.select',
     shareQrCode: 'profiles.components.menu.shareQrCode',
     editInfo: 'profiles.components.menu.editInfo',
-    editFile: 'profiles.components.menu.editFile',
-    editRules: 'profiles.components.menu.editRules',
-    editProxies: 'profiles.components.menu.editProxies',
-    editGroups: 'profiles.components.menu.editGroups',
     openFile: 'profiles.components.menu.openFile',
     update: 'profiles.components.menu.update',
     updateViaProxy: 'profiles.components.menu.updateViaProxy',
@@ -423,26 +375,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       label: menuLabels.editInfo,
       handler: onEditInfo,
       disabled: false,
-    },
-    {
-      label: menuLabels.editFile,
-      handler: onEditFile,
-      disabled: false,
-    },
-    {
-      label: menuLabels.editRules,
-      handler: onEditRules,
-      disabled: !option?.rules,
-    },
-    {
-      label: menuLabels.editProxies,
-      handler: onEditProxies,
-      disabled: !option?.proxies,
-    },
-    {
-      label: menuLabels.editGroups,
-      handler: onEditGroups,
-      disabled: !option?.groups,
     },
     {
       label: menuLabels.openFile,
@@ -486,26 +418,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       disabled: false,
     },
     {
-      label: menuLabels.editFile,
-      handler: onEditFile,
-      disabled: false,
-    },
-    {
-      label: menuLabels.editRules,
-      handler: onEditRules,
-      disabled: !option?.rules,
-    },
-    {
-      label: menuLabels.editProxies,
-      handler: onEditProxies,
-      disabled: !option?.proxies,
-    },
-    {
-      label: menuLabels.editGroups,
-      handler: onEditGroups,
-      disabled: !option?.groups,
-    },
-    {
       label: menuLabels.openFile,
       handler: onOpenFile,
       disabled: false,
@@ -532,16 +444,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     alignItems: 'center',
     justifyContent: 'space-between',
   }
-
-  const handleSaveProfileDocument = useLockFn(async () => {
-    const currentValue = profileDocument.value
-    if (!(await saveProfileFile(uid, currentValue))) {
-      await profileDocument.reload()
-      return
-    }
-    onSave?.(profileDocument.savedValue, currentValue)
-    profileDocument.markSaved(currentValue)
-  })
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -786,53 +688,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
           </MenuItem>
         ))}
       </Menu>
-      {fileOpen && (
-        <EditorViewer
-          open={true}
-          value={profileDocument.value}
-          language="yaml"
-          path={`profile:${uid}.yaml`}
-          loading={profileDocument.loading}
-          dirty={profileDocument.dirty}
-          onChange={profileDocument.setValue}
-          onSave={handleSaveProfileDocument}
-          onClose={() => setFileOpen(false)}
-        />
-      )}
-      {rulesOpen && (
-        <RulesEditorViewer
-          groupsUid={option?.groups ?? ''}
-          mergeUid={option?.merge ?? ''}
-          profileUid={uid}
-          property={option?.rules ?? ''}
-          open={true}
-          onSave={onSave}
-          onClose={() => setRulesOpen(false)}
-        />
-      )}
-      {proxiesOpen && (
-        <ProxiesEditorViewer
-          profileUid={uid}
-          property={option?.proxies ?? ''}
-          open={true}
-          onSave={onSave}
-          onClose={() => setProxiesOpen(false)}
-        />
-      )}
-      {groupsOpen && (
-        <GroupsEditorViewer
-          mergeUid={option?.merge ?? ''}
-          proxiesUid={option?.proxies ?? ''}
-          profileUid={uid}
-          property={option?.groups ?? ''}
-          open={true}
-          onSave={onSave}
-          onClose={() => {
-            setGroupsOpen(false)
-          }}
-        />
-      )}
-
       <BaseDialog
         title={t('profiles.modals.confirmDelete.title')}
         open={confirmOpen}

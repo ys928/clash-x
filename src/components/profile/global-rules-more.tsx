@@ -2,28 +2,15 @@ import { Box, Chip, Menu, MenuItem, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { RulesEditorViewer } from '@/components/profile/rules-editor-viewer'
-import { useProfiles } from '@/hooks/use-profiles'
 import { viewProfile } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 
 import { ProfileBox } from './profile-box'
 
-interface Props {
-  onSave?: (prev?: string, curr?: string) => void
-}
-
-export const GlobalRulesMore = ({ onSave }: Props) => {
+export const GlobalRulesMore = () => {
   const { t } = useTranslation()
-  const { current } = useProfiles()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [position, setPosition] = useState({ left: 0, top: 0 })
-  const [editorOpen, setEditorOpen] = useState(false)
-
-  const onEditRules = () => {
-    setAnchorEl(null)
-    setEditorOpen(true)
-  }
 
   const onOpenFile = async () => {
     setAnchorEl(null)
@@ -37,7 +24,9 @@ export const GlobalRulesMore = ({ onSave }: Props) => {
   return (
     <>
       <ProfileBox
-        onDoubleClick={onEditRules}
+        onDoubleClick={() => {
+          void onOpenFile()
+        }}
         onContextMenu={(event) => {
           const { clientX, clientY } = event
           setPosition({ top: clientY, left: clientX })
@@ -101,9 +90,6 @@ export const GlobalRulesMore = ({ onSave }: Props) => {
           e.preventDefault()
         }}
       >
-        <MenuItem onClick={onEditRules} dense sx={{ minWidth: 120 }}>
-          {t('profiles.components.menu.editRules')}
-        </MenuItem>
         <MenuItem
           onClick={() => {
             void onOpenFile()
@@ -114,19 +100,6 @@ export const GlobalRulesMore = ({ onSave }: Props) => {
           {t('profiles.components.menu.openFile')}
         </MenuItem>
       </Menu>
-
-      {editorOpen && (
-        <RulesEditorViewer
-          open
-          global
-          property="Rules"
-          profileUid={current?.uid ?? ''}
-          groupsUid={current?.option?.groups ?? ''}
-          mergeUid={current?.option?.merge ?? ''}
-          onSave={onSave}
-          onClose={() => setEditorOpen(false)}
-        />
-      )}
     </>
   )
 }

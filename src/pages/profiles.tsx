@@ -1004,13 +1004,6 @@ const ProfilePage = () => {
                       mutateProfiles={mutateProfiles}
                       onSelect={(f) => onSelect(item.uid, f)}
                       onEdit={() => viewerRef.current?.edit(item)}
-                      onSave={async (prev, curr) => {
-                        if (prev !== curr && profiles.current === item.uid) {
-                          await onEnhance(false)
-                          //  await restartCore();
-                          //   Notice.success(t("settings.feedback.notifications.clash.restartSuccess"), 1000);
-                        }
-                      }}
                       onDelete={() => {
                         if (batchMode) {
                           toggleProfileSelection(item.uid)
@@ -1036,13 +1029,7 @@ const ProfilePage = () => {
             <Box sx={{ mt: 1.5, mb: '10px' }}>
               <Grid container spacing={{ xs: 1, lg: 1 }}>
                 <Grid size={{ xs: 12, sm: 12, md: 4, lg: 4 }}>
-                  <GlobalRulesMore
-                    onSave={async (prev, curr) => {
-                      if (prev !== curr) {
-                        await onEnhance(false)
-                      }
-                    }}
-                  />
+                  <GlobalRulesMore />
                 </Grid>
               </Grid>
             </Box>
