@@ -33,8 +33,6 @@ export type ThemeColorDefaults = {
   font_family: string
 }
 
-export type ThemeSetting = NonNullable<IVergeConfig['theme_setting']>
-
 const buildShadows = (mode: 'light' | 'dark'): Shadows => {
   const e = mode === 'light' ? elevation : elevationDark
   const list = Array(25).fill(e.none) as string[]
@@ -69,10 +67,9 @@ export const resolvePalette = (
 const buildThemeOptions = (
   mode: 'light' | 'dark',
   dt: ThemeColorDefaults,
-  setting: ThemeSetting,
 ): ThemeOptions => {
   const palette = resolvePalette(mode, dt)
-  const primaryMain = setting.primary_color || palette.primary_color
+  const primaryMain = palette.primary_color
   const dividerColor = palette.divider
   const selectedBg = alpha(primaryMain, mode === 'light' ? 0.1 : 0.12)
   const hoverBg =
@@ -92,14 +89,14 @@ const buildThemeOptions = (
     palette: {
       mode,
       primary: { main: primaryMain },
-      secondary: { main: setting.secondary_color || palette.secondary_color },
-      info: { main: setting.info_color || palette.info_color },
-      error: { main: setting.error_color || palette.error_color },
-      warning: { main: setting.warning_color || palette.warning_color },
-      success: { main: setting.success_color || palette.success_color },
+      secondary: { main: palette.secondary_color },
+      info: { main: palette.info_color },
+      error: { main: palette.error_color },
+      warning: { main: palette.warning_color },
+      success: { main: palette.success_color },
       text: {
-        primary: setting.primary_text || palette.primary_text,
-        secondary: setting.secondary_text || palette.secondary_text,
+        primary: palette.primary_text,
+        secondary: palette.secondary_text,
       },
       divider: dividerColor,
       background: {
@@ -109,9 +106,7 @@ const buildThemeOptions = (
     },
     shadows: buildShadows(mode),
     typography: {
-      fontFamily: setting.font_family
-        ? `${setting.font_family}, ${dt.font_family}`
-        : dt.font_family,
+      fontFamily: dt.font_family,
       fontSize: typographyScale.fontSizeMd,
       fontWeightRegular: typographyScale.fontWeightRegular,
       fontWeightMedium: typographyScale.fontWeightMedium,
@@ -403,12 +398,11 @@ const buildThemeOptions = (
 export const createAppTheme = (
   mode: 'light' | 'dark',
   dt: ThemeColorDefaults,
-  setting: ThemeSetting = {},
 ): MuiTheme => {
   try {
-    return createTheme(buildThemeOptions(mode, dt, setting))
+    return createTheme(buildThemeOptions(mode, dt))
   } catch (e) {
     console.error('Error creating MUI theme, falling back to defaults:', e)
-    return createTheme(buildThemeOptions(mode, dt, {}))
+    return createTheme(buildThemeOptions(mode, dt))
   }
 }

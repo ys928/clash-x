@@ -1,10 +1,6 @@
 import { alpha, type Theme as MuiTheme } from '@mui/material'
 
-import {
-  resolvePalette,
-  type ThemeColorDefaults,
-  type ThemeSetting,
-} from './create-app-theme'
+import { resolvePalette, type ThemeColorDefaults } from './create-app-theme'
 import {
   controlHeight,
   darkPalette,
@@ -18,27 +14,17 @@ export type SyncCssVarsOptions = {
   mode: 'light' | 'dark'
   dt: ThemeColorDefaults
   theme: MuiTheme
-  setting: ThemeSetting
-  userBackgroundImage?: string
 }
 
 /**
  * Sync legacy CSS vars (compat) + design-system `--cx-*` vars onto `:root`.
  */
-export const syncCssVars = ({
-  mode,
-  dt,
-  theme,
-  setting,
-  userBackgroundImage = '',
-}: SyncCssVarsOptions) => {
+export const syncCssVars = ({ mode, dt, theme }: SyncCssVarsOptions) => {
   const rootEle = document.documentElement
   if (!rootEle) return
 
   const palette = resolvePalette(mode, dt)
-  const hasUserBackground = !!userBackgroundImage
 
-  // Legacy vars — keep names for layout.scss / user css_injection
   rootEle.style.setProperty('--divider-color', palette.divider)
   rootEle.style.setProperty('--background-color', palette.background_default)
   rootEle.style.setProperty('--background-paper', palette.background_color)
@@ -59,22 +45,7 @@ export const syncCssVars = ({
   rootEle.style.setProperty('--scrollbar-bg', palette.scrollbar_bg)
   rootEle.style.setProperty('--scrollbar-thumb', palette.scrollbar_thumb)
   rootEle.style.setProperty('--border-radius', `${radius.md}px`)
-  rootEle.style.setProperty(
-    '--user-background-image',
-    hasUserBackground ? `url('${userBackgroundImage}')` : 'none',
-  )
-  rootEle.style.setProperty(
-    '--background-blend-mode',
-    setting.background_blend_mode || 'normal',
-  )
-  rootEle.style.setProperty(
-    '--background-opacity',
-    setting.background_opacity !== undefined
-      ? String(setting.background_opacity)
-      : '1',
-  )
 
-  // Design-system tokens
   rootEle.style.setProperty('--cx-radius-xs', `${radius.xs}px`)
   rootEle.style.setProperty('--cx-radius-sm', `${radius.sm}px`)
   rootEle.style.setProperty('--cx-radius-md', `${radius.md}px`)
@@ -109,14 +80,11 @@ export const syncCssVars = ({
     '--cx-scrollbar-thumb-hover',
     palette.scrollbar_thumb_hover,
   )
-
-  rootEle.setAttribute('data-css-injection-root', 'true')
 }
 
 export const buildGlobalThemeStyles = (
   mode: 'light' | 'dark',
   theme: MuiTheme,
-  hasUserBackground: boolean,
 ) => {
   const palette = mode === 'light' ? lightPalette : darkPalette
   return `
@@ -135,18 +103,6 @@ export const buildGlobalThemeStyles = (
 
         body {
           background-color: var(--background-color);
-          ${
-            hasUserBackground
-              ? `
-            background-image: var(--user-background-image);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-blend-mode: var(--background-blend-mode);
-            opacity: var(--background-opacity);
-          `
-              : ''
-          }
         }
 
         .MuiPaper-root {
@@ -168,4 +124,14 @@ export const buildGlobalThemeStyles = (
           outline-offset: 1px;
         }
       `
+}
+
+export const applyThemeStyleElement = (globalStyles: string) => {
+  let styleElement = document.querySelector('style#verge-theme')
+  if (!styleElement) {
+    styleElement = document.createElement('style')
+    styleElement.id = 'verge-theme'
+    document.head.appendChild(styleElement)
+  }
+  styleElement.innerHTML = globalStyles
 }

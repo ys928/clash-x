@@ -89,8 +89,6 @@ pub struct IVerge {
 
     pub proxy_host: Option<String>,
 
-    pub theme_setting: Option<IVergeTheme>,
-
     pub web_ui_list: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -174,22 +172,6 @@ pub struct IVergeTestItem {
     pub name: Option<String>,
     pub icon: Option<String>,
     pub url: Option<String>,
-}
-
-#[derive(Default, Debug, Clone, Deserialize, Serialize)]
-pub struct IVergeTheme {
-    pub primary_color: Option<String>,
-    pub secondary_color: Option<String>,
-    pub primary_text: Option<String>,
-    pub secondary_text: Option<String>,
-
-    pub info_color: Option<String>,
-    pub error_color: Option<String>,
-    pub warning_color: Option<String>,
-    pub success_color: Option<String>,
-
-    pub font_family: Option<String>,
-    pub css_injection: Option<String>,
 }
 
 impl IVerge {
@@ -410,7 +392,6 @@ impl IVerge {
         patch!(proxy_auto_config);
         patch!(pac_file_content);
         patch!(proxy_host);
-        patch!(theme_setting);
         patch!(web_ui_list);
         patch!(clash_core);
         patch!(hotkeys);

@@ -11,10 +11,8 @@ import { useSetThemeMode, useThemeMode } from '@/services/states'
 import {
   applyThemeStyleElement,
   buildGlobalThemeStyles,
-  canUseCssScope,
   createAppTheme,
   syncCssVars,
-  wrapCssInjectionWithScope,
 } from '@/theme'
 
 /**
@@ -23,11 +21,9 @@ import {
 export const useCustomTheme = () => {
   const appWindow: WebviewWindow = useMemo(() => getCurrentWebviewWindow(), [])
   const { verge } = useVerge()
-  const { theme_mode, theme_setting } = verge ?? {}
+  const { theme_mode } = verge ?? {}
   const mode = useThemeMode()
   const setMode = useSetThemeMode()
-  const userBackgroundImage = theme_setting?.background_image || ''
-  const hasUserBackground = !!userBackgroundImage
 
   useEffect(() => {
     if (theme_mode === 'light' || theme_mode === 'dark') {
@@ -97,32 +93,20 @@ export const useCustomTheme = () => {
   }, [mode, appWindow, theme_mode])
 
   const theme = useMemo(() => {
-    const setting = theme_setting || {}
     const dt = mode === 'light' ? defaultTheme : defaultDarkTheme
-    const muiTheme = createAppTheme(mode, dt, setting)
+    const muiTheme = createAppTheme(mode, dt)
 
     syncCssVars({
       mode,
       dt,
       theme: muiTheme,
-      setting,
-      userBackgroundImage,
     })
 
-    let scopedCss: string | null = null
-    if (canUseCssScope() && setting.css_injection) {
-      scopedCss = wrapCssInjectionWithScope(setting.css_injection)
-    }
-    const effectiveInjectedCss = scopedCss ?? setting.css_injection ?? ''
-    const globalStyles = buildGlobalThemeStyles(
-      mode,
-      muiTheme,
-      hasUserBackground,
-    )
-    applyThemeStyleElement(effectiveInjectedCss, globalStyles)
+    const globalStyles = buildGlobalThemeStyles(mode, muiTheme)
+    applyThemeStyleElement(globalStyles)
 
     return muiTheme
-  }, [mode, theme_setting, userBackgroundImage, hasUserBackground])
+  }, [mode])
 
   useEffect(() => {
     const id = setTimeout(() => {
