@@ -309,15 +309,13 @@ async fn service_bypass(verge: &IVerge) -> Result<String> {
     let custom = verge.system_proxy_bypass.as_deref().unwrap_or("");
     ensure!(!custom.contains('\0'), "system proxy bypass contains NUL");
 
-    let base = if custom.is_empty() {
+    let mut bypass = if custom.is_empty() {
         MACOS_DEFAULT_BYPASS.to_owned()
     } else if verge.use_default_bypass.unwrap_or(true) {
         format!("{MACOS_DEFAULT_BYPASS},{custom}")
     } else {
         custom.to_owned()
     };
-    let extras = crate::enhance::direct_domain::global_direct_sysproxy_patterns().await;
-    let mut bypass = crate::enhance::direct_domain::merge_sysproxy_bypass(&base, ",", &extras);
     truncate_utf8(&mut bypass, MAX_SERVICE_BYPASS_LEN);
     Ok(bypass)
 }

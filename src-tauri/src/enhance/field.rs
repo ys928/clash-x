@@ -1,49 +1,27 @@
 use serde_yaml_ng::{Mapping, Value};
 use smartstring::alias::String;
 
-pub const HANDLE_FIELDS: [&str; 12] = [
-    "mode",
-    "redir-port",
-    "tproxy-port",
-    "mixed-port",
-    "socks-port",
-    "port",
-    "allow-lan",
-    "log-level",
-    "ipv6",
-    "external-controller",
-    "secret",
-    "unified-delay",
-];
+/// Large list fields are written last so settings remain readable at the top.
+const TRAILING_FIELDS: [&str; 5] = ["proxies", "proxy-providers", "proxy-groups", "rule-providers", "rules"];
 
-pub const DEFAULT_FIELDS: [&str; 5] = ["proxies", "proxy-providers", "proxy-groups", "rule-providers", "rules"];
-
-pub fn use_sort(mut config: Mapping) -> Mapping {
+pub fn use_sort(config: Mapping) -> Mapping {
     let mut sorted = Mapping::new();
-    HANDLE_FIELDS.into_iter().for_each(|key| {
-        let key = Value::from(key);
-        if let Some(value) = config.remove(&key) {
-            sorted.insert(key, value);
-        }
-    });
+    let mut trailing = Mapping::new();
 
-    let mut default_field_values = Mapping::new();
     for (key, value) in config {
-        if let Some(key_str) = key.as_str() {
-            if DEFAULT_FIELDS.contains(&key_str) {
-                default_field_values.insert(key, value);
-            } else if !HANDLE_FIELDS.contains(&key_str) {
-                sorted.insert(key, value);
-            }
+        if key.as_str().is_some_and(|key| TRAILING_FIELDS.contains(&key)) {
+            trailing.insert(key, value);
+        } else {
+            sorted.insert(key, value);
         }
     }
 
-    DEFAULT_FIELDS.into_iter().for_each(|key| {
+    for key in TRAILING_FIELDS {
         let key = Value::from(key);
-        if let Some(value) = default_field_values.remove(&key) {
+        if let Some(value) = trailing.remove(&key) {
             sorted.insert(key, value);
         }
-    });
+    }
 
     sorted
 }

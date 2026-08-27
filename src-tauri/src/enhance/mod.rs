@@ -1,17 +1,16 @@
-mod chain;
-pub mod direct_domain;
 pub mod field;
-pub mod seq;
+mod seq;
 mod tun;
 
 use self::{
-    chain::{AsyncChainItemFrom as _, ChainItem, ChainType},
-    direct_domain::{apply_direct_domain_dns, extract_direct_domains},
     field::{use_keys, use_sort},
-    seq::{SeqMap, use_seq},
+    seq::{SeqMap, merge_rules},
     tun::use_tun,
 };
-use crate::config::{Config, IProfiles, IVerge, PrfItem};
+use crate::{
+    config::{Config, IProfiles, IVerge},
+    utils::{dirs, help},
+};
 use anyhow::{Context as _, Result};
 use serde_yaml_ng::{Mapping, Value};
 use smartstring::alias::String;
@@ -29,43 +28,6 @@ struct ConfigValues {
     redir_enabled: bool,
     #[cfg(target_os = "linux")]
     tproxy_enabled: bool,
-}
-
-#[derive(Debug)]
-struct ProfileItems {
-    config: Mapping,
-    rules_item: ChainItem,
-    proxies_item: ChainItem,
-    groups_item: ChainItem,
-    global_rules: ChainItem,
-}
-
-impl Default for ProfileItems {
-    fn default() -> Self {
-        Self {
-            config: Default::default(),
-            rules_item: ChainItem {
-                data: ChainType::Rules(SeqMap::default()),
-            },
-            proxies_item: ChainItem {
-                data: ChainType::Proxies(SeqMap::default()),
-            },
-            groups_item: ChainItem {
-                data: ChainType::Groups(SeqMap::default()),
-            },
-            global_rules: ChainItem {
-                data: ChainType::Rules(SeqMap::default()),
-            },
-        }
-    }
-}
-
-async fn chain_item_or_default(item: Option<&PrfItem>, default_item: impl FnOnce() -> ChainItem) -> ChainItem {
-    if let Some(item) = item {
-        <Option<ChainItem>>::from_async(item).await.unwrap_or_else(default_item)
-    } else {
-        default_item()
-    }
 }
 
 async fn get_config_values() -> ConfigValues {
@@ -115,101 +77,35 @@ async fn get_config_values() -> ConfigValues {
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
-async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
-    let current_profile_uid = match profiles.current.clone() {
-        Some(uid) => uid,
-        None => {
-            let global_rules = chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
-                data: ChainType::Rules(SeqMap::default()),
-            })
-            .await;
-            return Ok(ProfileItems {
-                global_rules,
-                ..ProfileItems::default()
-            });
-        }
+async fn load_global_rules(profiles: &IProfiles) -> SeqMap {
+    let Ok(item) = profiles.get_item("Rules") else {
+        return SeqMap::default();
+    };
+    let Some(file) = item.file.clone() else {
+        return SeqMap::default();
+    };
+    let Some(path) = dirs::app_profiles_dir().ok().map(|dir| dir.join(file.as_str())) else {
+        return SeqMap::default();
+    };
+    if !path.exists() {
+        return SeqMap::default();
+    }
+    help::read_yaml::<SeqMap>(&path).await.unwrap_or_default()
+}
+
+async fn load_profile_config(profiles: &IProfiles) -> Result<(Mapping, SeqMap)> {
+    let global_rules = load_global_rules(profiles).await;
+
+    let Some(current_profile_uid) = profiles.current.clone() else {
+        return Ok((Mapping::default(), global_rules));
     };
 
-    let current = profiles
+    let config = profiles
         .current_mapping()
         .await
         .with_context(|| format!("failed to read current profile \"{current_profile_uid}\""))?;
 
-    let current_item = match profiles.get_item(&current_profile_uid) {
-        Ok(item) => item,
-        Err(err) => {
-            return Err(err).with_context(|| format!("failed to get current profile \"{current_profile_uid}\""));
-        }
-    };
-
-    // Profile rules use a dedicated sidecar UID; never fall back to the global "Rules" item.
-    let rules_uid = current_item.current_rules().cloned();
-    let proxies_uid = current_item
-        .current_proxies()
-        .cloned()
-        .unwrap_or_else(|| "Proxies".into());
-    let groups_uid = current_item
-        .current_groups()
-        .cloned()
-        .unwrap_or_else(|| "Groups".into());
-
-    let (rules_item, proxies_item, groups_item, global_rules) = tokio::join!(
-        chain_item_or_default(rules_uid.as_ref().and_then(|uid| profiles.get_item(uid).ok()), || {
-            ChainItem {
-                data: ChainType::Rules(SeqMap::default()),
-            }
-        },),
-        chain_item_or_default(profiles.get_item(&proxies_uid).ok(), || ChainItem {
-            data: ChainType::Proxies(SeqMap::default()),
-        },),
-        chain_item_or_default(profiles.get_item(&groups_uid).ok(), || ChainItem {
-            data: ChainType::Groups(SeqMap::default()),
-        },),
-        chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
-            data: ChainType::Rules(SeqMap::default()),
-        },),
-    );
-
-    Ok(ProfileItems {
-        config: current,
-        rules_item,
-        proxies_item,
-        groups_item,
-        global_rules,
-    })
-}
-
-fn process_seq_items(
-    mut config: Mapping,
-    rules_item: ChainItem,
-    proxies_item: ChainItem,
-    groups_item: ChainItem,
-) -> Mapping {
-    if let ChainType::Rules(rules) = rules_item.data {
-        config = use_seq(rules, config, "rules");
-    }
-
-    if let ChainType::Proxies(proxies) = proxies_item.data {
-        config = use_seq(proxies, config, "proxies");
-    }
-
-    if let ChainType::Groups(groups) = groups_item.data {
-        config = use_seq(groups, config, "proxy-groups");
-    }
-
-    config
-}
-
-fn process_global_rules(mut config: Mapping, global_rules: ChainItem) -> Mapping {
-    if let ChainType::Rules(rules) = global_rules.data {
-        // DIRECT domain rules need companion DNS (system resolver); routing alone is not enough
-        // for VPN / `.local` zones and often surfaces as HTTP 502 from the mixed port.
-        let direct_domains = extract_direct_domains(&rules);
-        config = use_seq(rules, config, "rules");
-        config = apply_direct_domain_dns(config, &direct_domains);
-    }
-    config
+    Ok((config, global_rules))
 }
 
 /// App 权威的顶层控制面键:核心连接、监听端口、UI/托盘开关。
@@ -495,14 +391,7 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
         tproxy_enabled,
     } = cfg_vals;
 
-    let profile = collect_profile_items(profiles).await?;
-    let config = profile.config;
-    let rules_item = profile.rules_item;
-    let proxies_item = profile.proxies_item;
-    let groups_item = profile.groups_item;
-    let global_rules = profile.global_rules;
-
-    let config = process_seq_items(config, rules_item, proxies_item, groups_item);
+    let (config, global_rules) = load_profile_config(profiles).await?;
     let exists_keys = use_keys(&config).collect::<Vec<_>>();
 
     let config = merge_default_config(
@@ -522,7 +411,7 @@ pub async fn enhance(profiles: &IProfiles) -> Result<(Mapping, HashSet<String>, 
     let authoritative = AuthoritativeFields::capture(&config);
 
     // Global rules run last so prepend DIRECT/bypass always wins across subscriptions.
-    let config = process_global_rules(config, global_rules);
+    let config = merge_rules(global_rules, config);
 
     let config = authoritative.enforce(config);
     let config = ensure_lan_bind_address(config);

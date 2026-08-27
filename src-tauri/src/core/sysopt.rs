@@ -282,9 +282,7 @@ async fn get_bypass() -> String {
     let use_default = verge.use_default_bypass.unwrap_or(true);
     let custom_bypass = verge.system_proxy_bypass.as_deref().unwrap_or("");
 
-    let base = format_bypass(use_default, custom_bypass);
-    let extras = crate::enhance::direct_domain::global_direct_sysproxy_patterns().await;
-    crate::enhance::direct_domain::merge_sysproxy_bypass(&base, BYPASS_SEPARATOR, &extras).into()
+    format_bypass(use_default, custom_bypass).into()
 }
 
 singleton!(Sysopt, SYSOPT);
