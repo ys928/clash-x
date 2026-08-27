@@ -158,11 +158,6 @@ pub struct IVerge {
     /// 自动进入轻量模式的延迟（分钟）
     pub auto_light_weight_minutes: Option<u64>,
 
-    pub enable_hover_jump_navigator: Option<bool>,
-
-    /// 代理页面自动滚动延迟（毫秒）
-    pub hover_jump_navigator_delay: Option<u64>,
-
     pub enable_external_controller: Option<bool>,
 }
 
@@ -289,8 +284,6 @@ impl IVerge {
             tun_tray_icon: Some(false),
             enable_auto_launch: Some(false),
             enable_silent_start: Some(false),
-            enable_hover_jump_navigator: Some(true),
-            hover_jump_navigator_delay: Some(280),
             enable_system_proxy: Some(false),
             proxy_auto_config: Some(false),
             pac_file_content: Some(DEFAULT_PAC.into()),
@@ -368,8 +361,6 @@ impl IVerge {
         patch!(enable_tun_mode);
         patch!(enable_auto_launch);
         patch!(enable_silent_start);
-        patch!(enable_hover_jump_navigator);
-        patch!(hover_jump_navigator_delay);
         #[cfg(not(target_os = "windows"))]
         patch!(verge_redir_port);
         #[cfg(not(target_os = "windows"))]

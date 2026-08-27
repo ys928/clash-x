@@ -1,13 +1,6 @@
 import { useLockFn } from 'ahooks'
 import { throttle } from 'lodash-es'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 
 import {
   BaseEmpty,
@@ -33,21 +26,8 @@ import {
   resolveEmptyListReason,
   resolveProxyListState,
 } from './proxy-empty-state-model'
-import { ProxyFocusHeader } from './proxy-focus-header'
-import {
-  listVisibleGroups,
-  readProxyPageViewMode,
-  resolveFocusedGroupName,
-  STORAGE_KEY_GROUP,
-  writeProxyPageViewMode,
-  type ProxyPageViewMode,
-} from './proxy-focus-model'
-import {
-  DEFAULT_HOVER_DELAY,
-  ProxyGroupNavigator,
-} from './proxy-group-navigator'
+import { ProxyGroupNavigator } from './proxy-group-navigator'
 import { ProxyRender } from './proxy-render'
-import { DEFAULT_STATE } from './use-head-state'
 import {
   hasRenderableItems,
   type IRenderItem,
@@ -80,20 +60,11 @@ function useEmptyRenderList() {
   )
 }
 
-function useProxyRenderState(mode: string, activeSelectedGroup: string | null) {
+function useProxyRenderState(mode: string) {
   const { verge } = useVerge()
   const { proxyView } = useProxiesData()
-  const { renderList, onProxies, onHeadState, headStates } = useRenderList(
-    mode,
-    activeSelectedGroup,
-  )
-  const scrollPositionKey = useMemo(
-    () =>
-      activeSelectedGroup
-        ? `${mode}:focus:${activeSelectedGroup}`
-        : `${mode}:normal`,
-    [activeSelectedGroup, mode],
-  )
+  const { renderList, onProxies, onHeadState } = useRenderList(mode)
+  const scrollPositionKey = mode
 
   const timeout = verge?.default_latency_timeout || 10000
 
@@ -166,9 +137,7 @@ function useProxyRenderState(mode: string, activeSelectedGroup: string | null) {
   }, [scrollPositionKey])
 
   return {
-    verge,
     renderList,
-    headStates,
     onProxies,
     onHeadState,
     handleCheckAll,
@@ -179,68 +148,21 @@ function useProxyRenderState(mode: string, activeSelectedGroup: string | null) {
 
 function NormalProxyGroups(props: { mode: string }) {
   const { mode } = props
-  const { proxyView } = useProxiesData()
   const stickyListRef = useRef<StickyVirtualListHandle>(null)
-  const [viewMode, setViewMode] = useState<ProxyPageViewMode>(() =>
-    readProxyPageViewMode(),
-  )
-  // User override; null means "follow saved preference / primary heuristic".
-  const [groupOverride, setGroupOverride] = useState<string | null>(null)
-
-  const visibleGroups = useMemo(
-    () => listVisibleGroups(proxyView?.groups),
-    [proxyView?.groups],
-  )
-
   const isRuleMode = mode === 'rule' || mode === 'script'
-  const showFocusChrome = isRuleMode && visibleGroups.length > 0
-
-  const focusedGroupName = useMemo(() => {
-    if (!isRuleMode) return null
-    let savedName: string | null
-    try {
-      savedName = localStorage.getItem(STORAGE_KEY_GROUP)
-    } catch {
-      savedName = null
-    }
-    return resolveFocusedGroupName(visibleGroups, {
-      currentName: groupOverride,
-      savedName,
-    })
-  }, [groupOverride, isRuleMode, visibleGroups])
-
-  const activeSelectedGroup =
-    showFocusChrome && viewMode === 'focus' ? focusedGroupName : null
 
   const {
     renderList,
-    headStates,
     onProxies,
     onHeadState,
     handleCheckAll,
     getScrollPosition,
     saveScrollPosition,
-  } = useProxyRenderState(mode, activeSelectedGroup)
+  } = useProxyRenderState(mode)
   const emptyList = useEmptyRenderList()
   const renderFirstRef = useRef(true)
   // 恢复滚动位置期间设为 true，避免程序化滚动触发的 scroll 事件把中间值写回存储
   const isRestoringRef = useRef(false)
-
-  const handleViewModeChange = useCallback((next: ProxyPageViewMode) => {
-    setViewMode(next)
-    writeProxyPageViewMode(next)
-    renderFirstRef.current = true
-  }, [])
-
-  const handleSelectGroup = useCallback((groupName: string) => {
-    setGroupOverride(groupName)
-    try {
-      localStorage.setItem(STORAGE_KEY_GROUP, groupName)
-    } catch {
-      // ignore
-    }
-    renderFirstRef.current = true
-  }, [])
 
   // 目前无法使用 StickyVirtualList 的 initialOffset 值设置初始化，具体原因需排查
   // 从 localStorage 恢复滚动位置
@@ -464,40 +386,11 @@ function NormalProxyGroups(props: { mode: string }) {
         flexDirection: 'column',
       }}
     >
-      {showFocusChrome && (
-        <ProxyFocusHeader
-          groups={visibleGroups}
-          selectedGroupName={focusedGroupName}
-          viewMode={viewMode}
-          onSelectGroup={handleSelectGroup}
-          onViewModeChange={handleViewModeChange}
-          headState={
-            focusedGroupName
-              ? (headStates[focusedGroupName] ?? DEFAULT_STATE)
-              : undefined
-          }
-          onLocation={() => {
-            const group = visibleGroups.find(
-              ({ name }) => name === focusedGroupName,
-            )
-            if (group) handleLocation(group)
-          }}
-          onCheckDelay={() => {
-            if (focusedGroupName) handleCheckAll(focusedGroupName)
-          }}
-          onHeadState={(patch) => {
-            if (focusedGroupName) onHeadState(focusedGroupName, patch)
-          }}
-        />
-      )}
-
       <div
         style={{
           position: 'relative',
           flex: 1,
           minHeight: 0,
-          // Focus chrome already owns group identity; give the flat node grid breathing room.
-          paddingTop: showFocusChrome ? 10 : 0,
         }}
       >
         <StickyVirtualList
@@ -511,13 +404,10 @@ function NormalProxyGroups(props: { mode: string }) {
           renderItem={renderProxyItem}
         />
 
-        {/* 全部组视图才需要侧边快速跳转；聚焦模式只有一组 */}
-        {isRuleMode && viewMode === 'all' && (
+        {isRuleMode && (
           <ProxyGroupNavigator
             proxyGroupNames={proxyGroupNames}
             onGroupLocation={handleGroupLocationByName}
-            enableHoverJump
-            hoverDelay={DEFAULT_HOVER_DELAY}
           />
         )}
       </div>

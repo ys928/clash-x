@@ -55,7 +55,7 @@ type GroupCache = {
   col: number
   latencyTimeout: number | undefined
   /// Focus vs accordion vs global change which rows are emitted for the same group.
-  layout: 'focus' | 'accordion' | 'global'
+  layout: 'accordion' | 'global'
   /// This group's own delays. Compared by identity so that a test settling in one group
   /// does not throw away every other group's sorted order.
   delays: DelaySnapshot | undefined
@@ -95,7 +95,7 @@ const groupOccurrences = <T>(list: T[], size: number): T[][] =>
     return acc
   }, [])
 
-export const useRenderList = (mode: string, selectedGroup?: string | null) => {
+export const useRenderList = (mode: string) => {
   const { proxyView } = useProxiesData()
   const { refreshProxy } = useAppRefreshers()
   const { verge } = useVerge()
@@ -112,14 +112,12 @@ export const useRenderList = (mode: string, selectedGroup?: string | null) => {
   const renderedGroupNames = useMemo(() => {
     if (!proxyView) return []
     const useRule = mode === 'rule' || mode === 'script'
-    // Focus mode (rule + selectedGroup): only the active group is on screen.
-    if (useRule && selectedGroup) return [selectedGroup]
     return useRule
       ? proxyView.groups.map(({ name }) => name)
       : proxyView.global
         ? [proxyView.global.name]
         : []
-  }, [mode, proxyView, selectedGroup])
+  }, [mode, proxyView])
   const groupDelays = useGroupsDelays(renderedGroupNames)
 
   const groupCacheRef = useRef<Map<string, GroupCache>>(new Map())
@@ -129,16 +127,12 @@ export const useRenderList = (mode: string, selectedGroup?: string | null) => {
     if (!proxyView) return []
 
     const useRule = mode === 'rule' || mode === 'script'
-    // Single-group focus: same flat node picker as global mode, but for one rule group.
-    const focusMode = useRule && !!selectedGroup
-    const layout = focusMode ? 'focus' : useRule ? 'accordion' : 'global'
-    const renderGroups = focusMode
-      ? proxyView.groups.filter(({ name }) => name === selectedGroup)
-      : useRule
-        ? proxyView.groups
-        : proxyView.global === null
-          ? []
-          : [proxyView.global]
+    const layout = useRule ? 'accordion' : 'global'
+    const renderGroups = useRule
+      ? proxyView.groups
+      : proxyView.global === null
+        ? []
+        : [proxyView.global]
     const cache = groupCacheRef.current
     let anyChanged = false
 
@@ -170,8 +164,7 @@ export const useRenderList = (mode: string, selectedGroup?: string | null) => {
         },
       ]
 
-      // Focus/global always expand; accordion mode still respects open.
-      if (headState.open || !useRule || focusMode) {
+      if (headState.open || !useRule) {
         const occurrences = filterSort(
           resolveOccurrences(proxyView, group),
           group.name,
@@ -227,25 +220,15 @@ export const useRenderList = (mode: string, selectedGroup?: string | null) => {
       return ret
     })
 
-    // Focus/global: drop the accordion header — the page chrome owns group identity.
-    const filtered =
-      !useRule || focusMode
-        ? retList.slice(1)
-        : retList.filter((item) => !item.group.hidden)
+    const filtered = useRule
+      ? retList.filter((item) => !item.group.hidden)
+      : retList.slice(1)
     if (!anyChanged && prevListRef.current.length === filtered.length) {
       return prevListRef.current
     }
     prevListRef.current = filtered
     return filtered
-  }, [
-    col,
-    groupDelays,
-    headStates,
-    latencyTimeout,
-    mode,
-    proxyView,
-    selectedGroup,
-  ])
+  }, [col, groupDelays, headStates, latencyTimeout, mode, proxyView])
 
   return {
     renderList,
