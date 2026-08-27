@@ -1,5 +1,6 @@
-import { LanRounded, SettingsRounded } from '@mui/icons-material'
+import { LanRounded } from '@mui/icons-material'
 import { MenuItem, Select, TextField, Typography } from '@mui/material'
+import { useLockFn } from 'ahooks'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { updateGeo } from 'tauri-plugin-mihomo-api'
@@ -7,11 +8,10 @@ import { updateGeo } from 'tauri-plugin-mihomo-api'
 import { DialogRef, Switch, TooltipIcon } from '@/components/base'
 import { useClash } from '@/hooks/use-clash'
 import { useDisplayedMixedPort } from '@/hooks/use-displayed-mixed-port'
-import { invoke_uwp_tool } from '@/services/cmds'
+import { invoke_uwp_tool, restartCore } from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import getSystem from '@/utils/get-system'
 
-import { ClashCoreViewer } from './mods/clash-core-viewer'
 import { ClashPortViewer } from './mods/clash-port-viewer'
 import { GuardState } from './mods/guard-state'
 import { NetworkInterfaceViewer } from './mods/network-interface-viewer'
@@ -38,7 +38,6 @@ const SettingClash = ({ onError }: Props) => {
   } = clash ?? {}
 
   const portRef = useRef<DialogRef>(null)
-  const coreRef = useRef<DialogRef>(null)
   const networkRef = useRef<DialogRef>(null)
   const tunnelRef = useRef<DialogRef>(null)
 
@@ -55,10 +54,20 @@ const SettingClash = ({ onError }: Props) => {
     }
   }
 
+  const onRestartCore = useLockFn(async () => {
+    try {
+      await restartCore()
+      showNotice.success(
+        t('settings.feedback.notifications.clash.restartSuccess'),
+      )
+    } catch (err: any) {
+      showNotice.error(err)
+    }
+  })
+
   return (
     <SettingList title={t('settings.sections.clash.title')}>
       <ClashPortViewer ref={portRef} />
-      <ClashCoreViewer ref={coreRef} />
       <NetworkInterfaceViewer ref={networkRef} />
       <TunnelsViewer ref={tunnelRef} />
       <SettingItem
@@ -170,17 +179,14 @@ const SettingClash = ({ onError }: Props) => {
         />
       </SettingItem>
 
-      <SettingItem
-        label={t('settings.sections.clash.form.fields.clashCore')}
-        extra={
-          <TooltipIcon
-            icon={SettingsRounded}
-            onClick={() => coreRef.current?.open()}
-          />
-        }
-      >
+      <SettingItem label={t('settings.sections.clash.form.fields.clashCore')}>
         <Typography sx={{ py: '7px', pr: 1 }}>{version}</Typography>
       </SettingItem>
+
+      <SettingItem
+        onClick={onRestartCore}
+        label={t('proxies.page.empty.actions.restartCore')}
+      />
 
       {isWIN && (
         <SettingItem

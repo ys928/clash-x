@@ -170,7 +170,7 @@ pub struct IVergeTestItem {
 }
 
 impl IVerge {
-    pub const VALID_CLASH_CORES: &'static [&'static str] = &["verge-mihomo", "verge-mihomo-alpha"];
+    pub const VALID_CLASH_CORES: &'static [&'static str] = &["verge-mihomo"];
 
     pub async fn validate_and_fix_config() -> Result<()> {
         let config_path = dirs::verge_path()?;
@@ -187,8 +187,7 @@ impl IVerge {
                 logging!(
                     warn,
                     Type::Config,
-                    "启动时发现无效的clash_core配置: '{}', 将自动修正为 'verge-mihomo'",
-                    core
+                    "启动时发现无效或已弃用的 clash_core 配置: '{core}', 将自动修正为 'verge-mihomo'"
                 );
                 config.clash_core = Some("verge-mihomo".into());
                 needs_fix = true;
@@ -384,7 +383,6 @@ impl IVerge {
         patch!(pac_file_content);
         patch!(proxy_host);
         patch!(web_ui_list);
-        patch!(clash_core);
         patch!(hotkeys);
         patch!(enable_global_hotkey);
 
