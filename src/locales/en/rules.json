@@ -10,11 +10,15 @@
     },
     "title": "Rules",
     "actions": {
-      "editGlobal": "Global Rules"
+      "editGlobal": "Global Rules",
+      "addGlobal": "Add Global Rule"
     },
     "filters": {
       "allTypes": "All types",
-      "allPolicies": "All policies"
+      "allPolicies": "All policies",
+      "global": "Global rules",
+      "allRules": "All rules",
+      "subscription": "Subscription rules"
     },
     "stats": {
       "total": "{{count}} rules",
@@ -22,7 +26,8 @@
       "showing": "Showing {{filtered}} of {{total}}"
     },
     "empty": {
-      "filtered": "No rules match the current filters"
+      "filtered": "No rules match the current filters",
+      "global": "No global rules yet. Add one below."
     }
   },
   "feedback": {
@@ -37,6 +42,15 @@
     }
   },
   "modals": {
+    "add": {
+      "title": "Add Global Rule",
+      "position": "Insert position",
+      "submit": "Add Rule",
+      "feedback": {
+        "duplicate": "This rule already exists",
+        "failed": "Failed to save global rule"
+      }
+    },
     "editor": {
       "form": {
         "labels": {

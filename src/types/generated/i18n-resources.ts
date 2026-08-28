@@ -586,6 +586,15 @@ export interface TranslationResources {
         }
       }
       modals: {
+        add: {
+          feedback: {
+            duplicate: string
+            failed: string
+          }
+          position: string
+          submit: string
+          title: string
+        }
         editor: {
           form: {
             actions: {
@@ -654,14 +663,19 @@ export interface TranslationResources {
       }
       page: {
         actions: {
+          addGlobal: string
           editGlobal: string
         }
         empty: {
           filtered: string
+          global: string
         }
         filters: {
           allPolicies: string
+          allRules: string
           allTypes: string
+          global: string
+          subscription: string
         }
         provider: {
           actions: {

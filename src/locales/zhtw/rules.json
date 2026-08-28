@@ -10,11 +10,15 @@
     },
     "title": "規則",
     "actions": {
-      "editGlobal": "全域規則"
+      "editGlobal": "全域規則",
+      "addGlobal": "新增全域規則"
     },
     "filters": {
       "allTypes": "全部類型",
-      "allPolicies": "全部策略"
+      "allPolicies": "全部策略",
+      "global": "全域規則",
+      "allRules": "全部規則",
+      "subscription": "訂閱規則"
     },
     "stats": {
       "total": "{{count}} 條規則",
@@ -22,7 +26,8 @@
       "showing": "顯示 {{filtered}} / {{total}}"
     },
     "empty": {
-      "filtered": "沒有符合目前篩選條件的規則"
+      "filtered": "沒有符合目前篩選條件的規則",
+      "global": "尚無全域規則，點擊下方按鈕新增"
     }
   },
   "feedback": {
@@ -37,6 +42,15 @@
     }
   },
   "modals": {
+    "add": {
+      "title": "新增全域規則",
+      "position": "插入位置",
+      "submit": "新增規則",
+      "feedback": {
+        "duplicate": "此規則已存在",
+        "failed": "儲存全域規則失敗"
+      }
+    },
     "editor": {
       "form": {
         "labels": {

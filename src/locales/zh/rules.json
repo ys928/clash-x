@@ -10,11 +10,15 @@
     },
     "title": "规则",
     "actions": {
-      "editGlobal": "全局规则"
+      "editGlobal": "全局规则",
+      "addGlobal": "新增全局规则"
     },
     "filters": {
       "allTypes": "全部类型",
-      "allPolicies": "全部策略"
+      "allPolicies": "全部策略",
+      "global": "全局规则",
+      "allRules": "全部规则",
+      "subscription": "订阅规则"
     },
     "stats": {
       "total": "{{count}} 条规则",
@@ -22,7 +26,8 @@
       "showing": "显示 {{filtered}} / {{total}}"
     },
     "empty": {
-      "filtered": "没有符合当前筛选条件的规则"
+      "filtered": "没有符合当前筛选条件的规则",
+      "global": "还没有全局规则，点击下方按钮添加"
     }
   },
   "feedback": {
@@ -37,6 +42,15 @@
     }
   },
   "modals": {
+    "add": {
+      "title": "新增全局规则",
+      "position": "插入位置",
+      "submit": "添加规则",
+      "feedback": {
+        "duplicate": "该规则已存在",
+        "failed": "保存全局规则失败"
+      }
+    },
     "editor": {
       "form": {
         "labels": {

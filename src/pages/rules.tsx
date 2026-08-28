@@ -1,4 +1,4 @@
-import { RefreshRounded } from '@mui/icons-material'
+import { AddRounded, RefreshRounded } from '@mui/icons-material'
 import {
   Box,
   Button,
@@ -15,15 +15,23 @@ import { useTranslation } from 'react-i18next'
 
 import { VirtualList, type VirtualListHandle } from '@/components/base'
 import { ScrollTopButton } from '@/components/layout/scroll-top-button'
+import { AddGlobalRuleDialog } from '@/components/rule/add-global-rule-dialog'
 import { ProviderButton } from '@/components/rule/provider-button'
 import RuleItem from '@/components/rule/rule-item'
 import { AppEmpty, AppPage, AppSearchField } from '@/components/ui'
 import { useVisibility } from '@/hooks/use-visibility'
 import { useAppRefreshers, useRulesData } from '@/providers/app-data-context'
-import { viewProfile } from '@/services/cmds'
-import { showNotice } from '@/services/notice-service'
+import {
+  emptyGlobalRulesSeq,
+  globalRuleKeySet,
+  loadGlobalRulesSeq,
+  runtimeRuleKey,
+  type GlobalRulesSeq,
+} from '@/utils/global-rules'
 
 const ALL = '__all__'
+
+type ScopeFilter = 'global' | 'all' | 'subscription'
 
 const resolveType = (type: unknown) =>
   typeof type === 'string'
@@ -68,54 +76,140 @@ const menuItemSx = {
   fontSize: 13,
 } as const
 
+const selectMenuProps = {
+  slots: { transition: Fade },
+  transitionDuration: { enter: 140, exit: 90 },
+  anchorOrigin: { vertical: 'bottom' as const, horizontal: 'right' as const },
+  transformOrigin: { vertical: 'top' as const, horizontal: 'right' as const },
+  marginThreshold: 8,
+  slotProps: {
+    paper: {
+      sx: (theme: {
+        palette: { mode: string; primary: { main: string } }
+      }) => ({
+        mt: 0.75,
+        minWidth: 168,
+        maxHeight: 320,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        backgroundImage: 'none',
+        overflow: 'hidden',
+        boxShadow:
+          theme.palette.mode === 'light'
+            ? '0 4px 16px rgba(15, 23, 42, 0.08)'
+            : '0 8px 24px rgba(0, 0, 0, 0.45)',
+        '& .MuiList-root': {
+          py: 0.5,
+          maxHeight: 312,
+          overflowY: 'auto',
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'transparent transparent',
+          '&:hover': {
+            scrollbarColor: 'var(--scroller-color) transparent',
+          },
+          '&::-webkit-scrollbar': {
+            width: 4,
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            borderRadius: 4,
+            backgroundColor: 'transparent',
+          },
+          '&:hover::-webkit-scrollbar-thumb': {
+            backgroundColor: 'var(--scroller-color)',
+          },
+        },
+        '& .MuiMenuItem-root.Mui-selected': {
+          bgcolor: alpha(
+            theme.palette.primary.main,
+            theme.palette.mode === 'light' ? 0.08 : 0.16,
+          ),
+        },
+        '& .MuiMenuItem-root.Mui-selected:hover': {
+          bgcolor: alpha(
+            theme.palette.primary.main,
+            theme.palette.mode === 'light' ? 0.12 : 0.22,
+          ),
+        },
+      }),
+    },
+  },
+}
+
 const RulesPage = () => {
   const { t } = useTranslation()
   const { rules = [], ruleProviders } = useRulesData()
   const { refreshRules, refreshRuleProviders } = useAppRefreshers()
   const [match, setMatch] = useState(() => (_: string) => true)
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('global')
   const [typeFilter, setTypeFilter] = useState(ALL)
   const [policyFilter, setPolicyFilter] = useState(ALL)
   const [refreshing, setRefreshing] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [globalSeq, setGlobalSeq] =
+    useState<GlobalRulesSeq>(emptyGlobalRulesSeq)
   const virtuosoRef = useRef<VirtualListHandle>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const pageVisible = useVisibility()
 
+  const reloadGlobalSeq = useCallback(async () => {
+    setGlobalSeq(await loadGlobalRulesSeq())
+  }, [])
+
   useEffect(() => {
+    void reloadGlobalSeq()
     refreshRules()
     refreshRuleProviders()
 
     if (pageVisible) {
+      void reloadGlobalSeq()
       refreshRules()
       refreshRuleProviders()
     }
-  }, [refreshRules, refreshRuleProviders, pageVisible])
+  }, [refreshRules, refreshRuleProviders, pageVisible, reloadGlobalSeq])
 
   const providerCount = useMemo(
     () => Object.keys(ruleProviders || {}).length,
     [ruleProviders],
   )
 
+  const globalKeys = useMemo(() => globalRuleKeySet(globalSeq), [globalSeq])
+
+  const scopedRules = useMemo(() => {
+    if (scopeFilter === 'all') return rules
+    return rules.filter((item) => {
+      const type = resolveType(item.type)
+      const key = runtimeRuleKey(type, item.payload, item.proxy)
+      const isGlobal = globalKeys.has(key)
+      return scopeFilter === 'global' ? isGlobal : !isGlobal
+    })
+  }, [rules, scopeFilter, globalKeys])
+
   const typeOptions = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const rule of rules) {
+    for (const rule of scopedRules) {
       const type = resolveType(rule.type)
       counts.set(type, (counts.get(type) ?? 0) + 1)
     }
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .map(([type, count]) => ({ type, count }))
-  }, [rules])
+  }, [scopedRules])
 
   const policyOptions = useMemo(() => {
     const set = new Set<string>()
-    for (const rule of rules) {
+    for (const rule of scopedRules) {
       if (rule.proxy) set.add(rule.proxy)
     }
     return [...set].sort((a, b) => a.localeCompare(b))
-  }, [rules])
+  }, [scopedRules])
 
   const filteredRules = useMemo(() => {
-    const rulesWithLineNo = rules.map((item, index) => ({
+    const rulesWithLineNo = scopedRules.map((item, index) => ({
       ...item,
       lineNo: index + 1,
     }))
@@ -128,9 +222,10 @@ const RulesPage = () => {
       const haystack = `${item.payload ?? ''} ${type} ${item.proxy ?? ''}`
       return match(haystack)
     })
-  }, [rules, match, typeFilter, policyFilter])
+  }, [scopedRules, match, typeFilter, policyFilter])
 
   const hasActiveFilter =
+    scopeFilter !== 'all' ||
     typeFilter !== ALL ||
     policyFilter !== ALL ||
     filteredRules.length !== rules.length
@@ -138,19 +233,23 @@ const RulesPage = () => {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     try {
-      await Promise.all([refreshRules(), refreshRuleProviders()])
+      await Promise.all([
+        reloadGlobalSeq(),
+        refreshRules(),
+        refreshRuleProviders(),
+      ])
     } finally {
       setRefreshing(false)
     }
-  }, [refreshRules, refreshRuleProviders])
+  }, [refreshRules, refreshRuleProviders, reloadGlobalSeq])
 
-  const handleOpenGlobalRules = useCallback(async () => {
-    try {
-      await viewProfile('Rules')
-    } catch (err) {
-      showNotice.error(err)
-    }
-  }, [])
+  const handleSaved = useCallback(async () => {
+    await Promise.all([
+      reloadGlobalSeq(),
+      refreshRules(),
+      refreshRuleProviders(),
+    ])
+  }, [reloadGlobalSeq, refreshRules, refreshRuleProviders])
 
   const handleScroll = useCallback((e: Event) => {
     setShowScrollTop((e.target as HTMLElement).scrollTop > 100)
@@ -159,6 +258,15 @@ const RulesPage = () => {
   const scrollToTop = () => {
     virtuosoRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  const emptyText =
+    scopeFilter === 'global' &&
+    globalSeq.prepend.length === 0 &&
+    globalSeq.append.length === 0
+      ? t('rules.page.empty.global')
+      : hasActiveFilter
+        ? t('rules.page.empty.filtered')
+        : undefined
 
   return (
     <AppPage
@@ -198,19 +306,20 @@ const RulesPage = () => {
           )}
           <Button
             size="small"
-            variant="outlined"
-            onClick={() => {
-              void handleOpenGlobalRules()
-            }}
+            variant="contained"
+            startIcon={<AddRounded fontSize="small" />}
+            onClick={() => setAddOpen(true)}
             sx={{
               height: 30,
               borderRadius: 1.5,
               textTransform: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
               px: 1.25,
+              boxShadow: 'none',
+              '&:hover': { boxShadow: 'none' },
             }}
           >
-            {t('profiles.components.menu.openFile')}
+            {t('rules.page.actions.addGlobal')}
           </Button>
           <ProviderButton />
           <IconButton
@@ -233,6 +342,13 @@ const RulesPage = () => {
         </Box>
       }
     >
+      <AddGlobalRuleDialog
+        key={addOpen ? 'open' : 'closed'}
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSaved={handleSaved}
+      />
+
       <Box
         sx={{
           px: 1.5,
@@ -250,7 +366,7 @@ const RulesPage = () => {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              sm: 'minmax(0, 1fr) 168px',
+              sm: 'minmax(0, 1fr) 140px 168px',
             },
             gap: 1,
             alignItems: 'center',
@@ -276,70 +392,52 @@ const RulesPage = () => {
 
           <Select
             size="small"
+            value={scopeFilter}
+            onChange={(e) => {
+              setScopeFilter(e.target.value as ScopeFilter)
+              setTypeFilter(ALL)
+              setPolicyFilter(ALL)
+            }}
+            MenuProps={selectMenuProps}
+            sx={{
+              ...controlSx,
+              width: '100%',
+              fontSize: 13,
+              outline: 'none',
+              boxShadow: 'none',
+              '& .MuiSelect-select': {
+                py: '7px',
+                display: 'flex',
+                alignItems: 'center',
+                outline: 'none',
+              },
+              '&.Mui-focused': {
+                outline: 'none',
+                boxShadow: 'none',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderWidth: '1px !important',
+                borderColor: 'divider !important',
+              },
+            }}
+          >
+            <MenuItem value="global" sx={menuItemSx}>
+              {t('rules.page.filters.global')}
+            </MenuItem>
+            <MenuItem value="all" sx={menuItemSx}>
+              {t('rules.page.filters.allRules')}
+            </MenuItem>
+            <MenuItem value="subscription" sx={menuItemSx}>
+              {t('rules.page.filters.subscription')}
+            </MenuItem>
+          </Select>
+
+          <Select
+            size="small"
             value={policyFilter}
             onChange={(e) => setPolicyFilter(String(e.target.value))}
             displayEmpty
-            MenuProps={{
-              slots: { transition: Fade },
-              transitionDuration: { enter: 140, exit: 90 },
-              anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
-              transformOrigin: { vertical: 'top', horizontal: 'right' },
-              marginThreshold: 8,
-              slotProps: {
-                paper: {
-                  sx: (theme) => ({
-                    mt: 0.75,
-                    minWidth: 168,
-                    maxHeight: 320,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper',
-                    backgroundImage: 'none',
-                    overflow: 'hidden',
-                    boxShadow:
-                      theme.palette.mode === 'light'
-                        ? '0 4px 16px rgba(15, 23, 42, 0.08)'
-                        : '0 8px 24px rgba(0, 0, 0, 0.45)',
-                    '& .MuiList-root': {
-                      py: 0.5,
-                      maxHeight: 312,
-                      overflowY: 'auto',
-                      scrollbarWidth: 'thin',
-                      scrollbarColor: 'transparent transparent',
-                      '&:hover': {
-                        scrollbarColor: 'var(--scroller-color) transparent',
-                      },
-                      '&::-webkit-scrollbar': {
-                        width: 4,
-                      },
-                      '&::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        borderRadius: 4,
-                        backgroundColor: 'transparent',
-                      },
-                      '&:hover::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'var(--scroller-color)',
-                      },
-                    },
-                    '& .MuiMenuItem-root.Mui-selected': {
-                      bgcolor: alpha(
-                        theme.palette.primary.main,
-                        theme.palette.mode === 'light' ? 0.08 : 0.16,
-                      ),
-                    },
-                    '& .MuiMenuItem-root.Mui-selected:hover': {
-                      bgcolor: alpha(
-                        theme.palette.primary.main,
-                        theme.palette.mode === 'light' ? 0.12 : 0.22,
-                      ),
-                    },
-                  }),
-                },
-              },
-            }}
+            MenuProps={selectMenuProps}
             sx={{
               ...controlSx,
               width: '100%',
@@ -451,7 +549,26 @@ const RulesPage = () => {
         </>
       ) : (
         <AppEmpty
-          text={hasActiveFilter ? t('rules.page.empty.filtered') : undefined}
+          text={emptyText}
+          extra={
+            scopeFilter === 'global' ? (
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<AddRounded />}
+                onClick={() => setAddOpen(true)}
+                sx={{
+                  mt: 1.5,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  boxShadow: 'none',
+                }}
+              >
+                {t('rules.page.actions.addGlobal')}
+              </Button>
+            ) : undefined
+          }
         />
       )}
     </AppPage>
