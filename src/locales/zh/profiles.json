@@ -2,24 +2,7 @@
   "page": {
     "actions": {
       "updateAll": "更新所有订阅",
-      "viewRuntimeConfig": "查看运行时订阅",
-      "reactivate": "重新激活订阅",
-      "import": "导入",
-      "more": "更多",
-      "toggleEnhance": "全局规则"
-    },
-    "batch": {
-      "actions": {
-        "delete": "删除选中订阅",
-        "selectAll": "全选",
-        "deselectAll": "取消全选",
-        "done": "完成"
-      },
-      "summary": {
-        "selected": "已选中",
-        "items": "项目"
-      },
-      "title": "批量操作"
+      "import": "导入"
     },
     "importForm": {
       "placeholder": "订阅文件链接",
@@ -47,9 +30,7 @@
         "importNeedsRefresh": "订阅已导入，但可能需要手动刷新",
         "importSuccess": "订阅已成功导入，如未显示请重启应用",
         "profileSwitched": "订阅已切换",
-        "profileReactivated": "订阅已激活",
-        "switchBusy": "正在切换订阅，请稍后重试",
-        "batchDeleted": "选中的订阅已成功删除"
+        "switchBusy": "正在切换订阅，请稍后重试"
       },
       "notices": {
         "forceRefreshCompleted": "数据已强制刷新",
@@ -73,7 +54,7 @@
     "menu": {
       "home": "首 页",
       "select": "使用",
-      "shareQrCode": "分享二维码",
+      "copySubscription": "复制订阅",
       "editInfo": "编辑信息",
       "editFile": "编辑文件",
       "editRules": "编辑规则",
@@ -84,19 +65,6 @@
       "openFile": "打开文件",
       "update": "更新",
       "updateViaProxy": "更新（代理）"
-    },
-    "more": {
-      "global": {
-        "merge": "全局扩展覆写配置",
-        "script": "全局扩展脚本",
-        "rules": "全局路由规则",
-        "rulesHint": "跨订阅始终生效，局域网 / 内网 VPN 域名可强制直连"
-      },
-      "chips": {
-        "merge": "Merge",
-        "script": "Script",
-        "rules": "Rules"
-      }
     },
     "profileItem": {
       "tooltips": {
@@ -202,9 +170,6 @@
     },
     "logViewer": {
       "title": "脚本控制台输出"
-    },
-    "qrViewer": {
-      "title": "订阅二维码"
     }
   }
 }

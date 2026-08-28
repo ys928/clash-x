@@ -248,6 +248,7 @@ export interface TranslationResources {
           chooseFile: string
         }
         menu: {
+          copySubscription: string
           editFile: string
           editGroups: string
           editInfo: string
@@ -258,22 +259,8 @@ export interface TranslationResources {
           home: string
           openFile: string
           select: string
-          shareQrCode: string
           update: string
           updateViaProxy: string
-        }
-        more: {
-          chips: {
-            merge: string
-            rules: string
-            script: string
-          }
-          global: {
-            merge: string
-            rules: string
-            rulesHint: string
-            script: string
-          }
         }
         profileItem: {
           status: {
@@ -380,31 +367,11 @@ export interface TranslationResources {
         proxiesEditor: {
           title: string
         }
-        qrViewer: {
-          title: string
-        }
       }
       page: {
         actions: {
           import: string
-          more: string
-          reactivate: string
-          toggleEnhance: string
           updateAll: string
-          viewRuntimeConfig: string
-        }
-        batch: {
-          actions: {
-            delete: string
-            deselectAll: string
-            done: string
-            selectAll: string
-          }
-          summary: {
-            items: string
-            selected: string
-          }
-          title: string
         }
         feedback: {
           errors: {
@@ -425,12 +392,10 @@ export interface TranslationResources {
             forceRefreshCompleted: string
           }
           notifications: {
-            batchDeleted: string
             importFail: string
             importNeedsRefresh: string
             importRetry: string
             importSuccess: string
-            profileReactivated: string
             profileSwitched: string
             switchBusy: string
           }

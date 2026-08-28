@@ -2,12 +2,7 @@ import type {
   DraggableAttributes,
   DraggableSyntheticListeners,
 } from '@dnd-kit/core'
-import {
-  CheckBoxOutlineBlankRounded,
-  CheckBoxRounded,
-  DragIndicatorRounded,
-  RefreshRounded,
-} from '@mui/icons-material'
+import { DragIndicatorRounded, RefreshRounded } from '@mui/icons-material'
 import {
   Box,
   CircularProgress,
@@ -18,6 +13,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
+import { writeText } from '@tauri-apps/plugin-clipboard-manager'
 import { useLockFn } from 'ahooks'
 import dayjs from 'dayjs'
 import {
@@ -40,7 +36,6 @@ import { openExternalUrl } from '@/utils/open-external-url'
 import parseTraffic from '@/utils/parse-traffic'
 
 import { ProfileBox } from './profile-box'
-import { QrViewer } from './qr-viewer'
 const round = keyframes`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -54,9 +49,6 @@ export interface ProfileItemProps {
   onSelect: (force: boolean) => void
   onEdit: () => void
   onDelete: () => void
-  batchMode?: boolean
-  isSelected?: boolean
-  onSelectionChange?: () => void
   timerUpdateRevision: number
   completedUpdateRevision: number
   dragHandleRef: (node: HTMLElement | null) => void
@@ -73,9 +65,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     onSelect,
     onEdit,
     onDelete,
-    batchMode,
-    isSelected,
-    onSelectionChange,
     timerUpdateRevision,
     completedUpdateRevision,
     dragHandleRef,
@@ -270,7 +259,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
   }, [forceRefresh, hasUrl, updated])
 
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [qrOpen, setQrOpen] = useState(false)
 
   const onOpenHome = () => {
     setAnchorEl(null)
@@ -283,10 +271,19 @@ const ProfileItemBase = (props: ProfileItemProps) => {
     onEdit()
   }
 
-  const onShareQrCode = () => {
+  const onCopySubscription = useLockFn(async () => {
     setAnchorEl(null)
-    setQrOpen(true)
-  }
+    if (!itemData.url) return
+    try {
+      await writeText(itemData.url)
+      showNotice.success(
+        'shared.feedback.notifications.common.copySuccess',
+        1000,
+      )
+    } catch (err) {
+      showNotice.error(err)
+    }
+  })
 
   const onForceSelect = () => {
     setAnchorEl(null)
@@ -343,7 +340,7 @@ const ProfileItemBase = (props: ProfileItemProps) => {
   const menuLabels: Record<string, TranslationKey> = {
     home: 'profiles.components.menu.home',
     select: 'profiles.components.menu.select',
-    shareQrCode: 'profiles.components.menu.shareQrCode',
+    copySubscription: 'profiles.components.menu.copySubscription',
     editInfo: 'profiles.components.menu.editInfo',
     openFile: 'profiles.components.menu.openFile',
     update: 'profiles.components.menu.update',
@@ -367,8 +364,8 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       disabled: false,
     },
     {
-      label: menuLabels.shareQrCode,
-      handler: onShareQrCode,
+      label: menuLabels.copySubscription,
+      handler: onCopySubscription,
       disabled: false,
     },
     {
@@ -395,13 +392,7 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       label: menuLabels.delete,
       handler: () => {
         setAnchorEl(null)
-        if (batchMode) {
-          if (onSelectionChange) {
-            onSelectionChange()
-          }
-        } else {
-          setConfirmOpen(true)
-        }
+        setConfirmOpen(true)
       },
       disabled: false,
     },
@@ -426,13 +417,7 @@ const ProfileItemBase = (props: ProfileItemProps) => {
       label: menuLabels.delete,
       handler: () => {
         setAnchorEl(null)
-        if (batchMode) {
-          if (onSelectionChange) {
-            onSelectionChange()
-          }
-        } else {
-          setConfirmOpen(true)
-        }
+        setConfirmOpen(true)
       },
       disabled: false,
     },
@@ -489,30 +474,11 @@ const ProfileItemBase = (props: ProfileItemProps) => {
         )}
         <Box sx={{ position: 'relative' }}>
           <Box sx={{ display: 'flex', justifyContent: 'start' }}>
-            {batchMode && (
-              <IconButton
-                size="small"
-                sx={{ padding: '2px', marginRight: '4px', marginLeft: '-8px' }}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (onSelectionChange) {
-                    onSelectionChange()
-                  }
-                }}
-              >
-                {isSelected ? (
-                  <CheckBoxRounded color="primary" />
-                ) : (
-                  <CheckBoxOutlineBlankRounded />
-                )}
-              </IconButton>
-            )}
             <Box
               ref={dragHandleRef}
               sx={{
                 display: 'flex',
                 margin: 'auto 0',
-                ...(batchMode && { marginLeft: '-4px' }),
               }}
               {...dragHandleAttributes}
               {...dragHandleListeners}
@@ -529,7 +495,7 @@ const ProfileItemBase = (props: ProfileItemProps) => {
 
             <Typography
               sx={{
-                width: batchMode ? 'calc(100% - 56px)' : 'calc(100% - 36px)',
+                width: 'calc(100% - 36px)',
                 fontSize: '18px',
                 fontWeight: '600',
                 lineHeight: '26px',
@@ -705,13 +671,6 @@ const ProfileItemBase = (props: ProfileItemProps) => {
           {t('profiles.modals.confirmDelete.message')}
         </Typography>
       </BaseDialog>
-      {qrOpen && itemData.url && (
-        <QrViewer
-          open={true}
-          value={`${itemData.url}${itemData.url.includes('?') ? '&' : '?'}name=${encodeURIComponent(name)}`}
-          onClose={() => setQrOpen(false)}
-        />
-      )}
     </Box>
   )
 }

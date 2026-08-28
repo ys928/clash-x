@@ -16,29 +16,11 @@ import {
   type SortingStrategy,
 } from '@dnd-kit/sortable'
 import {
-  CheckBoxOutlineBlankRounded,
-  CheckBoxRounded,
   ClearRounded,
   ContentPasteRounded,
-  DeleteRounded,
-  ExpandLess,
-  ExpandMore,
-  IndeterminateCheckBoxRounded,
-  LocalFireDepartmentRounded,
-  MoreVert,
   RefreshRounded,
-  TextSnippetOutlined,
 } from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Collapse,
-  Divider,
-  Grid,
-  IconButton,
-  Menu,
-  MenuItem,
-} from '@mui/material'
+import { Box, Button, Grid, IconButton } from '@mui/material'
 import { TauriEvent } from '@tauri-apps/api/event'
 import { readText } from '@tauri-apps/plugin-clipboard-manager'
 import { readTextFile } from '@tauri-apps/plugin-fs'
@@ -49,14 +31,11 @@ import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router'
 import { closeAllConnections } from 'tauri-plugin-mihomo-api'
 
-import { type DialogRef } from '@/components/base'
-import { GlobalRulesMore } from '@/components/profile/global-rules-more'
 import {
   ProfileViewer,
   type ProfileViewerRef,
 } from '@/components/profile/profile-viewer'
 import { SortableProfileItem } from '@/components/profile/sortable-profile-item'
-import { ConfigViewer } from '@/components/setting/mods/config-viewer'
 import { AppDialog, AppPage, AppTextField } from '@/components/ui'
 import { useListen } from '@/hooks/use-listen'
 import { useProfiles } from '@/hooks/use-profiles'
@@ -73,11 +52,7 @@ import {
 import { subscribeVergeEvents } from '@/services/events'
 import { errorDetail, showNotice } from '@/services/notice-service'
 import { fetchCacheData, revalidateQueries } from '@/services/query-client'
-import {
-  useLoadingCache,
-  useSetLoadingCache,
-  useThemeMode,
-} from '@/services/states'
+import { useLoadingCache, useSetLoadingCache } from '@/services/states'
 import { debugLog } from '@/utils/debug'
 
 // 与 src-tauri/src/main.rs 的 worker_limit 上限(8)保持一致，避免前后端更新风暴不对齐
@@ -156,32 +131,6 @@ const ProfilePage = () => {
   const [completedUpdateRevisions, setCompletedUpdateRevisions] = useState<
     Map<string, number>
   >(() => new Map())
-
-  // Batch selection states
-  const [batchMode, setBatchMode] = useState(false)
-  const [selectedProfiles, setSelectedProfiles] = useState<Set<string>>(
-    () => new Set(),
-  )
-  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(null)
-  const [showEnhance, setShowEnhance] = useState(() => {
-    try {
-      return localStorage.getItem('profiles-show-enhance') === 'true'
-    } catch {
-      return false
-    }
-  })
-
-  const toggleShowEnhance = useCallback(() => {
-    setShowEnhance((prev) => {
-      const next = !prev
-      try {
-        localStorage.setItem('profiles-show-enhance', String(next))
-      } catch {
-        /* ignore */
-      }
-      return next
-    })
-  }, [])
 
   // Profile 切换在前端串行执行；队列中只保留用户最后一次选择。
   const latestSwitchTargetRef = useRef<string | null>(null)
@@ -267,7 +216,7 @@ const ProfilePage = () => {
 
       // 等待状态稳定后增强配置
       await new Promise((resolve) => setTimeout(resolve, 500))
-      await onEnhance(false)
+      await onEnhance()
 
       showNotice.success(
         'profiles.page.feedback.notices.forceRefreshCompleted',
@@ -284,7 +233,6 @@ const ProfilePage = () => {
   })
 
   const viewerRef = useRef<ProfileViewerRef>(null)
-  const configRef = useRef<DialogRef>(null)
 
   // distinguish type
   const profileItems = useMemo(() => {
@@ -368,7 +316,7 @@ const ProfilePage = () => {
           setTimeout(resolve, baseDelay * (retryCount + 1)),
         )
 
-        await onEnhance(false)
+        await onEnhance()
         return
       } catch (error) {
         console.error(`[导入刷新] 第${retryCount + 1}次刷新失败:`, error)
@@ -384,7 +332,7 @@ const ProfilePage = () => {
     try {
       // 清除缓存并重新获取
       await fetchCacheData(['getProfiles'], getProfiles)
-      await onEnhance(false)
+      await onEnhance()
       showNotice.error(
         'profiles.page.feedback.notifications.importNeedsRefresh',
         3000,
@@ -544,7 +492,7 @@ const ProfilePage = () => {
     }
   }, [current, activateProfile, mutateProfiles])
 
-  const onEnhance = useLockFn(async (notifySuccess: boolean) => {
+  const onEnhance = useLockFn(async () => {
     if (switchRunnerRef.current) {
       debugLog(
         `[Profile] 有profile正在切换中(${latestSwitchTargetRef.current})，跳过enhance操作`,
@@ -557,12 +505,6 @@ const ProfilePage = () => {
 
     try {
       if (!(await enhanceProfiles())) return
-      if (notifySuccess) {
-        showNotice.success(
-          'profiles.page.feedback.notifications.profileReactivated',
-          1000,
-        )
-      }
     } catch (err: any) {
       showNotice.error(err, 3000)
     } finally {
@@ -577,7 +519,7 @@ const ProfilePage = () => {
       await deleteProfile(uid)
       mutateProfiles()
       if (current) {
-        await onEnhance(false)
+        await onEnhance()
       }
     } catch (err: any) {
       showNotice.error(err)
@@ -702,93 +644,6 @@ const ProfilePage = () => {
     setImportOpen(false)
   }, [loading])
 
-  // Batch selection functions
-  const toggleBatchMode = () => {
-    setBatchMode(!batchMode)
-    if (!batchMode) {
-      // Entering batch mode - clear previous selections
-      setSelectedProfiles(new Set())
-    }
-  }
-
-  const toggleProfileSelection = (uid: string) => {
-    setSelectedProfiles((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(uid)) {
-        newSet.delete(uid)
-      } else {
-        newSet.add(uid)
-      }
-      return newSet
-    })
-  }
-
-  const selectAllProfiles = () => {
-    setSelectedProfiles(new Set(profileItems.map((item) => item.uid)))
-  }
-
-  const clearAllSelections = () => {
-    setSelectedProfiles(new Set())
-  }
-
-  const isAllSelected = () => {
-    return (
-      profileItems.length > 0 && profileItems.length === selectedProfiles.size
-    )
-  }
-
-  const getSelectionState = () => {
-    if (selectedProfiles.size === 0) {
-      return 'none' // 无选择
-    } else if (selectedProfiles.size === profileItems.length) {
-      return 'all' // 全选
-    } else {
-      return 'partial' // 部分选择
-    }
-  }
-
-  const deleteSelectedProfiles = useLockFn(async () => {
-    if (selectedProfiles.size === 0) return
-
-    try {
-      // Get all currently activating profiles
-      const currentActivating =
-        profiles.current && selectedProfiles.has(profiles.current)
-          ? [profiles.current]
-          : []
-
-      setActivatings((prev) => [...new Set([...prev, ...currentActivating])])
-
-      // Delete all selected profiles
-      for (const uid of selectedProfiles) {
-        await deleteProfile(uid)
-      }
-
-      await mutateProfiles()
-
-      // If any deleted profile was current, enhance profiles
-      if (currentActivating.length > 0) {
-        await onEnhance(false)
-      }
-
-      // Clear selections and exit batch mode
-      setSelectedProfiles(new Set())
-      setBatchMode(false)
-
-      showNotice.success('profiles.page.feedback.notifications.batchDeleted')
-    } catch (err: any) {
-      showNotice.error(err)
-    } finally {
-      setActivatings([])
-    }
-  })
-
-  const mode = useThemeMode()
-  const isLight = mode === 'light'
-  const dividercolor = isLight
-    ? 'rgba(0, 0, 0, 0.06)'
-    : 'rgba(255, 255, 255, 0.06)'
-
   // 卸载后不再执行尚未发送的切换意图。
   useEffect(() => {
     profilePageMountedRef.current = true
@@ -810,155 +665,49 @@ const ProfilePage = () => {
       contentStyle={{ height: '100%' }}
       header={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {!batchMode ? (
-            <>
-              <Button
-                size="small"
-                color="inherit"
-                onClick={() => void openImportDialog()}
-                sx={{ textTransform: 'none', minWidth: 0, px: 1 }}
-              >
-                {t('profiles.page.actions.import')}
-              </Button>
-              <Button
-                size="small"
-                color="inherit"
-                onClick={() => viewerRef.current?.create()}
-                sx={{ textTransform: 'none', minWidth: 0, px: 1 }}
-              >
-                {t('shared.actions.new')}
-              </Button>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => void openImportDialog()}
+            sx={{ textTransform: 'none', minWidth: 0, px: 1 }}
+          >
+            {t('profiles.page.actions.import')}
+          </Button>
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => viewerRef.current?.create()}
+            sx={{ textTransform: 'none', minWidth: 0, px: 1 }}
+          >
+            {t('shared.actions.new')}
+          </Button>
 
-              <IconButton
-                size="small"
-                color="inherit"
-                title={t('profiles.page.actions.updateAll')}
-                onClick={onUpdateAll}
-              >
-                <RefreshRounded />
-              </IconButton>
+          <IconButton
+            size="small"
+            color="inherit"
+            title={t('profiles.page.actions.updateAll')}
+            onClick={onUpdateAll}
+          >
+            <RefreshRounded />
+          </IconButton>
 
-              {(error || isStale) && (
-                <IconButton
-                  size="small"
-                  color="warning"
-                  title={t(
-                    'profiles.page.feedback.tooltips.forceRefreshStaleData',
-                  )}
-                  onClick={onEmergencyRefresh}
-                  sx={{
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': { opacity: 1 },
-                      '50%': { opacity: 0.5 },
-                      '100%': { opacity: 1 },
-                    },
-                  }}
-                >
-                  <ClearRounded />
-                </IconButton>
-              )}
-
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={(event) => setOverflowAnchor(event.currentTarget)}
-                aria-label={t('profiles.page.actions.more')}
-              >
-                <MoreVert fontSize="small" />
-              </IconButton>
-              <Menu
-                anchorEl={overflowAnchor}
-                open={Boolean(overflowAnchor)}
-                onClose={() => setOverflowAnchor(null)}
-              >
-                <MenuItem
-                  onClick={() => {
-                    setOverflowAnchor(null)
-                    toggleBatchMode()
-                  }}
-                >
-                  <CheckBoxOutlineBlankRounded
-                    fontSize="small"
-                    sx={{ mr: 1 }}
-                  />
-                  {t('profiles.page.batch.title')}
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    setOverflowAnchor(null)
-                    configRef.current?.open()
-                  }}
-                >
-                  <TextSnippetOutlined fontSize="small" sx={{ mr: 1 }} />
-                  {t('profiles.page.actions.viewRuntimeConfig')}
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    setOverflowAnchor(null)
-                    void onEnhance(true)
-                  }}
-                >
-                  <LocalFireDepartmentRounded fontSize="small" sx={{ mr: 1 }} />
-                  {t('profiles.page.actions.reactivate')}
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    setOverflowAnchor(null)
-                    toggleShowEnhance()
-                  }}
-                >
-                  {showEnhance ? (
-                    <ExpandLess fontSize="small" sx={{ mr: 1 }} />
-                  ) : (
-                    <ExpandMore fontSize="small" sx={{ mr: 1 }} />
-                  )}
-                  {t('profiles.page.actions.toggleEnhance')}
-                </MenuItem>
-              </Menu>
-            </>
-          ) : (
-            // Batch mode header
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                size="small"
-                color="inherit"
-                title={
-                  isAllSelected()
-                    ? t('profiles.page.batch.actions.deselectAll')
-                    : t('profiles.page.batch.actions.selectAll')
-                }
-                onClick={
-                  isAllSelected() ? clearAllSelections : selectAllProfiles
-                }
-              >
-                {getSelectionState() === 'all' ? (
-                  <CheckBoxRounded />
-                ) : getSelectionState() === 'partial' ? (
-                  <IndeterminateCheckBoxRounded />
-                ) : (
-                  <CheckBoxOutlineBlankRounded />
-                )}
-              </IconButton>
-              <IconButton
-                size="small"
-                color="error"
-                title={t('profiles.page.batch.actions.delete')}
-                onClick={deleteSelectedProfiles}
-                disabled={selectedProfiles.size === 0}
-              >
-                <DeleteRounded />
-              </IconButton>
-              <Button size="small" variant="outlined" onClick={toggleBatchMode}>
-                {t('profiles.page.batch.actions.done')}
-              </Button>
-              <Box
-                sx={{ flex: 1, textAlign: 'right', color: 'text.secondary' }}
-              >
-                {t('profiles.page.batch.summary.selected')}{' '}
-                {selectedProfiles.size} {t('profiles.page.batch.summary.items')}
-              </Box>
-            </Box>
+          {(error || isStale) && (
+            <IconButton
+              size="small"
+              color="warning"
+              title={t('profiles.page.feedback.tooltips.forceRefreshStaleData')}
+              onClick={onEmergencyRefresh}
+              sx={{
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': { opacity: 1 },
+                  '50%': { opacity: 0.5 },
+                  '100%': { opacity: 1 },
+                },
+              }}
+            >
+              <ClearRounded />
+            </IconButton>
           )}
         </Box>
       }
@@ -1004,36 +753,13 @@ const ProfilePage = () => {
                       mutateProfiles={mutateProfiles}
                       onSelect={(f) => onSelect(item.uid, f)}
                       onEdit={() => viewerRef.current?.edit(item)}
-                      onDelete={() => {
-                        if (batchMode) {
-                          toggleProfileSelection(item.uid)
-                        } else {
-                          onDelete(item.uid)
-                        }
-                      }}
-                      batchMode={batchMode}
-                      isSelected={selectedProfiles.has(item.uid)}
-                      onSelectionChange={() => toggleProfileSelection(item.uid)}
+                      onDelete={() => onDelete(item.uid)}
                     />
                   </Grid>
                 ))}
               </SortableContext>
             </Grid>
           </Box>
-          <Collapse in={showEnhance}>
-            <Divider
-              variant="middle"
-              flexItem
-              sx={{ width: `calc(100% - 32px)`, borderColor: dividercolor }}
-            ></Divider>
-            <Box sx={{ mt: 1.5, mb: '10px' }}>
-              <Grid container spacing={{ xs: 1, lg: 1 }}>
-                <Grid size={{ xs: 12, sm: 12, md: 4, lg: 4 }}>
-                  <GlobalRulesMore />
-                </Grid>
-              </Grid>
-            </Box>
-          </Collapse>
         </Box>
         <DragOverlay />
       </DndContext>
@@ -1044,11 +770,10 @@ const ProfilePage = () => {
           mutateProfiles()
           // 只有更改当前激活的配置时才触发全局重新加载
           if (isActivating) {
-            await onEnhance(false)
+            await onEnhance()
           }
         }}
       />
-      <ConfigViewer ref={configRef} />
       <AppDialog
         open={importOpen}
         title={t('profiles.page.actions.import')}

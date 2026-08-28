@@ -2,24 +2,7 @@
   "page": {
     "actions": {
       "updateAll": "Update All Profiles",
-      "viewRuntimeConfig": "View Runtime Config",
-      "reactivate": "Reactivate Profiles",
-      "import": "Import",
-      "more": "More",
-      "toggleEnhance": "Global Rules"
-    },
-    "batch": {
-      "actions": {
-        "delete": "Delete Selected Profiles",
-        "selectAll": "Select All",
-        "deselectAll": "Deselect All",
-        "done": "Done"
-      },
-      "summary": {
-        "selected": "Selected",
-        "items": "items"
-      },
-      "title": "Batch Operations"
+      "import": "Import"
     },
     "importForm": {
       "placeholder": "Profile URL",
@@ -47,9 +30,7 @@
         "importNeedsRefresh": "Profile imported but may need manual refresh",
         "importSuccess": "Profile imported successfully, please restart if not visible",
         "profileSwitched": "Profile Switched",
-        "profileReactivated": "Profile Reactivated",
-        "switchBusy": "Profile switch is already in progress",
-        "batchDeleted": "Selected profiles deleted successfully"
+        "switchBusy": "Profile switch is already in progress"
       },
       "notices": {
         "forceRefreshCompleted": "Force refresh completed",
@@ -73,7 +54,7 @@
     "menu": {
       "home": "Home",
       "select": "Select",
-      "shareQrCode": "Share QR Code",
+      "copySubscription": "Copy Subscription",
       "editInfo": "Edit Info",
       "editFile": "Edit File",
       "editRules": "Edit Rules",
@@ -84,19 +65,6 @@
       "openFile": "Open File",
       "update": "Update",
       "updateViaProxy": "Update via proxy"
-    },
-    "more": {
-      "global": {
-        "merge": "Global Extend Config",
-        "script": "Global Extend Script",
-        "rules": "Global Routing Rules",
-        "rulesHint": "Always applied — LAN / VPN domains stay DIRECT across subscriptions"
-      },
-      "chips": {
-        "merge": "Merge",
-        "script": "Script",
-        "rules": "Rules"
-      }
     },
     "profileItem": {
       "tooltips": {
@@ -202,9 +170,6 @@
     },
     "logViewer": {
       "title": "Script Console"
-    },
-    "qrViewer": {
-      "title": "Subscription QR Code"
     }
   }
 }
