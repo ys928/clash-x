@@ -1,0 +1,39 @@
+{
+  "hint": "Statistics accumulate while the app is running (including lightweight mode) and persist on disk. Data is kept until you clear it. Proxy vs direct is inferred from each connection's outbound.",
+  "loading": "Loading…",
+  "empty": "No domain traffic yet. Browse for a while and check back.",
+  "searchPlaceholder": "Filter domains",
+  "ranges": {
+    "day": "Last day",
+    "week": "Last week",
+    "month": "Last month",
+    "year": "Last year"
+  },
+  "summary": {
+    "total": "Total",
+    "proxy": "Proxy",
+    "direct": "Direct"
+  },
+  "columns": {
+    "domain": "Domain",
+    "proxy": "Proxy",
+    "direct": "Direct",
+    "total": "Total"
+  },
+  "actions": {
+    "refresh": "Refresh",
+    "cleanup": "Clean up",
+    "cleanupTitle": "Clean up traffic stats",
+    "cleanupDesc": "Choose how to remove persisted domain traffic statistics. This cannot be undone.",
+    "clear": "Clear all",
+    "clearAllHint": "Delete every saved day bucket and start collecting from scratch.",
+    "clearConfirm": "Clear all domain traffic statistics? This cannot be undone.",
+    "clearDone": "All domain traffic statistics have been cleared.",
+    "clearBeforeLabel": "Clear data before",
+    "clearBefore": "Clear before date",
+    "clearBeforeHint": "Keep recent data and remove day buckets strictly before the selected date.",
+    "clearBeforeConfirm": "Delete all statistics strictly before {{date}}? This cannot be undone.",
+    "clearBeforeEmpty": "No day buckets were removed for that cutoff.",
+    "clearBeforeDone": "Removed {{count}} day(s) of statistics."
+  }
+}

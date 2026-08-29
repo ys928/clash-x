@@ -23,7 +23,55 @@ export const syncCssVars = ({ mode, dt, theme }: SyncCssVarsOptions) => {
   const rootEle = document.documentElement
   if (!rootEle) return
 
+  rootEle.classList.toggle('dark', mode === 'dark')
+  rootEle.style.setProperty('color-scheme', mode)
+
   const palette = resolvePalette(mode, dt)
+
+  // Bridge app theme into Element Plus CSS variables.
+  rootEle.style.setProperty('--el-color-primary', theme.palette.primary.main)
+  rootEle.style.setProperty('--el-color-danger', theme.palette.error.main)
+  rootEle.style.setProperty('--el-color-success', theme.palette.success.main)
+  rootEle.style.setProperty('--el-color-warning', theme.palette.warning.main)
+  rootEle.style.setProperty('--el-color-info', theme.palette.info.main)
+  rootEle.style.setProperty('--el-bg-color', palette.background_color)
+  rootEle.style.setProperty(
+    '--el-bg-color-overlay',
+    palette.background_elevated,
+  )
+  rootEle.style.setProperty('--el-bg-color-page', palette.background_default)
+  rootEle.style.setProperty(
+    '--el-text-color-primary',
+    theme.palette.text.primary,
+  )
+  rootEle.style.setProperty(
+    '--el-text-color-regular',
+    theme.palette.text.primary,
+  )
+  rootEle.style.setProperty(
+    '--el-text-color-secondary',
+    theme.palette.text.secondary,
+  )
+  rootEle.style.setProperty('--el-border-color', palette.divider)
+  rootEle.style.setProperty('--el-border-color-light', palette.divider)
+  rootEle.style.setProperty('--el-border-color-lighter', palette.divider)
+  rootEle.style.setProperty('--el-fill-color-blank', palette.background_color)
+  rootEle.style.setProperty(
+    '--el-fill-color-light',
+    palette.background_elevated,
+  )
+  rootEle.style.setProperty('--el-mask-color', alpha('#000000', 0.45))
+  rootEle.style.setProperty(
+    '--el-mask-color-extra-light',
+    alpha('#000000', 0.3),
+  )
+  rootEle.style.setProperty('--el-box-shadow', theme.shadows[2] || 'none')
+  rootEle.style.setProperty('--el-box-shadow-light', theme.shadows[1] || 'none')
+  rootEle.style.setProperty('--el-border-radius-base', `${radius.md}px`)
+  rootEle.style.setProperty('--el-border-radius-small', `${radius.sm}px`)
+  if (theme.typography.fontFamily) {
+    rootEle.style.setProperty('--el-font-family', theme.typography.fontFamily)
+  }
 
   rootEle.style.setProperty('--divider-color', palette.divider)
   rootEle.style.setProperty('--background-color', palette.background_default)

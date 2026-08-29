@@ -13,7 +13,9 @@ use crate::{
         tray::Tray,
     },
     feat,
-    module::{auto_switch::AutoSwitchManager, lightweight::auto_lightweight_boot},
+    module::{
+        auto_switch::AutoSwitchManager, domain_traffic::DomainTrafficManager, lightweight::auto_lightweight_boot,
+    },
     process::AsyncHandler,
     utils::{init, server, window_manager::WindowManager},
 };
@@ -74,6 +76,7 @@ pub(crate) fn resolve_setup_async() {
             init_hotkey(),
             init_auto_lightweight_boot(),
             init_auto_switch(),
+            init_domain_traffic(),
         );
 
         Handle::refresh_clash();
@@ -149,6 +152,10 @@ async fn init_auto_lightweight_boot() {
 
 pub(super) async fn init_auto_switch() {
     logging_error!(Type::Setup, AutoSwitchManager::global().init().await);
+}
+
+pub(super) async fn init_domain_traffic() {
+    logging_error!(Type::Setup, DomainTrafficManager::global().init().await);
 }
 
 fn init_update_checker() {

@@ -1,7 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["src/polyfills/*.js!", "scripts/patch-update-proxy.mjs"],
-  "project": ["src/**/*.{js,jsx,ts,tsx,sass,scss}!", "scripts/**/*.{js,mjs}!"],
+  "project": [
+    "src/**/*.{js,jsx,ts,tsx,vue,sass,scss}!",
+    "scripts/**/*.{js,mjs}!"
+  ],
   "include": [
     "files",
     "dependencies",

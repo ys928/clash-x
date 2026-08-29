@@ -1,0 +1,39 @@
+{
+  "hint": "統計在應用程式執行期間持續采集（含輕量模式）並持久化到磁碟，預設不會自動清理。代理 / 直連依據連線的最終出口判斷。",
+  "loading": "載入中…",
+  "empty": "尚無網域流量資料。使用一段時間後再回來查看。",
+  "searchPlaceholder": "篩選網域",
+  "ranges": {
+    "day": "近一天",
+    "week": "近一週",
+    "month": "近一月",
+    "year": "近一年"
+  },
+  "summary": {
+    "total": "合計",
+    "proxy": "代理",
+    "direct": "直連"
+  },
+  "columns": {
+    "domain": "網域",
+    "proxy": "代理",
+    "direct": "直連",
+    "total": "合計"
+  },
+  "actions": {
+    "refresh": "重新整理",
+    "cleanup": "清理",
+    "cleanupTitle": "清理流量統計",
+    "cleanupDesc": "選擇清理方式。刪除後無法復原。",
+    "clear": "清空全部",
+    "clearAllHint": "刪除所有已儲存的按日統計，並重新開始采集。",
+    "clearConfirm": "確定清空全部網域流量統計？此操作無法復原。",
+    "clearDone": "已清空全部網域流量統計。",
+    "clearBeforeLabel": "清理此日期之前",
+    "clearBefore": "依日期清理",
+    "clearBeforeHint": "保留較新資料，刪除所選日期之前的全部按日統計。",
+    "clearBeforeConfirm": "確定刪除 {{date}} 之前的全部統計？此操作無法復原。",
+    "clearBeforeEmpty": "沒有可清理的日期分桶。",
+    "clearBeforeDone": "已清理 {{count}} 天的統計資料。"
+  }
+}

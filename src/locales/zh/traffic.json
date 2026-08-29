@@ -1,0 +1,39 @@
+{
+  "hint": "统计在应用运行期间持续采集（含轻量模式）并持久化到磁盘，默认不会自动清理。代理 / 直连依据连接的最终出口判断。",
+  "loading": "加载中…",
+  "empty": "暂无域名流量数据。使用一段时间后再回来查看。",
+  "searchPlaceholder": "筛选域名",
+  "ranges": {
+    "day": "近一天",
+    "week": "近一周",
+    "month": "近一月",
+    "year": "近一年"
+  },
+  "summary": {
+    "total": "合计",
+    "proxy": "代理",
+    "direct": "直连"
+  },
+  "columns": {
+    "domain": "域名",
+    "proxy": "代理",
+    "direct": "直连",
+    "total": "合计"
+  },
+  "actions": {
+    "refresh": "刷新",
+    "cleanup": "清理",
+    "cleanupTitle": "清理流量统计",
+    "cleanupDesc": "选择清理方式。删除后无法恢复。",
+    "clear": "清空全部",
+    "clearAllHint": "删除所有已保存的按日统计，并重新开始采集。",
+    "clearConfirm": "确定清空全部域名流量统计？此操作不可撤销。",
+    "clearDone": "已清空全部域名流量统计。",
+    "clearBeforeLabel": "清理此日期之前",
+    "clearBefore": "按日期清理",
+    "clearBeforeHint": "保留较新数据，删除所选日期之前的全部按日统计。",
+    "clearBeforeConfirm": "确定删除 {{date}} 之前的全部统计？此操作不可撤销。",
+    "clearBeforeEmpty": "没有可清理的日期分桶。",
+    "clearBeforeDone": "已清理 {{count}} 天的统计数据。"
+  }
+}

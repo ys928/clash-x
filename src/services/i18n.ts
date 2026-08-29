@@ -76,6 +76,7 @@ const STARTUP_LANGUAGE_SECTIONS = [
   'proxies',
   'tests',
   'rules',
+  'traffic',
 ] as const
 
 const localeModules = import.meta.glob<LocaleModule>('@/locales/*/*.json')
@@ -174,3 +175,5 @@ export const initializeLanguage = async (
 ) => {
   await changeLanguage(initialLanguage)
 }
+
+export default i18n

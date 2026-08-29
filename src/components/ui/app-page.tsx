@@ -11,6 +11,8 @@ export interface AppPageProps {
   contentStyle?: CSSProperties
   children?: ReactNode
   full?: boolean
+  /** Disable native section scrolling so children can own the scroll container. */
+  lockScroll?: boolean
 }
 
 export const AppPage: React.FC<AppPageProps> = ({
@@ -18,6 +20,7 @@ export const AppPage: React.FC<AppPageProps> = ({
   header,
   contentStyle,
   full,
+  lockScroll,
   children,
 }) => {
   const theme = useTheme()
@@ -42,14 +45,43 @@ export const AppPage: React.FC<AppPageProps> = ({
 
         <div
           className={full ? 'base-container no-padding' : 'base-container'}
-          style={{ backgroundColor: theme.palette.background.default }}
+          style={{
+            backgroundColor: theme.palette.background.default,
+            ...(lockScroll ? { flex: 1, minHeight: 0, height: 'auto' } : null),
+          }}
         >
           <section
             style={{
               backgroundColor: theme.palette.background.default,
+              ...(lockScroll
+                ? {
+                    overflow: 'hidden',
+                    scrollbarGutter: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                  }
+                : null),
             }}
           >
-            <div className="base-content" style={contentStyle}>
+            <div
+              className="base-content"
+              style={{
+                ...(lockScroll
+                  ? {
+                      flex: 1,
+                      minHeight: 0,
+                      height: '100%',
+                      maxHeight: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'hidden',
+                      boxSizing: 'border-box',
+                    }
+                  : null),
+                ...contentStyle,
+              }}
+            >
               {children}
             </div>
           </section>

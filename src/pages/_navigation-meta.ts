@@ -9,6 +9,10 @@ export const navigationItems = {
     path: '/profile',
   },
   rules: { label: 'layout.components.navigation.tabs.rules', path: '/rules' },
+  traffic: {
+    label: 'layout.components.navigation.tabs.traffic',
+    path: '/traffic',
+  },
   settings: {
     label: 'layout.components.navigation.tabs.settings',
     path: '/settings',
@@ -16,4 +20,10 @@ export const navigationItems = {
 } as const
 
 /** Primary sidebar entries (settings is rendered separately). */
-export const primaryNavKeys = ['home', 'proxies', 'profiles', 'rules'] as const
+export const primaryNavKeys = [
+  'home',
+  'proxies',
+  'profiles',
+  'rules',
+  'traffic',
+] as const

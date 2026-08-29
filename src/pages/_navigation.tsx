@@ -1,6 +1,7 @@
 import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined'
 import ForkRightOutlinedIcon from '@mui/icons-material/ForkRightOutlined'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
+import QueryStatsOutlinedIcon from '@mui/icons-material/QueryStatsOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import WifiOutlinedIcon from '@mui/icons-material/WifiOutlined'
 import { type ComponentType, type ReactNode } from 'react'
@@ -17,6 +18,7 @@ import ProfilePage from './profiles'
 import ProxyPage from './proxies'
 import RulesPage from './rules'
 import SettingPage from './settings'
+import TrafficPage from './traffic'
 
 type NavigationItem = {
   label: (typeof navigationItems)[keyof typeof navigationItems]['label']
@@ -46,6 +48,14 @@ const pageByKey = {
     icon: [<ForkRightOutlinedIcon key="mui" />, <RulesSvg key="svg" />],
     Component: RulesPage,
   },
+  traffic: {
+    ...navigationItems.traffic,
+    icon: [
+      <QueryStatsOutlinedIcon key="mui" />,
+      <QueryStatsOutlinedIcon key="svg" />,
+    ],
+    Component: TrafficPage,
+  },
   settings: {
     ...navigationItems.settings,
     icon: [<SettingsOutlinedIcon key="mui" />, <SettingsSvg key="svg" />],
@@ -59,6 +69,7 @@ export const navItems: NavigationItem[] = [
   pageByKey.proxies,
   pageByKey.profiles,
   pageByKey.rules,
+  pageByKey.traffic,
   pageByKey.settings,
 ]
 

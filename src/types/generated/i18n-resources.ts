@@ -194,6 +194,7 @@ export interface TranslationResources {
             proxies: string
             rules: string
             settings: string
+            traffic: string
           }
         }
         serviceMigration: {
@@ -1328,6 +1329,45 @@ export interface TranslationResources {
           unsupportedRegion: string
           yes: string
         }
+      }
+    }
+    traffic: {
+      actions: {
+        cleanup: string
+        cleanupDesc: string
+        cleanupTitle: string
+        clear: string
+        clearAllHint: string
+        clearBefore: string
+        clearBeforeConfirm: string
+        clearBeforeDone: string
+        clearBeforeEmpty: string
+        clearBeforeHint: string
+        clearBeforeLabel: string
+        clearConfirm: string
+        clearDone: string
+        refresh: string
+      }
+      columns: {
+        direct: string
+        domain: string
+        proxy: string
+        total: string
+      }
+      empty: string
+      hint: string
+      loading: string
+      ranges: {
+        day: string
+        month: string
+        week: string
+        year: string
+      }
+      searchPlaceholder: string
+      summary: {
+        direct: string
+        proxy: string
+        total: string
       }
     }
   }
