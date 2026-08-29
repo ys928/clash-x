@@ -1,7 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 
 import type { AutoSwitchGroup } from '@/components/proxy/auto-switch-model'
-import type { CommandFailure } from '@/services/notice-service'
 import { showNotice } from '@/services/notice-service'
 import type { ProxyViewV1 } from '@/types/proxy-view'
 import { debugLog } from '@/utils/debug'
@@ -204,23 +203,8 @@ export async function getEmbeddedServerPort() {
   return invoke<number>('get_embedded_server_port')
 }
 
-export async function changeClashCore(clashCore: string) {
-  return invoke<CommandFailure | null>('change_clash_core', { clashCore })
-}
-
 export async function restartCore() {
   return invoke<void>('restart_core')
-}
-
-export interface CoreUpgradeReport {
-  /** False when the managed core was already at the latest version. */
-  upgraded: boolean
-  from: string
-  to: string
-}
-
-export async function upgradeClashCore(force = false) {
-  return invoke<CoreUpgradeReport>('upgrade_clash_core', { force })
 }
 
 export async function restartApp() {
@@ -291,10 +275,6 @@ export async function getSystemInfo() {
 
 export async function downloadIconCache(url: string, name: string) {
   return invoke<string>('download_icon_cache', { url, name })
-}
-
-export async function getNetworkInterfaces() {
-  return invoke<string[]>('get_network_interfaces')
 }
 
 export async function getSystemHostname() {

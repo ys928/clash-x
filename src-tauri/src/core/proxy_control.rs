@@ -305,7 +305,7 @@ fn truncate_utf8(value: &mut String, max_bytes: usize) {
     value.truncate(boundary);
 }
 
-async fn service_bypass(verge: &IVerge) -> Result<String> {
+fn service_bypass(verge: &IVerge) -> Result<String> {
     let custom = verge.system_proxy_bypass.as_deref().unwrap_or("");
     ensure!(!custom.contains('\0'), "system proxy bypass contains NUL");
 
@@ -320,7 +320,7 @@ async fn service_bypass(verge: &IVerge) -> Result<String> {
     Ok(bypass)
 }
 
-async fn service_proxy_config(verge: &IVerge, mixed_port: u16, pac_port: u16) -> Result<MacosProxyConfig> {
+fn service_proxy_config(verge: &IVerge, mixed_port: u16, pac_port: u16) -> Result<MacosProxyConfig> {
     if !verge.enable_system_proxy.unwrap_or_default() {
         return Ok(MacosProxyConfig::Disabled);
     }
@@ -335,7 +335,7 @@ async fn service_proxy_config(verge: &IVerge, mixed_port: u16, pac_port: u16) ->
         Ok(MacosProxyConfig::Global {
             host: LOOPBACK_HOST.to_owned(),
             port: mixed_port,
-            bypass: service_bypass(verge).await?,
+            bypass: service_bypass(verge)?,
         })
     }
 }
@@ -356,10 +356,10 @@ async fn current_service_proxy_config(verge: &IVerge) -> Result<MacosProxyConfig
         return Ok(MacosProxyConfig::Disabled);
     }
     if verge.proxy_auto_config.unwrap_or_default() {
-        return service_proxy_config(verge, 0, server::embedded_server_port()?).await;
+        return service_proxy_config(verge, 0, server::embedded_server_port()?);
     }
     let mixed_port = MixedPort::desired().await;
-    service_proxy_config(verge, mixed_port, 0).await
+    service_proxy_config(verge, mixed_port, 0)
 }
 
 pub fn is_reportable(error: &anyhow::Error) -> bool {
@@ -910,8 +910,8 @@ mod tests {
         assert_eq!(record_service_apply(false, true).await, (vec!["drain"], false));
     }
 
-    #[tokio::test]
-    async fn service_proxy_config_forces_loopback_targets_and_bounds_bypass() {
+    #[test]
+    fn service_proxy_config_forces_loopback_targets_and_bounds_bypass() {
         let verge = IVerge {
             enable_system_proxy: Some(true),
             proxy_auto_config: Some(false),
@@ -921,9 +921,7 @@ mod tests {
             ..IVerge::default()
         };
 
-        let proxy = service_proxy_config(&verge, 7897, 3333)
-            .await
-            .unwrap_or_else(|_| unreachable!());
+        let proxy = service_proxy_config(&verge, 7897, 3333).unwrap_or_else(|_| unreachable!());
         let MacosProxyConfig::Global { host, port, bypass } = proxy else {
             unreachable!();
         };
@@ -938,9 +936,7 @@ mod tests {
             ..verge
         };
         assert_eq!(
-            service_proxy_config(&pac_verge, 7897, 3333)
-                .await
-                .unwrap_or_else(|_| unreachable!()),
+            service_proxy_config(&pac_verge, 7897, 3333).unwrap_or_else(|_| unreachable!()),
             MacosProxyConfig::Pac {
                 url: "http://127.0.0.1:3333/commands/pac".to_owned()
             }

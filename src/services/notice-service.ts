@@ -302,7 +302,7 @@ function extractDisplayText(input: unknown): string | undefined {
   }
 }
 
-export interface CommandFailure {
+interface CommandFailure {
   code?: string
   operation?: FailedOperation
   detail: string

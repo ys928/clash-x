@@ -15,8 +15,7 @@ export const emptyGlobalRulesSeq = (): GlobalRulesSeq => ({
   delete: [],
 })
 
-export const normalizeRuleRaw = (raw: string) =>
-  raw.replace(/,no-resolve$/i, '')
+const normalizeRuleRaw = (raw: string) => raw.replace(/,no-resolve$/i, '')
 
 export const runtimeRuleKey = (
   type: string,
@@ -55,7 +54,7 @@ export async function loadGlobalRulesSeq(): Promise<GlobalRulesSeq> {
   }
 }
 
-export const serializeGlobalRulesSeq = (seq: GlobalRulesSeq) =>
+const serializeGlobalRulesSeq = (seq: GlobalRulesSeq) =>
   dump(
     {
       prepend: seq.prepend,

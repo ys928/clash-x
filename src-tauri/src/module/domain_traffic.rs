@@ -42,7 +42,7 @@ pub enum DomainTrafficRange {
 }
 
 impl DomainTrafficRange {
-    fn days(self) -> i64 {
+    const fn days(self) -> i64 {
         match self {
             Self::Day => 1,
             Self::Week => 7,
@@ -66,7 +66,7 @@ struct DomainDayCounters {
 }
 
 impl DomainDayCounters {
-    fn add(&mut self, is_direct: bool, upload: u64, download: u64) {
+    const fn add(&mut self, is_direct: bool, upload: u64, download: u64) {
         if upload == 0 && download == 0 {
             return;
         }
@@ -79,7 +79,7 @@ impl DomainDayCounters {
         }
     }
 
-    fn merge_from(&mut self, other: &Self) {
+    const fn merge_from(&mut self, other: &Self) {
         self.proxy_upload = self.proxy_upload.saturating_add(other.proxy_upload);
         self.proxy_download = self.proxy_download.saturating_add(other.proxy_download);
         self.direct_upload = self.direct_upload.saturating_add(other.direct_upload);
@@ -341,6 +341,7 @@ async fn poll_once(state: &ParkingMutex<CollectorState>) -> Result<()> {
     }
 
     guard.seen.retain(|id, _| active.contains_key(id));
+    drop(guard);
     Ok(())
 }
 
@@ -504,6 +505,7 @@ fn aggregate_stats(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, reason = "tests assert by panicking")]
 mod tests {
     use super::*;
 

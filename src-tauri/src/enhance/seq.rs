@@ -33,6 +33,7 @@ pub fn merge_rules(seq: SeqMap, mut config: Mapping) -> Mapping {
 }
 
 #[cfg(test)]
+#[allow(clippy::expect_used, clippy::panic, reason = "tests assert by panicking")]
 mod tests {
     use super::*;
 

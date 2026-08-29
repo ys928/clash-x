@@ -15,7 +15,7 @@ const locales = {
   zhtw: zhTw,
 } as const
 
-export function resolveElementPlusLocale(language?: string) {
+function resolveElementPlusLocale(language?: string) {
   const lang = resolveLanguage(language) as keyof typeof locales
   return locales[lang] ?? zhCn
 }

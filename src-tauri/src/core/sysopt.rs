@@ -282,7 +282,7 @@ async fn get_bypass() -> String {
     let use_default = verge.use_default_bypass.unwrap_or(true);
     let custom_bypass = verge.system_proxy_bypass.as_deref().unwrap_or("");
 
-    format_bypass(use_default, custom_bypass).into()
+    format_bypass(use_default, custom_bypass)
 }
 
 singleton!(Sysopt, SYSOPT);

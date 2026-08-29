@@ -13,7 +13,7 @@ export interface DomainTrafficItem {
   total: number
 }
 
-export interface DomainTrafficTotals {
+interface DomainTrafficTotals {
   proxyUpload: number
   proxyDownload: number
   directUpload: number

@@ -1,5 +1,4 @@
 export { default as UiButton } from './ui/UiButton.vue'
-export { default as UiDateField } from './ui/UiDateField.vue'
 export { default as UiSearchField } from './ui/UiSearchField.vue'
 export { default as UiSegmentedControl } from './ui/UiSegmentedControl.vue'
 export { default as UiStatCard } from './ui/UiStatCard.vue'
