@@ -14,7 +14,7 @@
 
 | Dark                             | Light                             |
 | -------------------------------- | --------------------------------- |
-| ![预览](https://github.com/user-attachments/assets/f4f71f0d-c7ed-491b-bdba-ea0fea29e71b) | ![预览](https://github.com/user-attachments/assets/138671fe-bee1-4c5b-a0a0-4df49c4bf364) |
+| ![预览](https://github.com/user-attachments/assets/488a8804-a866-4380-972f-6266587b3852) | ![预览](https://github.com/user-attachments/assets/8f1a7429-3926-46c7-8cde-fded578a26f4) |
 
 ## Upstream
 
