@@ -9,14 +9,9 @@ export { BaseErrorBoundary } from './base-error-boundary'
 export { BaseFieldset } from './base-fieldset'
 export { BaseLoading } from './base-loading'
 export { BaseLoadingOverlay } from './base-loading-overlay'
-export { type SearchState } from './base-search-box'
 export { BaseSplitChipEditor } from './base-split-chip-editor'
 export { MonacoEditor } from './monaco-editor'
 export { Switch } from './base-switch'
 export { BaseTooltip } from './base-tooltip'
 export { TooltipIcon } from './base-tooltip-icon'
 export { VirtualList, type VirtualListHandle } from './virtual-list'
-export {
-  StickyVirtualList,
-  type StickyVirtualListHandle,
-} from './sticky-virtual-list'

@@ -1,9 +1,12 @@
 import delayManager from '@/services/delay'
-import { memberDetails } from '@/types/proxy-view'
+import { memberDetails, type ResolvedProxyMember } from '@/types/proxy-view'
 import { compareByDelay, DEFAULT_DELAY_TIMEOUT } from '@/utils/delay'
 import { compileStringMatcher } from '@/utils/search-matcher'
 
-import type { ResolvedMemberOccurrence } from './use-render-list'
+export interface ResolvedMemberOccurrence {
+  memberIndex: number
+  member: ResolvedProxyMember
+}
 
 export type ProxySortType = 0 | 1 | 2
 

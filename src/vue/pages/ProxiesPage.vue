@@ -66,6 +66,9 @@ import {
   type ResolvedProxyMember,
 } from '@/types/proxy-view'
 import { debugLog } from '@/utils/debug'
+import { navigateApp } from '@/utils/app-navigate'
+
+import { navigationItems } from '@/pages/_navigation-meta'
 
 import ProxyNodeCard from '@/vue/components/ProxyNodeCard.vue'
 import UiStatusMessage from '@/vue/components/ui/UiStatusMessage.vue'
@@ -347,9 +350,7 @@ const openAutoSwitch = () => {
 }
 
 const openProfiles = () => {
-  void import('@/pages/_routers').then(({ router }) => {
-    void router.navigate('/profile')
-  })
+  navigateApp(navigationItems.profiles.path)
 }
 
 const onRestartCore = async () => {

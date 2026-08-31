@@ -33,6 +33,7 @@ import { AutoSwitchRunnerHost } from '@/components/proxy/auto-switch-runner-host
 import { useI18n } from '@/hooks/use-i18n'
 import { useVerge } from '@/hooks/use-verge'
 import { useThemeMode } from '@/services/states'
+import { APP_NAVIGATE_EVENT } from '@/utils/app-navigate'
 import getSystem from '@/utils/get-system'
 
 import {
@@ -247,6 +248,16 @@ const Layout = () => {
       switchLanguage(language)
     }
   }, [language, switchLanguage])
+
+  useEffect(() => {
+    const onNavigate = (event: Event) => {
+      const path = (event as CustomEvent<{ path: string }>).detail.path
+      if (path) navigate(path)
+    }
+
+    window.addEventListener(APP_NAVIGATE_EVENT, onNavigate)
+    return () => window.removeEventListener(APP_NAVIGATE_EVENT, onNavigate)
+  }, [navigate])
 
   const renderNavList = (items: NavItem[], sortable: boolean) => {
     if (sortable) {
