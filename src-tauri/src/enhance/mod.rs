@@ -50,7 +50,7 @@ async fn get_config_values() -> ConfigValues {
     let enable_external_controller = enable_external_controller.unwrap_or(false);
 
     let (enable_tun, socks_enabled, http_enabled) = (
-        enable_tun_mode.unwrap_or(false) && !Config::tun_suppressed_for_session(),
+        enable_tun_mode.unwrap_or(false),
         verge_socks_enabled.unwrap_or(false),
         verge_http_enabled.unwrap_or(false),
     );
