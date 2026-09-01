@@ -3,7 +3,7 @@ use crate::config::{Config, IVerge};
 use crate::core::handle::Handle;
 use crate::core::proxy_control::{self, SysproxyFailure};
 use crate::core::service::{SERVICE_MANAGER, ServiceStatus};
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use clash_verge_logging::{Type, logging};
 use scopeguard::defer;
 use smartstring::alias::String;
@@ -128,18 +128,22 @@ where
 {
     match (running_mode, proxy_intent) {
         (RunningMode::NotRunning, _) => {}
-        // Do not hand the OS to another owner while the old guard may still write.
-        (RunningMode::Sidecar, ProxyStopIntent::HandOverToService) => ensure!(
-            stop_guard().await,
-            "the system proxy guard did not stop in time; not handing the proxy to the service"
-        ),
-        (RunningMode::Service, _) if is_macos => ensure!(
-            stop_guard().await,
-            "the system proxy guard did not stop in time; not stopping the service-owned core"
-        ),
+        // A guard that will not stop must not block the core from stopping.
+        (RunningMode::Sidecar, ProxyStopIntent::HandOverToService) => warn_if_guard_lingers(stop_guard().await),
+        (RunningMode::Service, _) if is_macos => warn_if_guard_lingers(stop_guard().await),
         (RunningMode::Service | RunningMode::Sidecar, _) => clear_proxy().await?,
     }
     stop_core().await
+}
+
+fn warn_if_guard_lingers(stopped: bool) {
+    if !stopped {
+        logging!(
+            warn,
+            Type::Core,
+            "the system proxy guard did not stop in time; stopping the core anyway"
+        );
+    }
 }
 
 async fn run_core_start_transition<Start, StartFuture, Ready, Apply, ApplyFuture>(
@@ -949,7 +953,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_guard_that_would_not_stop_keeps_the_core_where_it_is() {
+    async fn a_guard_that_would_not_stop_does_not_block_the_core_from_stopping() {
         for (mode, intent) in [
             (RunningMode::Sidecar, ProxyStopIntent::HandOverToService),
             (RunningMode::Service, ProxyStopIntent::Clear),
@@ -966,8 +970,8 @@ mod tests {
             )
             .await;
 
-            assert!(result.is_err(), "{mode:?} {intent:?}");
-            assert!(calls.lock().is_empty(), "{mode:?} {intent:?}: {:?}", *calls.lock());
+            assert!(result.is_ok(), "{mode:?} {intent:?}");
+            assert_eq!(&*calls.lock(), &["core_stop"], "{mode:?} {intent:?}");
         }
     }
 
