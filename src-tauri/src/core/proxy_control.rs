@@ -1080,7 +1080,7 @@ mod tests {
             bypass: String::new(),
         };
 
-        let error = service_apply_result(
+        let error = super::service_apply_result(
             &requested,
             ProxyApplyOutcome::DirectFallback {
                 message: sysproxy::Error::NoActiveNetworkService.to_string(),
@@ -1099,7 +1099,7 @@ mod tests {
     #[test]
     fn a_disable_is_satisfied_by_the_os_ending_up_direct() {
         assert!(
-            service_apply_result(
+            super::service_apply_result(
                 &MacosProxyConfig::Disabled,
                 ProxyApplyOutcome::DirectFallback {
                     message: sysproxy::Error::NoActiveNetworkService.to_string(),
