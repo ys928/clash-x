@@ -17,9 +17,9 @@ notifications:
     title: 系统代理守卫
     body: 连续多次失败后已停止守卫。打开 Clash Verge 查看原因。
   tunModeToggled:
-    title: 增强模式
-    'on': 增强模式已开启。
-    'off': 增强模式已关闭。
+    title: TUN 模式
+    'on': TUN 模式已开启。
+    'off': TUN 模式已关闭。
   lightweightModeEntered:
     title: 轻量模式
     body: 已进入轻量模式。
@@ -32,6 +32,11 @@ notifications:
   appHidden:
     title: 应用已隐藏
     body: Clash Verge 正在后台运行。
+  updateReady:
+    title: Clash Verge 更新
+    body: 新版本 (v{version}) 已下载完成，是否立即安装？
+    installNow: 立即安装
+    later: 稍后
 service:
   adminInstallPrompt: 安装 Clash Verge 服务需要管理员权限
   adminUninstallPrompt: 卸载 Clash Verge 服务需要管理员权限
@@ -67,7 +72,7 @@ tray:
   profiles: 订阅
   proxies: 代理
   systemProxy: 系统代理
-  tunMode: 增强模式
+  tunMode: TUN 模式
   closeAllConnections: 关闭所有连接
   lightweightMode: 轻量模式
   copyEnv: 复制环境变量
@@ -84,5 +89,5 @@ tray:
   exit: 退出
   tooltip:
     systemProxy: 系统代理
-    tun: 增强
+    tun: TUN
     profile: 订阅

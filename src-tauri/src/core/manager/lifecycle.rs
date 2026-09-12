@@ -1,6 +1,7 @@
 use super::{CoreManager, RunningMode};
 use crate::config::{Config, IVerge};
 use crate::core::handle::Handle;
+use crate::core::manager::CLASH_LOGGER;
 use crate::core::proxy_control::{self, SysproxyFailure};
 use crate::core::service::{SERVICE_MANAGER, ServiceStatus};
 use anyhow::Result;
@@ -316,6 +317,7 @@ impl CoreManager {
         .await
     }
 
+    #[tracing::instrument(skip_all, level = "info", fields(status = tracing::field::Empty, tun_disabled = false, readiness_generation = tracing::field::Empty))]
     pub async fn continue_with_sidecar(&self) -> Result<()> {
         if !self.try_start_config_update() {
             anyhow::bail!("configuration update is already running");
@@ -328,6 +330,7 @@ impl CoreManager {
         let config_write = Config::lock_config_write().await;
         let _life = self.lifecycle_lock.lock().await;
         let status = SERVICE_MANAGER.current().await;
+        tracing::Span::current().record("status", tracing::field::debug(&status));
         let mode = self.get_running_mode();
         if !can_allow_sidecar_for_session(&mode, &status) {
             anyhow::bail!("Sidecar continuation is not allowed from {mode:?} / {status:?}");
@@ -341,6 +344,7 @@ impl CoreManager {
                 .state()
                 .tun_should_be_disabled(tun_enabled)
             {
+                tracing::Span::current().record("tun_disabled", true);
                 Config::disable_tun_and_persist().await?;
             }
             Config::generate().await
@@ -360,6 +364,7 @@ impl CoreManager {
             {
                 anyhow::bail!("Sidecar did not become ready");
             }
+            tracing::Span::current().record("readiness_generation", self.current_core_readiness_generation());
             self.apply_proxy_after_start().await
         }
         .await;
@@ -375,6 +380,7 @@ impl CoreManager {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, level = "info", fields(readiness_generation = tracing::field::Empty))]
     pub async fn uninstall_service_and_start_sidecar(&self) -> Result<()> {
         if !self.try_start_config_update() {
             anyhow::bail!("configuration update is already running");
@@ -412,6 +418,7 @@ impl CoreManager {
                 {
                     anyhow::bail!("Sidecar did not become ready after service uninstall");
                 }
+                tracing::Span::current().record("readiness_generation", self.current_core_readiness_generation());
                 self.apply_proxy_after_start().await
             },
         )
@@ -455,6 +462,7 @@ impl CoreManager {
         .await
     }
 
+    #[tracing::instrument(skip_all, level = "info", fields(mode = ?*self.get_running_mode(), readiness_generation = self.current_core_readiness_generation(), owner_generation = crate::core::service::owner_monitor_generation()))]
     pub(crate) async fn apply_proxy_after_start(&self) -> Result<()> {
         let expectation = ProxyRestoreExpectation::capture(
             *self.get_running_mode(),
@@ -464,6 +472,29 @@ impl CoreManager {
         .ok_or_else(|| {
             anyhow::anyhow!("cannot apply system proxy before core readiness").context(SysproxyFailure::CoreNotReady)
         })?;
+        // At login the app usually beats the network. Leave the write to the network watcher
+        // rather than fail — only if the watcher is actually live; a user toggling while
+        // offline still fails fast.
+        #[cfg(target_os = "macos")]
+        let watcher_armed = crate::core::network_watch::is_armed();
+        #[cfg(not(target_os = "macos"))]
+        let watcher_armed = false;
+        if watcher_armed
+            && !crate::utils::resolve::is_resolve_done()
+            && Config::verge()
+                .await
+                .latest_arc()
+                .enable_system_proxy
+                .unwrap_or_default()
+            && !proxy_control::has_network_service().await
+        {
+            logging!(
+                info,
+                Type::Core,
+                "no network service yet; the system proxy is applied once one appears"
+            );
+            return Ok(());
+        }
         proxy_control::apply().await?;
         if !expectation.is_valid(
             self.get_running_mode().as_ref(),
@@ -490,9 +521,12 @@ impl CoreManager {
                     .context(SysproxyFailure::CoreNotReady),
             );
         }
+        // tell the window when a background apply lands
+        Handle::refresh_verge();
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, level = "info", fields(decision = tracing::field::Empty))]
     async fn start_core_inner(&self) -> Result<()> {
         if Handle::global().is_exiting() {
             return Ok(());
@@ -500,7 +534,7 @@ impl CoreManager {
 
         if !matches!(*self.get_running_mode(), RunningMode::NotRunning) {
             logging!(
-                info,
+                debug,
                 Type::Core,
                 "start_core called while a core is running; treated as no-op"
             );
@@ -508,6 +542,7 @@ impl CoreManager {
         }
 
         let startup = self.prepare_startup().await;
+        tracing::Span::current().record("decision", tracing::field::debug(&startup));
         if matches!(startup, StartupDecision::Wait) {
             self.rollback_failed_start().await;
             return Ok(());
@@ -537,6 +572,7 @@ impl CoreManager {
         result
     }
 
+    #[tracing::instrument(skip_all, level = "info", fields(mode = ?*self.get_running_mode()))]
     pub async fn stop_core(&self) -> Result<()> {
         let _life = self.lifecycle_lock.lock().await;
         self.controlled_stop_core_inner().await
@@ -568,6 +604,7 @@ impl CoreManager {
     }
 
     async fn stop_core_unprepared_inner(&self) -> Result<()> {
+        CLASH_LOGGER.clear_logs();
         match *self.get_running_mode() {
             RunningMode::Service => self.stop_core_by_service().await,
             RunningMode::Sidecar => {
@@ -578,6 +615,7 @@ impl CoreManager {
         }
     }
 
+    #[tracing::instrument(skip_all, level = "info")]
     pub async fn restart_core(&self) -> Result<()> {
         if !self.try_start_config_update() {
             anyhow::bail!("configuration update is already running");
@@ -590,7 +628,6 @@ impl CoreManager {
 
     pub(crate) async fn restart_core_during_config_update(&self) -> Result<()> {
         let _life = self.lifecycle_lock.lock().await;
-        logging!(info, Type::Core, "Restarting core");
         let proxy_intent = self.proxy_stop_intent().await;
         run_core_replacement_transition(
             || self.controlled_stop_core_with_intent(proxy_intent),
@@ -608,6 +645,7 @@ impl CoreManager {
         .await
     }
 
+    #[tracing::instrument(skip_all, level = "info", fields(core = %clash_core))]
     pub async fn change_core(&self, clash_core: &String) -> Result<()> {
         if !IVerge::VALID_CLASH_CORES.contains(&clash_core.as_str()) {
             anyhow::bail!("invalid clash core: {clash_core}");
@@ -730,6 +768,7 @@ impl CoreManager {
     }
 
     #[cfg(target_os = "windows")]
+    #[tracing::instrument(skip_all, level = "debug", fields(outcome = tracing::field::Empty))]
     async fn try_handoff_sidecar_to_service(&self) -> HandoffOutcome {
         // Before probing: a probe reply records an observation, which clears sidecar_allowed.
         if crate::core::runstate::RUN_STATE.state().sidecar_allowed {

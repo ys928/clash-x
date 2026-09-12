@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::{
-    config::DEFAULT_PAC,
+    config::{DEFAULT_PAC, deserialize_encrypted, serialize_encrypted},
     constants::network,
     utils::{dirs, help},
 };
@@ -57,6 +57,9 @@ pub struct IVerge {
     pub menu_order: Option<Vec<String>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub proxy_group_tools_position: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub notice_position: Option<String>,
 
     pub collapse_navbar: Option<bool>,
@@ -77,6 +80,13 @@ pub struct IVerge {
 
     pub enable_bypass_check: Option<bool>,
 
+    /// enable dns settings - this controls whether dns_config.yaml is applied
+    pub enable_dns_settings: Option<bool>,
+
+    // Force-enable confirmation is valid only for the current app session.
+    #[serde(skip)]
+    pub dns_override_confirmation: Option<String>,
+
     pub use_default_bypass: Option<bool>,
 
     pub system_proxy_bypass: Option<String>,
@@ -88,6 +98,8 @@ pub struct IVerge {
     pub pac_file_content: Option<String>,
 
     pub proxy_host: Option<String>,
+
+    pub theme_setting: Option<IVergeTheme>,
 
     pub web_ui_list: Option<Vec<String>>,
 
@@ -104,7 +116,8 @@ pub struct IVerge {
 
     pub auto_close_connection: Option<bool>,
 
-    /// 默认的延迟测试连接
+    pub auto_check_update: Option<bool>,
+
     pub default_latency_test: Option<String>,
 
     pub default_latency_timeout: Option<i16>,
@@ -122,6 +135,13 @@ pub struct IVerge {
 
     /// 0: 不清理; 1: 1天；2: 7天; 3: 30天; 4: 90天
     pub auto_log_clean: Option<i32>,
+
+    pub enable_auto_backup_schedule: Option<bool>,
+
+    /// Automatic backup interval in hours
+    pub auto_backup_interval_hours: Option<u64>,
+
+    pub auto_backup_on_change: Option<bool>,
 
     /// verge 的各种 port 用于覆盖 clash 的各种 port
     #[cfg(not(target_os = "windows"))]
@@ -146,6 +166,30 @@ pub struct IVerge {
 
     pub verge_http_enabled: Option<bool>,
 
+    #[serde(
+        serialize_with = "serialize_encrypted",
+        deserialize_with = "deserialize_encrypted",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub webdav_url: Option<String>,
+
+    #[serde(
+        serialize_with = "serialize_encrypted",
+        deserialize_with = "deserialize_encrypted",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub webdav_username: Option<String>,
+
+    #[serde(
+        serialize_with = "serialize_encrypted",
+        deserialize_with = "deserialize_encrypted",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub webdav_password: Option<String>,
+
     #[cfg(target_os = "macos")]
     pub enable_tray_speed: Option<bool>,
 
@@ -158,6 +202,11 @@ pub struct IVerge {
     /// 自动进入轻量模式的延迟（分钟）
     pub auto_light_weight_minutes: Option<u64>,
 
+    pub enable_hover_jump_navigator: Option<bool>,
+
+    /// 代理页面自动滚动延迟（毫秒）
+    pub hover_jump_navigator_delay: Option<u64>,
+
     pub enable_external_controller: Option<bool>,
 }
 
@@ -169,8 +218,24 @@ pub struct IVergeTestItem {
     pub url: Option<String>,
 }
 
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
+pub struct IVergeTheme {
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub primary_text: Option<String>,
+    pub secondary_text: Option<String>,
+
+    pub info_color: Option<String>,
+    pub error_color: Option<String>,
+    pub warning_color: Option<String>,
+    pub success_color: Option<String>,
+
+    pub font_family: Option<String>,
+    pub css_injection: Option<String>,
+}
+
 impl IVerge {
-    pub const VALID_CLASH_CORES: &'static [&'static str] = &["verge-mihomo"];
+    pub const VALID_CLASH_CORES: &'static [&'static str] = &["verge-mihomo", "verge-mihomo-alpha"];
 
     pub async fn validate_and_fix_config() -> Result<()> {
         let config_path = dirs::verge_path()?;
@@ -187,7 +252,8 @@ impl IVerge {
                 logging!(
                     warn,
                     Type::Config,
-                    "启动时发现无效或已弃用的 clash_core 配置: '{core}', 将自动修正为 'verge-mihomo'"
+                    "启动时发现无效的clash_core配置: '{}', 将自动修正为 'verge-mihomo'",
+                    core
                 );
                 config.clash_core = Some("verge-mihomo".into());
                 needs_fix = true;
@@ -203,13 +269,13 @@ impl IVerge {
         }
 
         if needs_fix {
-            logging!(info, Type::Config, "正在保存修正后的配置文件...");
+            logging!(debug, Type::Config, "正在保存修正后的配置文件...");
             help::save_yaml(&config_path, &config, Some("# Clash Verge Config")).await?;
             logging!(info, Type::Config, "配置文件修正完成，需要重新加载配置");
 
             Self::reload_config_after_fix(config).await;
         } else {
-            logging!(info, Type::Config, "clash_core配置验证通过: {:?}", config.clash_core);
+            logging!(debug, Type::Config, "clash_core配置验证通过: {:?}", config.clash_core);
         }
 
         Ok(())
@@ -246,12 +312,12 @@ impl IVerge {
                     config
                 }
                 Err(err) => {
-                    logging!(error, Type::Config, "{err}");
+                    logging!(error, Type::Config, "failed to read verge config: {err:#}");
                     Self::template()
                 }
             },
             Err(err) => {
-                logging!(error, Type::Config, "{err}");
+                logging!(error, Type::Config, "failed to get verge config path: {err:#}");
                 Self::template()
             }
         }
@@ -283,6 +349,8 @@ impl IVerge {
             tun_tray_icon: Some(false),
             enable_auto_launch: Some(false),
             enable_silent_start: Some(false),
+            enable_hover_jump_navigator: Some(true),
+            hover_jump_navigator_delay: Some(280),
             enable_system_proxy: Some(false),
             proxy_auto_config: Some(false),
             pac_file_content: Some(DEFAULT_PAC.into()),
@@ -305,7 +373,15 @@ impl IVerge {
             use_default_bypass: Some(true),
             proxy_guard_duration: Some(30),
             auto_close_connection: Some(true),
+            auto_check_update: Some(true),
+            enable_builtin_enhanced: Some(true),
             auto_log_clean: Some(2), // 1: 1天, 2: 7天, 3: 30天, 4: 90天
+            enable_auto_backup_schedule: Some(false),
+            auto_backup_interval_hours: Some(24),
+            auto_backup_on_change: Some(true),
+            webdav_url: None,
+            webdav_username: None,
+            webdav_password: None,
             #[cfg(target_os = "macos")]
             enable_tray_speed: Some(false),
             tray_proxy_groups_display_mode: Some("default".into()),
@@ -313,6 +389,7 @@ impl IVerge {
             enable_global_hotkey: Some(true),
             enable_auto_light_weight_mode: Some(false),
             auto_light_weight_minutes: Some(10),
+            enable_dns_settings: Some(false),
             home_cards: None,
             enable_external_controller: Some(false),
             ..Self::default()
@@ -351,6 +428,7 @@ impl IVerge {
         patch!(tray_icon);
         patch!(menu_icon);
         patch!(menu_order);
+        patch!(proxy_group_tools_position);
         patch!(notice_position);
         patch!(collapse_navbar);
         patch!(common_tray_icon);
@@ -360,6 +438,8 @@ impl IVerge {
         patch!(enable_tun_mode);
         patch!(enable_auto_launch);
         patch!(enable_silent_start);
+        patch!(enable_hover_jump_navigator);
+        patch!(hover_jump_navigator_delay);
         #[cfg(not(target_os = "windows"))]
         patch!(verge_redir_port);
         #[cfg(not(target_os = "windows"))]
@@ -382,24 +462,36 @@ impl IVerge {
         patch!(proxy_auto_config);
         patch!(pac_file_content);
         patch!(proxy_host);
+        patch!(theme_setting);
         patch!(web_ui_list);
+        patch!(clash_core);
         patch!(hotkeys);
         patch!(enable_global_hotkey);
 
         patch!(auto_close_connection);
+        patch!(auto_check_update);
         patch!(default_latency_test);
         patch!(default_latency_timeout);
         patch!(enable_auto_delay_detection);
         patch!(auto_delay_detection_interval_minutes);
+        patch!(enable_builtin_enhanced);
         patch!(proxy_layout_column);
         patch!(test_list);
         patch!(auto_log_clean);
+        patch!(enable_auto_backup_schedule);
+        patch!(auto_backup_interval_hours);
+        patch!(auto_backup_on_change);
+
+        patch!(webdav_url);
+        patch!(webdav_username);
+        patch!(webdav_password);
         #[cfg(target_os = "macos")]
         patch!(enable_tray_speed);
         patch!(tray_proxy_groups_display_mode);
         patch!(tray_inline_outbound_modes);
         patch!(enable_auto_light_weight_mode);
         patch!(auto_light_weight_minutes);
+        patch!(enable_dns_settings);
         patch!(home_cards);
         patch!(enable_external_controller);
     }

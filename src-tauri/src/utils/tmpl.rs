@@ -24,8 +24,7 @@ function main(config, profileName) {
 }
 ";
 
-pub const ITEM_RULES: &str = "# Global / Profile Enhancement Rules Template for Clash Verge
-# prepend rules apply first (e.g. LAN/VPN DIRECT bypass)
+pub const ITEM_RULES: &str = "# Profile Enhancement Rules Template for Clash Verge
 
 prepend: []
 

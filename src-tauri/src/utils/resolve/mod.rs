@@ -8,14 +8,12 @@ use crate::{
         CoreManager, Timer,
         handle::Handle,
         hotkey::Hotkey,
-        logger::Logger,
+        logger,
         service::{SERVICE_MANAGER, ServiceManager},
         tray::Tray,
     },
     feat,
-    module::{
-        auto_switch::AutoSwitchManager, domain_traffic::DomainTrafficManager, lightweight::auto_lightweight_boot,
-    },
+    module::{auto_backup::AutoBackupManager, lightweight::auto_lightweight_boot},
     process::AsyncHandler,
     utils::{init, server, window_manager::WindowManager},
 };
@@ -33,7 +31,7 @@ pub(crate) fn init_work_dir_and_logger() -> anyhow::Result<()> {
     AsyncHandler::block_on(async {
         init_work_config().await;
         logging!(info, Type::Setup, "Initializing logger");
-        Logger::global().init().await?;
+        logger::init().await?;
         Ok(())
     })
 }
@@ -48,41 +46,53 @@ pub(crate) fn resolve_setup_sync() {
 }
 
 pub(crate) fn resolve_setup_async() {
-    AsyncHandler::spawn(|| async {
-        logging!(info, Type::ClashVergeRev, "Version: {}", env!("CARGO_PKG_VERSION"));
+    AsyncHandler::spawn(resolve_setup);
+}
 
-        // Migrate before windows or timers can change the loaded config.
-        logging_error!(Type::Setup, init::migrate_short_update_intervals().await);
+#[tracing::instrument(skip_all, level = "info")]
+async fn resolve_setup() {
+    logging!(info, Type::ClashVergeRev, "Version: {}", env!("CARGO_PKG_VERSION"));
 
-        #[cfg(target_os = "macos")]
-        resolve_dock_show().await;
-        init_startup_script().await;
-        init_service_manager().await;
-        let config_initialized = init_verge_config_before_window().await;
-        feat::reconcile_startup_tun_availability().await;
-        init_resources().await;
-        if config_initialized {
-            init_verge_config().await;
-        }
-        Config::verify_config_initialization().await;
+    // Migrate before windows or timers can change the loaded config.
+    logging_error!(Type::Setup, init::migrate_short_update_intervals().await);
+
+    #[cfg(target_os = "macos")]
+    resolve_dock_show().await;
+    init_startup_script().await;
+    init_service_manager().await;
+    let config_initialized = init_verge_config_before_window().await;
+    init_window().await;
+    feat::reconcile_startup_tun_availability().await;
+    init_resources().await;
+    if let Err(e) = init::init_dns_config().await {
+        logging!(warn, Type::Setup, "DNS config initialization failed: {}", e);
+    }
+    if config_initialized {
+        init_verge_config().await;
+    }
+    Config::verify_config_initialization().await;
+
+    // Live before the core starts, so a service appearing mid-start is not missed.
+    #[cfg(target_os = "macos")]
+    crate::core::network_watch::start();
+
+    let core_init = AsyncHandler::spawn(|| async {
         init_core_manager().await;
-        init_window().await;
-
-        init_update_checker();
-
-        let _ = futures::join!(
-            init_tray(),
-            init_timer(),
-            init_hotkey(),
-            init_auto_lightweight_boot(),
-            init_auto_switch(),
-            init_domain_traffic(),
-        );
-
-        Handle::refresh_clash();
-        refresh_tray_menu().await;
-        resolve_done();
     });
+
+    let _ = futures::join!(
+        core_init,
+        init_tray(),
+        init_timer(),
+        init_hotkey(),
+        init_auto_lightweight_boot(),
+        init_auto_backup(),
+        init_silent_updater(),
+    );
+
+    Handle::refresh_clash();
+    refresh_tray_menu().await;
+    resolve_done();
 }
 
 pub async fn resolve_reset_async() -> Result<(), anyhow::Error> {
@@ -150,30 +160,34 @@ async fn init_auto_lightweight_boot() {
     logging_error!(Type::Setup, auto_lightweight_boot().await);
 }
 
-pub(super) async fn init_auto_switch() {
-    logging_error!(Type::Setup, AutoSwitchManager::global().init().await);
+async fn init_auto_backup() {
+    logging_error!(Type::Setup, AutoBackupManager::global().init().await);
 }
 
-pub(super) async fn init_domain_traffic() {
-    logging_error!(Type::Setup, DomainTrafficManager::global().init().await);
-}
-
-fn init_update_checker() {
-    use crate::core::UpdateChecker;
+async fn init_silent_updater() {
+    use crate::core::SilentUpdater;
     use crate::core::handle::Handle;
 
-    logging!(info, Type::Setup, "Initializing update checker...");
+    logging!(debug, Type::Setup, "Initializing silent updater...");
 
-    let app_handle = Handle::app_handle().clone();
+    let app_handle = Handle::app_handle();
+
+    // Install cached updates before starting background checks.
+    if SilentUpdater::global().try_install_on_startup(app_handle).await {
+        logging!(info, Type::Setup, "Update installed at startup, restarting...");
+        feat::restart_app().await;
+    }
+
+    let app_handle = app_handle.clone();
     tokio::spawn(async move {
-        UpdateChecker::global().start_background_check(app_handle).await;
+        SilentUpdater::global().start_background_check(app_handle).await;
     });
 
-    logging!(info, Type::Setup, "Update checker initialized");
+    logging!(info, Type::Setup, "Silent updater initialized");
 }
 
 pub(crate) fn init_signal() {
-    logging!(info, Type::Setup, "Initializing signal handlers...");
+    logging!(debug, Type::Setup, "Initializing signal handlers...");
     clash_verge_signal::register(feat::quit);
 }
 

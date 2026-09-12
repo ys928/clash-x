@@ -7,9 +7,10 @@ use crate::{
         CoreManager, handle,
         validate::{CoreConfigValidator, ValidationOutcome},
     },
+    module::auto_backup::{AutoBackupManager, AutoBackupTrigger},
     utils::dirs,
 };
-use clash_verge_logging::{Type, logging};
+use clash_verge_logging::{Type, logging, logging_error};
 use smartstring::alias::String;
 use tokio::fs;
 
@@ -19,6 +20,12 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     let file_data = match file_data {
         Some(d) => d,
         None => return Ok(ValidationOutcome::Valid),
+    };
+
+    let backup_trigger = match index.as_str() {
+        "Merge" => Some(AutoBackupTrigger::GlobalMerge),
+        "Script" => Some(AutoBackupTrigger::GlobalScript),
+        _ => None,
     };
 
     // 在异步操作前获取必要元数据并释放锁
@@ -59,14 +66,6 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     // 保存新的配置文件
     fs::write(&file_path, &file_data).await.stringify_err()?;
 
-    logging!(
-        info,
-        Type::Config,
-        "[cmd配置save] 开始验证配置文件: {}, 是否为merge文件: {}",
-        file_path_str,
-        is_merge_file
-    );
-
     let changes_applied = handle_saved_profile_file(
         &file_path_str,
         &file_path,
@@ -78,16 +77,10 @@ pub async fn save_profile_file(index: String, file_data: Option<String>) -> CmdR
     )
     .await?;
 
-    // Global DIRECT domain rules also feed the OS proxy bypass list; refresh when Rules change.
     if changes_applied.is_valid()
-        && index == "Rules"
-        && let Err(err) = crate::core::proxy_control::apply().await
+        && let Some(trigger) = backup_trigger
     {
-        logging!(
-            warn,
-            Type::Config,
-            "[cmd配置save] 全局规则保存后刷新系统代理失败: {err}"
-        );
+        AutoBackupManager::trigger_backup(trigger);
     }
 
     Ok(changes_applied)
@@ -106,11 +99,6 @@ async fn restore_original(
 }
 
 fn profile_affects_runtime(profiles: &IProfiles, index: &str) -> bool {
-    // Global rules feed the runtime config; merge/script are legacy and ignored.
-    if index == "Rules" {
-        return true;
-    }
-
     let Some(current_uid) = profiles.current.as_ref() else {
         return false;
     };
@@ -122,6 +110,8 @@ fn profile_affects_runtime(profiles: &IProfiles, index: &str) -> bool {
         return false;
     };
     [
+        item.current_merge().map_or("Merge", String::as_str),
+        item.current_script().map_or("Script", String::as_str),
         item.current_rules().map_or("Rules", String::as_str),
         item.current_proxies().map_or("Proxies", String::as_str),
         item.current_groups().map_or("Groups", String::as_str),
@@ -146,18 +136,8 @@ async fn handle_saved_profile_file(
         (ValidationNoticeTarget::Runtime, "YAML配置文件")
     };
 
-    logging!(
-        info,
-        Type::Config,
-        "[cmd配置save] 开始{}验证: {}",
-        file_type,
-        file_path_str
-    );
-
     match CoreConfigValidator::validate_config_file_outcome(file_path_str, Some(is_merge_file)).await {
-        Ok(outcome) if outcome.is_valid() => {
-            logging!(info, Type::Config, "[cmd配置save] 文件验证通过: {}", file_path_str);
-        }
+        Ok(outcome) if outcome.is_valid() => {}
         Ok(outcome) => {
             logging!(warn, Type::Config, "[cmd配置save] 文件验证失败: {}", outcome);
             restore_original(file_path, original_content, original_existed).await?;
@@ -165,7 +145,7 @@ async fn handle_saved_profile_file(
             return Ok(outcome);
         }
         Err(e) => {
-            logging!(error, Type::Config, "[cmd配置save] 验证过程发生错误: {}", e);
+            logging!(error, Type::Config, "[cmd配置save] 验证过程发生错误: {e:#}");
             restore_original(file_path, original_content, original_existed).await?;
             return Err(e.to_string().into());
         }
@@ -182,6 +162,7 @@ async fn handle_saved_profile_file(
     );
     match CoreManager::global().update_config_forced().await {
         Ok(outcome) if outcome.is_valid() => {
+            logging_error!(Type::Config, Config::sync_dns_override().await);
             handle::Handle::refresh_clash();
             Ok(ValidationOutcome::Valid)
         }
@@ -192,7 +173,7 @@ async fn handle_saved_profile_file(
             Ok(outcome)
         }
         Err(err) => {
-            logging!(error, Type::Config, "[cmd配置save] 运行时配置应用错误: {}", err);
+            logging!(error, Type::Config, "[cmd配置save] 运行时配置应用错误: {err:#}");
             restore_original(file_path, original_content, original_existed).await?;
             Err(err.to_string().into())
         }

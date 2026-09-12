@@ -93,12 +93,11 @@ pub fn proxy_aware_error(error: &anyhow::Error) -> CommandFailure {
 
 // Command modules
 pub mod app;
-pub mod auto_switch;
 pub mod backup;
 pub mod clash;
-pub mod domain_traffic;
 pub mod lightweight;
 pub mod listener;
+pub mod media_unlock_checker;
 pub mod network;
 pub mod profile;
 pub mod proxy;
@@ -106,19 +105,18 @@ pub mod runtime;
 pub mod save_profile;
 pub mod service;
 pub mod system;
-pub mod updater;
 pub mod uwp;
 pub mod validate;
 pub mod verge;
+pub mod webdav;
 
 // Re-export all command functions for backwards compatibility
 pub use app::*;
-pub use auto_switch::*;
 pub use backup::*;
 pub use clash::*;
-pub use domain_traffic::*;
 pub use lightweight::*;
 pub use listener::*;
+pub use media_unlock_checker::*;
 pub use network::*;
 pub use profile::*;
 pub use proxy::*;
@@ -126,12 +124,15 @@ pub use runtime::*;
 pub use save_profile::*;
 pub use service::*;
 pub use system::*;
-pub use updater::*;
 pub use uwp::*;
 pub use verge::*;
+pub use webdav::*;
 
 pub trait StringifyErr<T> {
     fn stringify_err(self) -> CmdResult<T>;
+    fn stringify_err_log<F>(self, log_fn: F) -> CmdResult<T>
+    where
+        F: Fn(&str);
 }
 
 pub trait WithErrorCode<T> {
@@ -141,6 +142,17 @@ pub trait WithErrorCode<T> {
 impl<T, E: std::fmt::Display> StringifyErr<T> for Result<T, E> {
     fn stringify_err(self) -> CmdResult<T> {
         self.map_err(CommandFailure::plain)
+    }
+
+    fn stringify_err_log<F>(self, log_fn: F) -> CmdResult<T>
+    where
+        F: Fn(&str),
+    {
+        self.map_err(|e| {
+            let failure = CommandFailure::plain(e);
+            log_fn(&failure.detail);
+            failure
+        })
     }
 }
 

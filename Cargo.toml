@@ -2,6 +2,7 @@
 members = [
   "src-tauri",
   "crates/clash-verge-draft",
+  "crates/clash-verge-media-unlock",
   "crates/clash-verge-logging",
   "crates/clash-verge-signal",
   "crates/tauri-plugin-clash-verge-sysinfo",
@@ -47,11 +48,14 @@ split-debuginfo = "unpacked"
 
 [workspace.dependencies]
 clash-verge-draft = { path = "crates/clash-verge-draft" }
+clash-verge-media-unlock = { path = "crates/clash-verge-media-unlock" }
 clash-verge-logging = { path = "crates/clash-verge-logging" }
 clash-verge-signal = { path = "crates/clash-verge-signal" }
 clash-verge-i18n = { path = "crates/clash-verge-i18n" }
 clash-verge-limiter = { path = "crates/clash-verge-limiter" }
+tracing-estuary = { git = "https://github.com/Tunglies/tracing-estuary.git", branch = "main" }
 tauri-plugin-clash-verge-sysinfo = { path = "crates/tauri-plugin-clash-verge-sysinfo" }
+tracing = "0.1"
 
 tauri = { version = "2.11.5" }
 tauri-plugin-clipboard-manager = "2.3.2"
@@ -69,9 +73,9 @@ flexi_logger = "0.31.10"
 log = "0.4.33"
 regex = "1.13.1"
 reqwest = { version = "0.13.4", features = ["json", "cookies", "gzip", "rustls", "form"] }
+rust_iso3166 = "0.2.0"
 
 smartstring = { version = "1.0.1" }
-compact_str = { version = "0.10.0", features = ["serde"] }
 
 serde = { version = "1.0.229" }
 serde_json = { version = "1.0.151" }

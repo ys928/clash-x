@@ -17,9 +17,9 @@ notifications:
     title: System Proxy Guard
     body: The guard stopped after failing several times running. Open Clash Verge to see why.
   tunModeToggled:
-    title: Enhanced Mode
-    'on': Enhanced mode has been enabled.
-    'off': Enhanced mode has been disabled.
+    title: TUN Mode
+    'on': TUN mode has been enabled.
+    'off': TUN mode has been disabled.
   lightweightModeEntered:
     title: Lightweight Mode
     body: Entered lightweight mode.
@@ -32,6 +32,11 @@ notifications:
   appHidden:
     title: Application Hidden
     body: Clash Verge is running in the background.
+  updateReady:
+    title: Clash Verge Update
+    body: A new version (v{version}) has been downloaded and is ready to install.
+    installNow: Install Now
+    later: Later
 service:
   adminInstallPrompt: Installing the Clash Verge service requires administrator privileges.
   adminUninstallPrompt: Uninstalling the Clash Verge service requires administrator privileges.
@@ -67,7 +72,7 @@ tray:
   profiles: Profiles
   proxies: Proxies
   systemProxy: System Proxy
-  tunMode: Enhanced Mode
+  tunMode: TUN Mode
   closeAllConnections: Close All Connections
   lightweightMode: Lightweight Mode
   copyEnv: Copy Environment Variables
@@ -84,5 +89,5 @@ tray:
   exit: Exit
   tooltip:
     systemProxy: System Proxy
-    tun: Enhanced
+    tun: TUN
     profile: Profile

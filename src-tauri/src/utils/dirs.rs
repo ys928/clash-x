@@ -2,7 +2,6 @@ use crate::core::{CoreManager, handle, manager::RunningMode};
 use anyhow::Result;
 use async_trait::async_trait;
 use clash_verge_logging::{Type, logging};
-use once_cell::sync::OnceCell;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -13,18 +12,11 @@ use tauri::Manager as _;
 pub static APP_ID: &str = "io.github.clash-verge-rev.clash-verge-rev";
 #[cfg(not(feature = "verge-dev"))]
 pub static BACKUP_DIR: &str = "clash-verge-rev-backup";
-/// clash-x owned data/config namespace (separate from upstream verge dirs).
-#[cfg(not(feature = "verge-dev"))]
-pub static CLASH_X_APP_ID: &str = "io.github.ys928.clash-x";
 
 #[cfg(feature = "verge-dev")]
 pub static APP_ID: &str = "io.github.clash-verge-rev.clash-verge-rev.dev";
 #[cfg(feature = "verge-dev")]
 pub static BACKUP_DIR: &str = "clash-verge-rev-backup-dev";
-#[cfg(feature = "verge-dev")]
-pub static CLASH_X_APP_ID: &str = "io.github.ys928.clash-x.dev";
-
-pub static PORTABLE_FLAG: OnceCell<bool> = OnceCell::new();
 
 pub static CLASH_CONFIG: &str = "config.yaml";
 pub static VERGE_CONFIG: &str = "verge.yaml";
@@ -32,111 +24,15 @@ pub static PROFILE_YAML: &str = "profiles.yaml";
 /// Marks that the one-shot raise of too-short auto-update intervals has already run.
 pub static UPDATE_INTERVAL_MIGRATED: &str = ".update-interval-migrated";
 
-pub fn init_portable_flag() -> Result<()> {
-    use tauri::utils::platform::current_exe;
-
-    let app_exe = current_exe()?;
-    if let Some(dir) = app_exe.parent() {
-        let dir = PathBuf::from(dir).join(".config/PORTABLE");
-
-        if dir.exists() {
-            PORTABLE_FLAG.get_or_init(|| true);
-        }
-    }
-    PORTABLE_FLAG.get_or_init(|| false);
-    Ok(())
-}
-
+/// Uses the same platform data resolver as Tauri, including before its handle exists.
 pub fn app_home_dir() -> Result<PathBuf> {
-    resolve_app_dir(APP_ID, AppDirKind::Data)
-}
-
-/// clash-x specific data directory (domain traffic, future clash-x-only state).
-/// Kept separate from upstream `APP_ID` / verge config so new features do not mix into the fork base dir.
-pub fn clash_x_data_dir() -> Result<PathBuf> {
-    resolve_app_dir(CLASH_X_APP_ID, AppDirKind::Data)
-}
-
-/// clash-x specific config directory for future clash-x-only settings.
-pub fn clash_x_config_dir() -> Result<PathBuf> {
-    resolve_app_dir(CLASH_X_APP_ID, AppDirKind::Config)
-}
-
-#[derive(Clone, Copy)]
-enum AppDirKind {
-    Data,
-    Config,
-}
-
-fn resolve_app_dir(app_id: &str, kind: AppDirKind) -> Result<PathBuf> {
-    use tauri::utils::platform::current_exe;
-
-    let flag = PORTABLE_FLAG.get().unwrap_or(&false);
-    if *flag {
-        let app_exe = current_exe()?;
-        let app_exe = dunce::canonicalize(app_exe)?;
-        let app_dir = app_exe
-            .parent()
-            .ok_or_else(|| anyhow::anyhow!("failed to get the portable app dir"))?;
-        return Ok(PathBuf::from(app_dir).join(".config").join(app_id));
-    }
-
-    // Directory helpers can run before the Tauri handle is initialized.
-    let Some(app_handle) = crate::APP_HANDLE.get() else {
-        return preinit_app_dir(app_id, kind);
-    };
-
-    let root = match kind {
-        AppDirKind::Data => app_handle.path().data_dir(),
-        AppDirKind::Config => app_handle.path().config_dir().or_else(|_| app_handle.path().data_dir()),
-    };
-
-    match root {
-        Ok(dir) => Ok(dir.join(app_id)),
-        Err(e) => {
-            logging!(error, Type::File, "Failed to get the app directory ({app_id}): {e}");
-            Err(anyhow::anyhow!("Failed to get the app directory"))
-        }
-    }
+    ::dirs::data_dir()
+        .map(|root| root.join(APP_ID))
+        .ok_or_else(|| anyhow::anyhow!("Failed to get the app home directory"))
 }
 
 pub fn preinit_app_data_dir() -> Result<PathBuf> {
-    preinit_app_dir(APP_ID, AppDirKind::Data)
-}
-
-fn preinit_app_dir(app_id: &str, kind: AppDirKind) -> Result<PathBuf> {
-    if PORTABLE_FLAG.get().copied().unwrap_or(false) {
-        let executable = std::env::current_exe()?;
-        let parent = executable
-            .parent()
-            .ok_or_else(|| anyhow::anyhow!("portable executable has no parent directory"))?;
-        return Ok(parent.join(".config").join(app_id));
-    }
-
-    #[cfg(target_os = "macos")]
-    let root = {
-        let home = PathBuf::from(std::env::var_os("HOME").ok_or_else(|| anyhow::anyhow!("HOME is unavailable"))?);
-        match kind {
-            AppDirKind::Data => home.join("Library/Application Support"),
-            AppDirKind::Config => home.join("Library/Application Support"),
-        }
-    };
-    #[cfg(target_os = "linux")]
-    let root = match kind {
-        AppDirKind::Data => std::env::var_os("XDG_DATA_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/share")),
-        AppDirKind::Config => std::env::var_os("XDG_CONFIG_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config")),
-    };
-    #[cfg(windows)]
-    let root = {
-        let _ = kind;
-        PathBuf::from(std::env::var_os("APPDATA").ok_or_else(|| anyhow::anyhow!("APPDATA is unavailable"))?)
-    };
-
-    Ok(root.join(app_id))
+    app_home_dir()
 }
 
 pub fn app_resources_dir() -> Result<PathBuf> {
@@ -433,7 +329,7 @@ impl PathBufExec for PathBuf {
     async fn remove_if_exists(&self) -> Result<()> {
         if self.exists() {
             tokio::fs::remove_file(self).await?;
-            logging!(info, Type::File, "Removed file: {:?}", self);
+            logging!(debug, Type::File, "Removed file: {:?}", self);
         }
         Ok(())
     }

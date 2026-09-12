@@ -33,7 +33,7 @@ mod app_init {
     /// Initialize singleton monitoring for other instances
     pub fn init_singleton_check() -> Result<server::SingletonDisposition> {
         AsyncHandler::block_on(async move {
-            logging!(info, Type::Setup, "开始检查单例实例...");
+            logging!(debug, Type::Setup, "开始检查单例实例...");
             server::check_singleton().await
         })
     }
@@ -74,7 +74,7 @@ mod app_init {
     pub fn setup_deep_links(app: &tauri::App) {
         #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
         {
-            logging!(info, Type::Setup, "注册深层链接...");
+            logging!(debug, Type::Setup, "注册深层链接...");
             let _ = app.deep_link().register_all();
         }
 
@@ -107,7 +107,7 @@ mod app_init {
 
     /// Setup window state management
     pub fn setup_window_state(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-        logging!(info, Type::Setup, "初始化窗口状态管理...");
+        logging!(debug, Type::Setup, "初始化窗口状态管理...");
         let window_state_plugin = tauri_plugin_window_state::Builder::new()
             .with_filename(files::WINDOW_STATE)
             .with_state_flags(tauri_plugin_window_state::StateFlags::default())
@@ -120,7 +120,6 @@ mod app_init {
         tauri::generate_handler![
             tauri_plugin_clash_verge_sysinfo::commands::get_system_info,
             tauri_plugin_clash_verge_sysinfo::commands::get_app_uptime,
-            tauri_plugin_clash_verge_sysinfo::commands::app_is_admin,
             tauri_plugin_clash_verge_sysinfo::commands::export_diagnostic_info,
             cmd::probe_listener,
             cmd::save_proxy_ports,
@@ -130,48 +129,43 @@ mod app_init {
             cmd::open_app_dir,
             cmd::open_logs_dir,
             cmd::open_core_dir,
-            cmd::get_portable_flag,
             cmd::get_network_interfaces,
             cmd::get_system_hostname,
             cmd::restart_app,
-            cmd::start_core,
-            cmd::stop_core,
             cmd::restart_core,
+            cmd::upgrade_clash_core,
             cmd::get_runtime_state,
             cmd::get_pending_failures,
-            cmd::get_auto_launch_status,
             cmd::entry_lightweight_mode,
-            cmd::exit_lightweight_mode,
             cmd::install_service,
             cmd::uninstall_service,
             cmd::reinstall_service,
             cmd::repair_service,
             cmd::continue_with_sidecar,
+            cmd::sync_runtime_providers,
             cmd::get_clash_info,
             cmd::patch_clash_config,
             cmd::patch_clash_mode,
             cmd::get_clash_mode,
             cmd::change_clash_core,
-            cmd::upgrade_clash_core,
             cmd::get_runtime_config,
             cmd::get_proxy_view,
-            cmd::get_auto_switch_groups,
-            cmd::replace_auto_switch_groups,
-            cmd::upsert_auto_switch_group,
-            cmd::patch_auto_switch_group,
-            cmd::delete_auto_switch_group,
-            cmd::run_auto_switch_once,
-            cmd::get_domain_traffic_stats,
-            cmd::clear_domain_traffic_before,
-            cmd::clear_domain_traffic_stats,
             cmd::get_runtime_yaml,
-            cmd::get_runtime_exists,
             cmd::get_runtime_logs,
+            cmd::get_runtime_proxy_chain_config,
+            cmd::update_proxy_chain_config_in_runtime,
             cmd::invoke_uwp_tool,
             cmd::copy_clash_env,
             cmd::sync_tray_proxy_selection,
             cmd::record_selected_node,
             cmd::forget_selected_node,
+            cmd::save_dns_config,
+            cmd::apply_dns_config,
+            cmd::set_dns_override,
+            cmd::take_dns_override_notice,
+            cmd::get_dns_config_content,
+            cmd::validate_dns_config,
+            cmd::get_clash_logs,
             cmd::get_verge_config,
             cmd::patch_verge_config,
             cmd::test_delay,
@@ -200,8 +194,14 @@ mod app_init {
             cmd::restore_local_backup,
             cmd::import_local_backup,
             cmd::export_local_backup,
-            cmd::get_update_status,
-            cmd::get_updater_clash_proxy,
+            cmd::create_webdav_backup,
+            cmd::save_webdav_config,
+            cmd::list_webdav_backup,
+            cmd::delete_webdav_backup,
+            cmd::restore_webdav_backup,
+            cmd::get_unlock_items,
+            cmd::check_media_unlock,
+            cmd::check_media_unlock_item,
         ]
     }
 }
@@ -233,8 +233,6 @@ pub fn run() -> std::process::ExitCode {
     {
         return std::process::ExitCode::SUCCESS;
     }
-
-    let _ = utils::dirs::init_portable_flag();
 
     // Runs before the singleton check, which is the first thing to open a file in that directory.
     #[cfg(windows)]
@@ -285,10 +283,10 @@ pub fn run() -> std::process::ExitCode {
                     .expect("failed to set global app handle");
 
                 if let Err(e) = resolve::init_work_dir_and_logger() {
-                    logging!(error, Type::Setup, "Failed to init work dir/logger: {}", e);
+                    logging!(error, Type::Setup, "Failed to init work dir/logger: {e:#}");
                 }
 
-                logging!(info, Type::Setup, "开始应用初始化...");
+                logging!(debug, Type::Setup, "开始应用初始化...");
                 if let Err(e) = app_init::setup_autostart(app) {
                     logging!(error, Type::Setup, "Failed to setup autostart: {}", e);
                 }
@@ -307,7 +305,6 @@ pub fn run() -> std::process::ExitCode {
                 resolve::resolve_setup_async();
                 resolve::resolve_setup_sync();
                 resolve::init_signal();
-                logging!(info, Type::Setup, "初始化已启动");
             })) {
                 log_setup_panic("window-core", panic);
             }
@@ -347,7 +344,7 @@ pub fn run() -> std::process::ExitCode {
 
             #[cfg(target_os = "macos")]
             if let Some(window) = _app_handle.get_webview_window("main") {
-                let _ = window.set_title("clash-x");
+                let _ = window.set_title("Clash Verge");
             }
         }
 
@@ -475,6 +472,7 @@ pub fn run() -> std::process::ExitCode {
                 );
             }
             logging!(info, Type::System, "Application exited");
+            crate::core::logger::Logger::global().flush_logs();
         }),
         #[allow(unused_variables)]
         tauri::RunEvent::ExitRequested { api, code, .. } => {

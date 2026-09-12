@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tauri_plugin_mihomo::models::{
     DelayHistory, Proxies, Proxy, ProxyProvider, ProxyProviders, ProxyType, VehicleType,
 };
@@ -95,7 +95,7 @@ pub struct ProxyNodeView {
     pub source: ProxyNodeSource,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ProxyNodeSource {
     Core {
@@ -738,7 +738,7 @@ mod tests {
             view.records["p:0:0"].source,
             ProxyNodeSource::Provider {
                 provider_name: "a-provider".into(),
-                proxy_name: "same".into()
+                proxy_name: "same".into(),
             }
         );
     }

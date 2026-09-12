@@ -315,7 +315,7 @@ impl Tray {
         );
 
         let tooltip = format!(
-            "clash-x {}\n{}: {}\n{}: {}\n{}: {}",
+            "Clash Verge {}\n{}: {}\n{}: {}\n{}: {}",
             reassembled_version,
             sys_proxy_text,
             switch_str(system_proxy),

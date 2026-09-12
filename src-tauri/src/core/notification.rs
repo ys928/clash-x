@@ -35,9 +35,6 @@ pub enum FrontendEvent<'a> {
     RunStateChanged {
         state: serde_json::Value,
     },
-    UpdateStatus {
-        status: serde_json::Value,
-    },
     PendingFailuresChanged,
     #[cfg(target_os = "linux")]
     ThemeChanged {
@@ -294,7 +291,6 @@ impl NotificationSystem {
             FrontendEvent::ProfileUpdateStarted { uid } => ("profile-update-started", Ok(json!({ "uid": uid }))),
             FrontendEvent::ProfileUpdateCompleted { uid } => ("profile-update-completed", Ok(json!({ "uid": uid }))),
             FrontendEvent::RunStateChanged { state } => ("verge://run-state-changed", Ok(state)),
-            FrontendEvent::UpdateStatus { status } => ("verge://update-status", Ok(status)),
             FrontendEvent::PendingFailuresChanged => ("verge://pending-failures-changed", Ok(serde_json::Value::Null)),
             #[cfg(target_os = "linux")]
             FrontendEvent::ThemeChanged { theme } => ("tauri://theme-changed", serde_json::to_value(theme)),

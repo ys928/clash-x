@@ -261,13 +261,11 @@ impl Default for Sysopt {
 }
 
 #[cfg(target_os = "windows")]
-// `*.local` mirrors macOS: Windows `<local>` only skips hosts without dots, so
-// `gitlab.corp.local` still hits the proxy without an explicit `*.local` pattern.
-static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;*.local;<local>";
+static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;<local>";
 #[cfg(target_os = "windows")]
 static BYPASS_SEPARATOR: &str = ";";
 #[cfg(target_os = "linux")]
-static DEFAULT_BYPASS: &str = "localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,::1,*.local";
+static DEFAULT_BYPASS: &str = "localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,::1";
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 static BYPASS_SEPARATOR: &str = ",";
 #[cfg(target_os = "macos")]
@@ -572,8 +570,6 @@ impl Sysopt {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(target_os = "macos")]
-    use super::skip_without_network_service;
     use super::{
         AuthoritativeState, BYPASS_SEPARATOR, DEFAULT_BYPASS, OsProxyState, ProxyApplyStep, SystemProxyStateUnknown,
         authoritative_state, authoritative_state_from, classify_os_proxy_state, disable_both,
@@ -583,6 +579,9 @@ mod tests {
     use parking_lot::Mutex;
     use std::collections::VecDeque;
     use sysproxy::{Autoproxy, Sysproxy};
+
+    #[cfg(target_os = "macos")]
+    use super::skip_without_network_service;
 
     #[cfg(target_os = "macos")]
     #[test]

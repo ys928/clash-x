@@ -196,7 +196,7 @@ impl PrfItem {
             script = script_item.uid.clone();
         }
         if rules.is_none() {
-            let rules_item = &mut Self::from_rules(None)?;
+            let rules_item = &mut Self::from_rules();
             profiles::profiles_append_item_safe(rules_item).await?;
             rules = rules_item.uid.clone();
         }
@@ -374,7 +374,7 @@ impl PrfItem {
             script = script_item.uid.clone();
         }
         if rules.is_none() {
-            let rules_item = &mut Self::from_rules(None)?;
+            let rules_item = &mut Self::from_rules();
             profiles::profiles_append_item_safe(rules_item).await?;
             rules = rules_item.uid.clone();
         }
@@ -449,18 +449,18 @@ impl PrfItem {
         }
     }
 
-    pub fn from_rules(uid: Option<String>) -> Result<Self> {
-        let id = uid.unwrap_or_else(|| help::get_uid("r").into());
-        let file = format!("{id}.yaml").into(); // yaml ext
+    fn from_rules() -> Self {
+        let uid = help::get_uid("r").into();
+        let file = format!("{uid}.yaml").into(); // yaml ext
 
-        Ok(Self {
-            uid: Some(id),
+        Self {
+            uid: Some(uid),
             itype: Some("rules".into()),
             file: Some(file),
             updated: Some(chrono::Local::now().timestamp() as usize),
             file_data: Some(tmpl::ITEM_RULES.into()),
             ..Default::default()
-        })
+        }
     }
 
     fn from_proxies() -> Self {
@@ -505,6 +505,14 @@ impl PrfItem {
 }
 
 impl PrfItem {
+    pub(crate) fn current_merge(&self) -> Option<&String> {
+        self.option.as_ref().and_then(|o| o.merge.as_ref())
+    }
+
+    pub(crate) fn current_script(&self) -> Option<&String> {
+        self.option.as_ref().and_then(|o| o.script.as_ref())
+    }
+
     pub(crate) fn current_rules(&self) -> Option<&String> {
         self.option.as_ref().and_then(|o| o.rules.as_ref())
     }

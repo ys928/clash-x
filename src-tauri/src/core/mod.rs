@@ -5,6 +5,8 @@ pub mod hotkey;
 pub mod listener;
 pub mod logger;
 pub mod manager;
+#[cfg(target_os = "macos")]
+pub mod network_watch;
 pub mod notification;
 pub(crate) mod owner_identity;
 pub mod proxy_control;
@@ -19,8 +21,4 @@ pub mod updater;
 pub mod validate;
 pub mod win_uwp;
 
-pub use self::{
-    manager::CoreManager,
-    timer::Timer,
-    updater::{UpdateChecker, UpdateStatus},
-};
+pub use self::{manager::CoreManager, timer::Timer, updater::SilentUpdater};

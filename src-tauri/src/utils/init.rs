@@ -33,7 +33,7 @@ async fn delete_snapshot_logs(log_dir: &Path) -> Result<()> {
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("log") {
                 let _ = path.remove_if_exists().await;
-                logging!(info, Type::Setup, "delete snapshot log file: {}", path.display());
+                logging!(debug, Type::Setup, "delete snapshot log file: {}", path.display());
             }
         }
     }
@@ -69,7 +69,7 @@ pub async fn delete_log() -> Result<()> {
         _ => return Ok(()),
     };
 
-    logging!(info, Type::Setup, "try to delete log files, day: {}", day);
+    logging!(debug, Type::Setup, "try to delete log files, day: {}", day);
 
     let parse_time_str = |s: &str| {
         let sa: Vec<&str> = s.split('-').collect();
@@ -102,7 +102,7 @@ pub async fn delete_log() -> Result<()> {
             let duration = now.signed_duration_since(file_time);
             if duration.num_days() > day {
                 let _ = file.path().remove_if_exists().await;
-                logging!(info, Type::Setup, "delete log file: {}", file_name);
+                logging!(debug, Type::Setup, "delete log file: {}", file_name);
             }
         }
         Ok(())
@@ -284,7 +284,7 @@ async fn migrate_legacy_macos_logs() -> Result<()> {
 
     if is_logs_dir_writable(&log_dir).await {
         if let Err(e) = migrate_legacy_macos_service_logs(&log_dir).await {
-            logging!(warn, Type::Setup, "Failed to migrate legacy macOS service logs: {}", e);
+            logging!(warn, Type::Setup, "Failed to migrate legacy macOS service logs: {e:#}");
         }
         return Ok(());
     }
@@ -312,6 +312,110 @@ async fn migrate_legacy_macos_logs() -> Result<()> {
         .await
         .map_err(|e| anyhow::anyhow!("Failed to recreate macOS logs directory {:?}: {}", log_dir, e))?;
     logging!(info, Type::Setup, "Recreated macOS logs directory: {:?}", log_dir);
+
+    Ok(())
+}
+
+pub(super) async fn init_dns_config() -> Result<()> {
+    use serde_yaml_ng::Value;
+
+    let dns_config = serde_yaml_ng::Mapping::from_iter([
+        ("enable".into(), Value::Bool(true)),
+        // Must match the frontend default used for authoritative `dns.ipv6`.
+        ("ipv6".into(), Value::Bool(true)),
+        ("listen".into(), Value::String(":53".into())),
+        ("enhanced-mode".into(), Value::String("fake-ip".into())),
+        ("fake-ip-range".into(), Value::String("198.18.0.1/16".into())),
+        ("fake-ip-range6".into(), Value::String("fdfe:dcba:9876::1/64".into())),
+        ("fake-ip-filter-mode".into(), Value::String("blacklist".into())),
+        ("prefer-h3".into(), Value::Bool(false)),
+        ("respect-rules".into(), Value::Bool(false)),
+        ("use-hosts".into(), Value::Bool(false)),
+        ("use-system-hosts".into(), Value::Bool(false)),
+        (
+            "fake-ip-filter".into(),
+            Value::Sequence(vec![
+                Value::String("*.lan".into()),
+                Value::String("*.local".into()),
+                Value::String("*.arpa".into()),
+                Value::String("time.*.com".into()),
+                Value::String("ntp.*.com".into()),
+                Value::String("time.*.com".into()),
+                Value::String("+.market.xiaomi.com".into()),
+                Value::String("localhost.ptlogin2.qq.com".into()),
+                Value::String("*.msftncsi.com".into()),
+                Value::String("www.msftconnecttest.com".into()),
+            ]),
+        ),
+        (
+            "default-nameserver".into(),
+            Value::Sequence(vec![
+                Value::String("system".into()),
+                Value::String("223.6.6.6".into()),
+                Value::String("8.8.8.8".into()),
+                Value::String("2400:3200::1".into()),
+                Value::String("2001:4860:4860::8888".into()),
+            ]),
+        ),
+        (
+            "nameserver".into(),
+            Value::Sequence(vec![
+                Value::String("8.8.8.8".into()),
+                Value::String("https://doh.pub/dns-query".into()),
+                Value::String("https://dns.alidns.com/dns-query".into()),
+            ]),
+        ),
+        ("fallback".into(), Value::Sequence(vec![])),
+        (
+            "nameserver-policy".into(),
+            Value::Mapping(serde_yaml_ng::Mapping::new()),
+        ),
+        (
+            "proxy-server-nameserver".into(),
+            Value::Sequence(vec![
+                Value::String("https://doh.pub/dns-query".into()),
+                Value::String("https://dns.alidns.com/dns-query".into()),
+                Value::String("tls://223.5.5.5".into()),
+            ]),
+        ),
+        ("direct-nameserver".into(), Value::Sequence(vec![])),
+        ("direct-nameserver-follow-policy".into(), Value::Bool(false)),
+        (
+            "fallback-filter".into(),
+            Value::Mapping(serde_yaml_ng::Mapping::from_iter([
+                ("geoip".into(), Value::Bool(true)),
+                ("geoip-code".into(), Value::String("CN".into())),
+                (
+                    "ipcidr".into(),
+                    Value::Sequence(vec![
+                        Value::String("240.0.0.0/4".into()),
+                        Value::String("0.0.0.0/32".into()),
+                    ]),
+                ),
+                (
+                    "domain".into(),
+                    Value::Sequence(vec![
+                        Value::String("+.google.com".into()),
+                        Value::String("+.facebook.com".into()),
+                        Value::String("+.youtube.com".into()),
+                    ]),
+                ),
+            ])),
+        ),
+    ]);
+
+    let default_dns_config = serde_yaml_ng::Mapping::from_iter([
+        ("dns".into(), Value::Mapping(dns_config)),
+        ("hosts".into(), Value::Mapping(serde_yaml_ng::Mapping::new())),
+    ]);
+
+    let app_dir = dirs::app_home_dir()?;
+    let dns_path = app_dir.join(constants::files::DNS_CONFIG);
+
+    if !dns_path.exists() {
+        logging!(info, Type::Setup, "Creating default DNS config file");
+        help::save_yaml(&dns_path, &default_dns_config, Some("# Clash Verge DNS Config")).await?;
+    }
 
     Ok(())
 }
@@ -385,9 +489,9 @@ pub async fn init_config() -> Result<()> {
 
     AsyncHandler::spawn(|| async {
         if let Err(e) = delete_log().await {
-            logging!(warn, Type::Setup, "Failed to clean old logs: {}", e);
+            logging!(warn, Type::Setup, "Failed to clean old logs: {e:#}");
         }
-        logging!(info, Type::Setup, "后台日志清理任务完成");
+        logging!(debug, Type::Setup, "后台日志清理任务完成");
     });
 
     Ok(())
@@ -446,8 +550,8 @@ pub fn init_scheme() -> Result<()> {
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (clash, _) = hkcu.create_subkey("Software\\Classes\\Clash")?;
-    clash.set_value("", &"clash-x")?;
-    clash.set_value("URL Protocol", &"clash-x URL Scheme Protocol")?;
+    clash.set_value("", &"Clash Verge")?;
+    clash.set_value("URL Protocol", &"Clash Verge URL Scheme Protocol")?;
     let (default_icon, _) = hkcu.create_subkey("Software\\Classes\\Clash\\DefaultIcon")?;
     default_icon.set_value("", &app_exe)?;
     let (command, _) = hkcu.create_subkey("Software\\Classes\\Clash\\Shell\\Open\\Command")?;
@@ -457,7 +561,7 @@ pub fn init_scheme() -> Result<()> {
 }
 #[cfg(target_os = "linux")]
 pub fn init_scheme() -> Result<()> {
-    const DESKTOP_FILE: &str = "clash-x.desktop";
+    const DESKTOP_FILE: &str = "clash-verge.desktop";
 
     for scheme in DEEP_LINK_SCHEMES {
         let handler = format!("x-scheme-handler/{scheme}");

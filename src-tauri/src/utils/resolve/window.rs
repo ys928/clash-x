@@ -1,8 +1,6 @@
 use dark_light::{Mode as SystemTheme, detect as detect_system_theme};
 use tauri::utils::config::Color;
 use tauri::webview::PageLoadEvent;
-#[cfg(target_os = "macos")]
-use tauri::window::{Effect, EffectsBuilder};
 use tauri::{Theme, WebviewWindow};
 
 use crate::{config::Config, core::handle, utils::resolve::window_script::build_window_initial_script};
@@ -10,10 +8,10 @@ use crate::{config::Config, core::handle, utils::resolve::window_script::build_w
 use clash_verge_logging::logging;
 use clash_verge_logging::{Type, logging_error};
 
-const DARK_BACKGROUND_COLOR: Color = Color(26, 27, 30, 255); // #1A1B1E
-const LIGHT_BACKGROUND_COLOR: Color = Color(242, 243, 245, 255); // #F2F3F5
-const DARK_BACKGROUND_HEX: &str = "#1A1B1E";
-const LIGHT_BACKGROUND_HEX: &str = "#F2F3F5";
+const DARK_BACKGROUND_COLOR: Color = Color(46, 48, 61, 255); // #2E303D
+const LIGHT_BACKGROUND_COLOR: Color = Color(245, 245, 245, 255); // #F5F5F5
+const DARK_BACKGROUND_HEX: &str = "#2E303D";
+const LIGHT_BACKGROUND_HEX: &str = "#F5F5F5";
 
 const DEFAULT_WIDTH: f64 = 940.0;
 const DEFAULT_HEIGHT: f64 = 700.0;
@@ -21,16 +19,10 @@ const DEFAULT_HEIGHT: f64 = 700.0;
 const MINIMAL_WIDTH: f64 = 520.0;
 const MINIMAL_HEIGHT: f64 = 520.0;
 
+#[cfg(target_os = "linux")]
 const DEFAULT_DECORATIONS: bool = false;
-const DEFAULT_TRANSPARENT: bool = true;
-/// macOS `EffectsBuilder::radius`; Windows 11 uses system corner radius via `shadow(true)`.
-#[cfg(target_os = "macos")]
-const NATIVE_WINDOW_CORNER_RADIUS: f64 = 12.0;
-#[cfg(target_os = "windows")]
-const NATIVE_WINDOW_SHADOW: bool = true;
-#[cfg(not(target_os = "windows"))]
-const NATIVE_WINDOW_SHADOW: bool = false;
-const TRANSPARENT_BACKGROUND: Color = Color(0, 0, 0, 0);
+#[cfg(not(target_os = "linux"))]
+const DEFAULT_DECORATIONS: bool = true;
 
 const fn restored_window_size_is_too_small(width: u32, height: u32) -> bool {
     width < MINIMAL_WIDTH as u32 || height < MINIMAL_HEIGHT as u32
@@ -76,9 +68,7 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
         _ => !matches!(detect_system_theme().ok(), Some(SystemTheme::Light)),
     };
 
-    let background_color = if DEFAULT_TRANSPARENT {
-        TRANSPARENT_BACKGROUND
-    } else if prefers_dark_background {
+    let background_color = if prefers_dark_background {
         DARK_BACKGROUND_COLOR
     } else {
         LIGHT_BACKGROUND_COLOR
@@ -91,11 +81,9 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
         "main", /* the unique window label */
         tauri::WebviewUrl::App(start_page.into()),
     )
-    .title("clash-x")
+    .title("Clash Verge")
     .center()
     .decorations(DEFAULT_DECORATIONS)
-    .transparent(DEFAULT_TRANSPARENT)
-    .shadow(NATIVE_WINDOW_SHADOW)
     .fullscreen(false)
     .inner_size(DEFAULT_WIDTH, DEFAULT_HEIGHT)
     .min_inner_size(MINIMAL_WIDTH, MINIMAL_HEIGHT)
@@ -113,16 +101,6 @@ pub async fn build_new_window() -> Result<WebviewWindow, String> {
 
     if let Some(theme) = resolved_theme {
         builder = builder.theme(Some(theme));
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        builder = builder.effects(
-            EffectsBuilder::new()
-                .effect(Effect::HudWindow)
-                .radius(NATIVE_WINDOW_CORNER_RADIUS)
-                .build(),
-        );
     }
 
     builder = builder.background_color(background_color);
