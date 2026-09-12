@@ -12,11 +12,15 @@ use tauri::Manager as _;
 pub static APP_ID: &str = "io.github.clash-verge-rev.clash-verge-rev";
 #[cfg(not(feature = "verge-dev"))]
 pub static BACKUP_DIR: &str = "clash-verge-rev-backup";
+#[cfg(not(feature = "verge-dev"))]
+pub static CLASH_X_APP_ID: &str = "io.github.ys928.clash-x";
 
 #[cfg(feature = "verge-dev")]
 pub static APP_ID: &str = "io.github.clash-verge-rev.clash-verge-rev.dev";
 #[cfg(feature = "verge-dev")]
 pub static BACKUP_DIR: &str = "clash-verge-rev-backup-dev";
+#[cfg(feature = "verge-dev")]
+pub static CLASH_X_APP_ID: &str = "io.github.ys928.clash-x.dev";
 
 pub static CLASH_CONFIG: &str = "config.yaml";
 pub static VERGE_CONFIG: &str = "verge.yaml";
@@ -29,6 +33,13 @@ pub fn app_home_dir() -> Result<PathBuf> {
     ::dirs::data_dir()
         .map(|root| root.join(APP_ID))
         .ok_or_else(|| anyhow::anyhow!("Failed to get the app home directory"))
+}
+
+/// Clash-X-specific data directory used by features that must not mix with upstream state.
+pub fn clash_x_data_dir() -> Result<PathBuf> {
+    ::dirs::data_dir()
+        .map(|root| root.join(CLASH_X_APP_ID))
+        .ok_or_else(|| anyhow::anyhow!("Failed to get the Clash-X data directory"))
 }
 
 pub fn preinit_app_data_dir() -> Result<PathBuf> {
