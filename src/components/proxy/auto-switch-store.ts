@@ -1,9 +1,6 @@
 import {
-  deleteAutoSwitchGroup as deleteAutoSwitchGroupCmd,
   getAutoSwitchGroups as getAutoSwitchGroupsCmd,
-  patchAutoSwitchGroup as patchAutoSwitchGroupCmd,
   replaceAutoSwitchGroups as replaceAutoSwitchGroupsCmd,
-  upsertAutoSwitchGroup as upsertAutoSwitchGroupCmd,
 } from '@/services/cmds'
 
 import {
@@ -55,32 +52,4 @@ export function hydrateAutoSwitchGroups() {
     }
   })()
   return hydratePromise
-}
-
-const afterHydrate = async <T>(run: () => Promise<T>) => {
-  await hydrateAutoSwitchGroups()
-  return run()
-}
-
-export const setAutoSwitchGroups = async (next: AutoSwitchGroup[]) => {
-  const saved = await afterHydrate(() => replaceAutoSwitchGroupsCmd(next))
-  setGroups(saved)
-}
-
-export const updateAutoSwitchGroup = async (
-  id: string,
-  patch: Partial<AutoSwitchGroup>,
-) => {
-  const saved = await afterHydrate(() => patchAutoSwitchGroupCmd(id, patch))
-  setGroups(saved)
-}
-
-export const upsertAutoSwitchGroup = async (group: AutoSwitchGroup) => {
-  const saved = await afterHydrate(() => upsertAutoSwitchGroupCmd(group))
-  setGroups(saved)
-}
-
-export const removeAutoSwitchGroup = async (id: string) => {
-  const saved = await afterHydrate(() => deleteAutoSwitchGroupCmd(id))
-  setGroups(saved)
 }
