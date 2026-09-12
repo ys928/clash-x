@@ -13,7 +13,9 @@ use crate::{
         tray::Tray,
     },
     feat,
-    module::{auto_backup::AutoBackupManager, lightweight::auto_lightweight_boot},
+    module::{
+        auto_backup::AutoBackupManager, domain_traffic::DomainTrafficManager, lightweight::auto_lightweight_boot,
+    },
     process::AsyncHandler,
     utils::{init, server, window_manager::WindowManager},
 };
@@ -87,6 +89,7 @@ async fn resolve_setup() {
         init_hotkey(),
         init_auto_lightweight_boot(),
         init_auto_backup(),
+        DomainTrafficManager::global().init(),
         init_silent_updater(),
     );
 
