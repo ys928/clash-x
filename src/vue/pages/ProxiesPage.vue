@@ -71,6 +71,7 @@ import { navigateApp } from '@/utils/app-navigate'
 import { navigationItems } from '@/pages/_navigation-meta'
 
 import ProxyNodeCard from '@/vue/components/ProxyNodeCard.vue'
+import AutoSwitchPanel from '@/vue/components/AutoSwitchPanel.vue'
 import UiStatusMessage from '@/vue/components/ui/UiStatusMessage.vue'
 import { resolvePrimaryProxyGroup } from '@/vue/utils/resolve-primary-proxy-group'
 
@@ -102,6 +103,7 @@ const testingAll = ref(false)
 const selecting = ref(false)
 const restarting = ref(false)
 const providerOpen = ref(false)
+const autoSwitchOpen = ref(false)
 const updatingProviders = ref<Record<string, boolean>>({})
 const delayTick = ref(0)
 const listEl = ref<HTMLElement | null>(null)
@@ -346,7 +348,12 @@ const toggleShowType = () => {
 }
 
 const openAutoSwitch = () => {
-  window.dispatchEvent(new CustomEvent('clash-x:open-auto-switch'))
+  autoSwitchOpen.value = true
+}
+
+const onAutoSwitchRefresh = async () => {
+  await refreshAll({ silent: true })
+  syncReactProxyCache()
 }
 
 const openProfiles = () => {
@@ -697,6 +704,13 @@ onUnmounted(() => {
         </el-button>
       </template>
     </el-dialog>
+
+    <AutoSwitchPanel
+      v-model:open="autoSwitchOpen"
+      :proxy-view="proxyView"
+      :mode="DISPLAY_MODE"
+      @refresh="onAutoSwitchRefresh"
+    />
   </div>
 </template>
 
