@@ -14,7 +14,8 @@ use crate::{
     },
     feat,
     module::{
-        auto_backup::AutoBackupManager, domain_traffic::DomainTrafficManager, lightweight::auto_lightweight_boot,
+        auto_backup::AutoBackupManager, auto_switch::AutoSwitchManager, domain_traffic::DomainTrafficManager,
+        lightweight::auto_lightweight_boot,
     },
     process::AsyncHandler,
     utils::{init, server, window_manager::WindowManager},
@@ -89,6 +90,7 @@ async fn resolve_setup() {
         init_hotkey(),
         init_auto_lightweight_boot(),
         init_auto_backup(),
+        init_auto_switch(),
         DomainTrafficManager::global().init(),
         init_silent_updater(),
     );
@@ -165,6 +167,10 @@ async fn init_auto_lightweight_boot() {
 
 async fn init_auto_backup() {
     logging_error!(Type::Setup, AutoBackupManager::global().init().await);
+}
+
+async fn init_auto_switch() {
+    logging_error!(Type::Setup, AutoSwitchManager::global().init().await);
 }
 
 async fn init_silent_updater() {
