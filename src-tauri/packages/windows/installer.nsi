@@ -942,6 +942,8 @@ Section Install
   ; Remove legacy executables
   IfFileExists "$INSTDIR\Clash Verge.exe" 0 +2
     Delete "$INSTDIR\Clash Verge.exe"
+  IfFileExists "$INSTDIR\clash-verge.exe" 0 +2
+    Delete "$INSTDIR\clash-verge.exe"
 
   !insertmacro SetContext
 
@@ -1134,6 +1136,8 @@ Section Uninstall
   ; Remove legacy executables
   IfFileExists "$INSTDIR\Clash Verge.exe" 0 +2
     Delete "$INSTDIR\Clash Verge.exe"
+  IfFileExists "$INSTDIR\clash-verge.exe" 0 +2
+    Delete "$INSTDIR\clash-verge.exe"
 
   !insertmacro SetContext
 
