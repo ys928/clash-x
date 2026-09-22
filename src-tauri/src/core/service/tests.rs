@@ -1,8 +1,8 @@
 #![allow(clippy::expect_used, clippy::panic, reason = "tests assert by panicking")]
 use super::{
     ServiceHealth, ServiceStatus, capture_generation_before, claim_owner_recovery_generation,
-    generate_service_session_token, macos_install_shell, mark_service_unavailable_after_owner_loss,
-    owner_recovery_policy, service_core_path_for, session_matches_status,
+    generate_service_session_token, mark_service_unavailable_after_owner_loss, owner_recovery_policy,
+    service_core_path_for, session_matches_status,
 };
 #[cfg(unix)]
 use super::{service_core_path_for_with_publisher, service_tool_path_for};
@@ -137,17 +137,6 @@ fn development_service_tool_uses_safe_layout_and_executable_bytes() -> anyhow::R
     assert_eq!(std::fs::read(&selected)?, b"development installer");
     assert_ne!(std::fs::metadata(&selected)?.permissions().mode() & 0o111, 0);
     Ok(())
-}
-
-#[test]
-fn macos_install_shell_starts_from_root_without_nested_sudo() {
-    let shell = macos_install_shell(Path::new("/safe/service-tools/clash-verge-service-install"), 20);
-
-    assert_eq!(
-        shell,
-        "cd /; CLASH_VERGE_SERVICE_GID=20 '/safe/service-tools/clash-verge-service-install'"
-    );
-    assert!(!shell.contains("sudo"));
 }
 
 #[cfg(unix)]

@@ -243,15 +243,9 @@ pub(crate) fn escape_osascript_double_quoted_string(value: &str) -> String {
     value.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
-#[cfg(any(target_os = "macos", test))]
+#[cfg(target_os = "macos")]
 pub(crate) fn shell_single_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', r"'\''"))
-}
-
-#[cfg(any(target_os = "macos", test))]
-pub(crate) fn macos_install_shell(install_path: &Path, gid: u32) -> String {
-    let install_quoted = shell_single_quote(&install_path.to_string_lossy());
-    format!("cd /; CLASH_VERGE_SERVICE_GID={gid} {install_quoted}")
 }
 
 pub(crate) fn packaged_service_tool_path(
