@@ -27,7 +27,6 @@ pub(crate) use clash_verge_service_ipc::{
 pub(crate) use once_cell::sync::Lazy;
 pub(crate) use parking_lot::Mutex;
 pub(crate) use std::{
-    borrow::Cow,
     collections::HashMap,
     env::current_exe,
     future::Future,

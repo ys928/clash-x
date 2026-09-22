@@ -308,32 +308,36 @@ const CONTROL_PLANE_KEYS: &[&str] = &[
     "unified-delay",
 ];
 
-/// The fields the app owns, held across the stages that apply the user's manual overrides.
-///
-/// Capturing and restoring are one value rather than two calls because the order is a
-/// correctness requirement, not a style: capture must happen after the app has finished
-/// deriving these fields and before any override runs, and restore must happen after every
-/// override. As four separate calls that contract lived only in comments.
+/// App-owned fields: captured after the app derives them, enforced after every override.
 struct AuthoritativeFields {
     control_plane: Mapping,
     tun: Mapping,
-    /// Only tracked when the DNS page owns it; otherwise overrides may set `dns.ipv6` freely.
-    dns_ipv6: Option<Value>,
+    dns: Mapping,
+    hosts: Option<Value>,
 }
 
 impl AuthoritativeFields {
-    fn capture(config: &Mapping, gui_tun_keys: &[Value], enable_dns_settings: bool) -> Self {
+    fn capture(config: &Mapping, gui_tun_keys: &[Value], mut dns_settings: Mapping) -> Self {
         Self {
             control_plane: snapshot_control_plane(config),
             tun: snapshot_tun(config, gui_tun_keys),
-            dns_ipv6: enable_dns_settings.then(|| snapshot_dns_ipv6(config)).flatten(),
+            dns: take_mapping(&mut dns_settings, "dns"),
+            hosts: dns_settings.remove("hosts"),
         }
     }
 
     fn enforce(self, config: Mapping) -> Mapping {
         let config = enforce_control_plane(config, self.control_plane);
-        let config = enforce_tun(config, self.tun);
-        enforce_dns_ipv6(config, self.dns_ipv6)
+        let mut config = enforce_tun(config, self.tun);
+        if !self.dns.is_empty() {
+            let mut dns = take_mapping(&mut config, "dns");
+            dns.extend(self.dns);
+            config.insert("dns".into(), dns.into());
+        }
+        if let Some(hosts) = self.hosts {
+            config.insert("hosts".into(), hosts);
+        }
+        config
     }
 }
 
@@ -401,19 +405,55 @@ fn enforce_tun(mut config: Mapping, snapshot: Mapping) -> Mapping {
     config
 }
 
-/// DNS 页权威的嵌套开关;只在 `enable_dns_settings` 时快照。
-fn snapshot_dns_ipv6(config: &Mapping) -> Option<Value> {
-    config.get("dns")?.get("ipv6").cloned()
+/// DNS page fields are captured from the applied dns_config.yaml overlay, not ipv6 alone.
+fn take_mapping(config: &mut Mapping, key: &str) -> Mapping {
+    config
+        .get_mut(key)
+        .and_then(Value::as_mapping_mut)
+        .map(std::mem::take)
+        .unwrap_or_default()
 }
 
-/// 恢复 `dns.ipv6`,但不创建缺失的 `dns` 块。
-fn enforce_dns_ipv6(mut config: Mapping, dns_ipv6: Option<Value>) -> Mapping {
-    if let Some(dns_ipv6) = dns_ipv6
-        && let Some(Value::Mapping(dns)) = config.get_mut("dns")
-    {
-        dns.insert(Value::from("ipv6"), dns_ipv6);
+/// On, non-blank text, or non-empty list/map; anything else keeps the profile's value.
+fn is_set(value: &Value) -> bool {
+    match value {
+        Value::Null => false,
+        Value::Bool(on) => *on,
+        Value::String(text) => !text.trim().is_empty(),
+        Value::Sequence(items) => !items.is_empty(),
+        Value::Mapping(map) => !map.is_empty(),
+        Value::Number(_) | Value::Tagged(_) => true,
     }
-    config
+}
+
+fn merge_dns_config(mut config: Mapping, mut dns_config: Mapping) -> (Mapping, Mapping) {
+    let mut applied = Mapping::new();
+    if let Some(Value::Mapping(hosts)) = dns_config.remove("hosts")
+        && !hosts.is_empty()
+    {
+        applied.insert("hosts".into(), hosts.clone().into());
+        config.insert("hosts".into(), hosts.into());
+        logging!(debug, Type::Core, "apply hosts configuration");
+    }
+
+    // Legacy layout: no `dns` root.
+    let dns_override = match dns_config.remove("dns") {
+        Some(Value::Mapping(dns)) => Some(dns),
+        Some(_) => None,
+        None => Some(dns_config),
+    };
+    if let Some(mut dns_override) = dns_override {
+        dns_override.retain(|_, value| is_set(value));
+        if !dns_override.is_empty() {
+            applied.insert("dns".into(), dns_override.clone().into());
+        }
+        let mut dns = take_mapping(&mut config, "dns");
+        dns.extend(dns_override);
+        ensure_fake_ip_range6(&mut dns);
+        config.insert("dns".into(), dns.into());
+        logging!(debug, Type::Core, "apply dns_config.yaml");
+    }
+    (config, applied)
 }
 
 fn is_loopback_bind_address(addr: &str) -> bool {
@@ -708,38 +748,20 @@ fn ensure_fake_ip_range6(dns: &mut Mapping) {
     }
 }
 
-async fn apply_dns_settings(mut config: Mapping, enable_dns_settings: bool) -> Mapping {
+/// Returns the merged config and the non-empty fields owned by the DNS page.
+async fn apply_dns_settings(config: Mapping, enable_dns_settings: bool) -> (Mapping, Mapping) {
     if enable_dns_settings && let Ok(app_dir) = dirs::app_home_dir() {
         let dns_path = app_dir.join(constants::files::DNS_CONFIG);
 
         if dns_path.exists()
             && let Ok(dns_yaml) = fs::read_to_string(&dns_path).await
-            && let Ok(dns_config) = serde_yaml_ng::from_str::<serde_yaml_ng::Mapping>(&dns_yaml)
+            && let Ok(dns_config) = serde_yaml_ng::from_str::<Mapping>(&dns_yaml)
         {
-            if let Some(hosts_value) = dns_config.get("hosts")
-                && hosts_value.is_mapping()
-            {
-                config.insert("hosts".into(), hosts_value.clone());
-                logging!(debug, Type::Core, "apply hosts configuration");
-            }
-
-            if let Some(dns_value) = dns_config.get("dns") {
-                if let Some(dns_mapping) = dns_value.as_mapping() {
-                    let mut dns_mapping = dns_mapping.clone();
-                    ensure_fake_ip_range6(&mut dns_mapping);
-                    config.insert("dns".into(), dns_mapping.into());
-                    logging!(debug, Type::Core, "apply dns_config.yaml (dns section)");
-                }
-            } else {
-                let mut dns_config = dns_config;
-                ensure_fake_ip_range6(&mut dns_config);
-                config.insert("dns".into(), dns_config.into());
-                logging!(debug, Type::Core, "apply dns_config.yaml");
-            }
+            return merge_dns_config(config, dns_config);
         }
     }
 
-    config
+    (config, Mapping::new())
 }
 
 /// Returns the enhanced profile, its original keys, script logs, and DNS override decision.
@@ -800,9 +822,9 @@ pub async fn enhance(
 
     let config = apply_builtin_scripts(config, clash_core, enable_builtin);
     let config = use_tun(config, enable_tun);
-    let config = apply_dns_settings(config, enable_dns_settings).await;
+    let (config, dns_settings) = apply_dns_settings(config, enable_dns_settings).await;
 
-    let authoritative = AuthoritativeFields::capture(&config, &gui_tun_keys, enable_dns_settings);
+    let authoritative = AuthoritativeFields::capture(&config, &gui_tun_keys, dns_settings);
 
     let (config, exists_keys, result_map) = process_global_items(
         config,
@@ -1223,7 +1245,7 @@ mod authoritative_field_tests {
     #[test]
     fn an_override_cannot_change_a_field_the_app_owns() {
         let derived = config_with(&[("mode", Value::from("rule")), ("secret", Value::from("ours"))]);
-        let authoritative = AuthoritativeFields::capture(&derived, &[], false);
+        let authoritative = AuthoritativeFields::capture(&derived, &[], Mapping::new());
 
         let overridden = config_with(&[("mode", Value::from("global")), ("secret", Value::from("theirs"))]);
         let result = authoritative.enforce(overridden);
@@ -1236,7 +1258,7 @@ mod authoritative_field_tests {
     fn an_override_cannot_introduce_a_field_the_app_left_out() {
         // The app decided not to expose the external controller; a profile must not re-add it.
         let derived = Mapping::new();
-        let authoritative = AuthoritativeFields::capture(&derived, &[], false);
+        let authoritative = AuthoritativeFields::capture(&derived, &[], Mapping::new());
 
         let overridden = config_with(&[("external-controller", Value::from("0.0.0.0:9090"))]);
         let result = authoritative.enforce(overridden);
@@ -1247,7 +1269,7 @@ mod authoritative_field_tests {
     #[test]
     fn fields_the_app_does_not_own_survive_an_override() {
         let derived = config_with(&[("mode", Value::from("rule"))]);
-        let authoritative = AuthoritativeFields::capture(&derived, &[], false);
+        let authoritative = AuthoritativeFields::capture(&derived, &[], Mapping::new());
 
         let overridden = config_with(&[("mode", Value::from("global")), ("profile-key", Value::from(1))]);
         let result = authoritative.enforce(overridden);
@@ -1259,7 +1281,7 @@ mod authoritative_field_tests {
     fn dns_ipv6_is_only_reclaimed_when_the_dns_page_owns_it() {
         let derived = config_with(&[("dns", dns_with_ipv6(true))]);
 
-        let owned = AuthoritativeFields::capture(&derived, &[], true);
+        let owned = AuthoritativeFields::capture(&derived, &[], derived.clone());
         let restored = owned.enforce(config_with(&[("dns", dns_with_ipv6(false))]));
         assert_eq!(
             restored.get(Value::from("dns")).and_then(|dns| dns.get("ipv6")),
@@ -1267,7 +1289,7 @@ mod authoritative_field_tests {
             "with the DNS page on, the app's value wins"
         );
 
-        let unowned = AuthoritativeFields::capture(&derived, &[], false);
+        let unowned = AuthoritativeFields::capture(&derived, &[], Mapping::new());
         let left_alone = unowned.enforce(config_with(&[("dns", dns_with_ipv6(false))]));
         assert_eq!(
             left_alone.get(Value::from("dns")).and_then(|dns| dns.get("ipv6")),
@@ -1277,14 +1299,13 @@ mod authoritative_field_tests {
     }
 
     #[test]
-    fn restoring_dns_ipv6_never_invents_a_dns_block() {
+    fn restoring_dns_settings_reinstates_a_removed_dns_block() {
         let derived = config_with(&[("dns", dns_with_ipv6(true))]);
-        let authoritative = AuthoritativeFields::capture(&derived, &[], true);
+        let authoritative = AuthoritativeFields::capture(&derived, &[], derived.clone());
 
-        // An override removed DNS entirely; reinstating just `ipv6` would be a half-config.
         let result = authoritative.enforce(Mapping::new());
 
-        assert!(!result.contains_key(Value::from("dns")));
+        assert_eq!(result["dns"], derived["dns"]);
     }
 }
 
@@ -1292,7 +1313,7 @@ mod authoritative_field_tests {
 #[cfg(test)]
 mod tests {
     use super::{
-        ChainItem, ChainType, cleanup_proxy_groups, ensure_lan_bind_address, process_global_items,
+        AuthoritativeFields, ChainItem, ChainType, cleanup_proxy_groups, ensure_lan_bind_address, process_global_items,
         process_profile_items, use_keys,
     };
     use std::collections::HashMap;
@@ -1498,19 +1519,21 @@ mod tests {
     }
 
     #[test]
-    fn dns_ipv6_follows_ui_but_other_dns_stays_overridable() {
+    fn empty_dns_settings_leave_inherited_fields_overridable() {
         let app_config = mapping(r#"{dns: {ipv6: false, proxy-server-nameserver: ["1.1.1.1"]}}"#);
-        let dns_ipv6 = super::snapshot_dns_ipv6(&app_config);
+        let (config, dns_settings) =
+            super::merge_dns_config(app_config.clone(), mapping(r"{dns: {enable: false, nameserver: []}}"));
+        let authoritative = AuthoritativeFields::capture(&config, &[], dns_settings);
 
         let hijacked = mapping(r#"{dns: {ipv6: true, proxy-server-nameserver: ["8.8.8.8"]}}"#);
-        let result = super::enforce_dns_ipv6(hijacked, dns_ipv6);
+        let result = authoritative.enforce(hijacked);
 
         assert_eq!(
             result
                 .get("dns")
                 .and_then(|value| value.get("ipv6"))
                 .and_then(serde_yaml_ng::Value::as_bool),
-            Some(false)
+            Some(true)
         );
         assert_eq!(
             result
