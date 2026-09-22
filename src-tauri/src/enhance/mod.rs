@@ -1522,7 +1522,7 @@ mod tests {
     fn empty_dns_settings_leave_inherited_fields_overridable() {
         let app_config = mapping(r#"{dns: {ipv6: false, proxy-server-nameserver: ["1.1.1.1"]}}"#);
         let (config, dns_settings) =
-            super::merge_dns_config(app_config.clone(), mapping(r"{dns: {enable: false, nameserver: []}}"));
+            super::merge_dns_config(app_config, mapping(r"{dns: {enable: false, nameserver: []}}"));
         let authoritative = AuthoritativeFields::capture(&config, &[], dns_settings);
 
         let hijacked = mapping(r#"{dns: {ipv6: true, proxy-server-nameserver: ["8.8.8.8"]}}"#);
