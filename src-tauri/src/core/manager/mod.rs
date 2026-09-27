@@ -74,6 +74,14 @@ impl fmt::Display for RunningMode {
     }
 }
 
+/// Why the Core is not running, retained until a Core starts again.
+#[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
+#[serde(tag = "kind", content = "detail", rename_all = "camelCase")]
+pub enum CoreFailure {
+    StartFailed(String),
+    ServiceCoreStopped(String),
+}
+
 #[derive(Debug)]
 pub struct CoreManager {
     /// The Run State this manager reports transitions to.
@@ -87,6 +95,7 @@ pub struct CoreManager {
     job_handle: ArcSwapOption<OwnedHandle>,
     config_update_in_progress: AtomicBool,
     core_readiness_state: AtomicU64,
+    startup_error: parking_lot::Mutex<Option<CoreFailure>>,
     // 串行化 start/stop/restart 和 sidecar→service 交接。
     // 锁序固定为 config_update_in_progress → lifecycle_lock。
     pub(crate) lifecycle_lock: tokio::sync::Mutex<()>,
@@ -114,6 +123,7 @@ impl Default for CoreManager {
             job_handle: ArcSwapOption::new(None),
             config_update_in_progress: AtomicBool::new(false),
             core_readiness_state: AtomicU64::new(0),
+            startup_error: parking_lot::Mutex::new(None),
             lifecycle_lock: tokio::sync::Mutex::new(()),
             #[cfg(target_os = "windows")]
             handoff_watcher_running: AtomicBool::new(false),
@@ -137,6 +147,17 @@ impl CoreManager {
 
     pub fn get_running_mode(&self) -> Arc<RunningMode> {
         self.run_state.mode_arc()
+    }
+
+    pub(crate) fn record_startup_error(&self, failure: CoreFailure) {
+        let mut startup_error = self.startup_error.lock();
+        if matches!(*self.get_running_mode(), RunningMode::NotRunning) {
+            *startup_error = Some(failure);
+        }
+    }
+
+    pub(crate) fn get_startup_error(&self) -> Option<CoreFailure> {
+        self.startup_error.lock().clone()
     }
 
     pub fn take_child_sidecar(&self) -> Option<CommandChild> {
@@ -165,6 +186,7 @@ impl CoreManager {
             logging!(info, Type::Core, "Core running mode changed: {previous} -> {mode}");
         }
         self.run_state.core_started(mode);
+        self.startup_error.lock().take();
     }
 
     /// The Core is no longer running, for any reason.

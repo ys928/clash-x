@@ -21,8 +21,9 @@ pub(crate) use anyhow::{Context as _, Result, anyhow, bail};
 pub(crate) use clash_verge_draft::Draft;
 pub(crate) use clash_verge_logging::{Type, logging};
 pub(crate) use clash_verge_service_ipc::{
-    MacosProxyConfig, OwnerCredentials, OwnerSessionProof, ProtocolInfo, ProxyApplyOutcome, RuntimeBundle,
-    RuntimeFileOutcome, RuntimeFileRequest, ServiceErrorCode, StageRuntimeOutcome, StartClashRequest, WriterConfig,
+    MacosProxyConfig, OwnerCredentials, OwnerIdentity, OwnerSessionProof, ProtocolInfo, ProxyApplyOutcome,
+    RuntimeBundle, RuntimeFileOutcome, RuntimeFileRequest, ServiceErrorCode, StageRuntimeOutcome, StartClashRequest,
+    WriterConfig,
 };
 pub(crate) use once_cell::sync::Lazy;
 pub(crate) use parking_lot::Mutex;
@@ -38,6 +39,35 @@ pub(crate) use std::{
 
 pub(crate) static OWNER_MONITOR_GENERATION: AtomicU64 = AtomicU64::new(0);
 pub(crate) static ACTIVE_SERVICE_SESSION: Lazy<Mutex<Option<ActiveServiceSession>>> = Lazy::new(|| Mutex::new(None));
+pub(crate) static PENDING_SERVICE_FALLBACK_NOTICE: AtomicBool = AtomicBool::new(false);
+pub(crate) static PENDING_SERVICE_REPAIR_NOTICE: AtomicBool = AtomicBool::new(false);
+pub(crate) static PENDING_SERVICE_OWNER_NOTICE: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+
+#[cfg(windows)]
+pub(crate) fn notify_service_fallback() {
+    PENDING_SERVICE_FALLBACK_NOTICE.store(true, Ordering::Relaxed);
+    Handle::notice_message("service_core::sidecar_fallback", "");
+}
+
+pub(crate) fn take_service_fallback_notice() -> bool {
+    PENDING_SERVICE_FALLBACK_NOTICE.swap(false, Ordering::Relaxed)
+}
+
+pub(crate) fn take_service_repair_notice() -> bool {
+    PENDING_SERVICE_REPAIR_NOTICE.swap(false, Ordering::Relaxed)
+}
+
+pub(crate) fn take_service_owner_notice() -> Option<String> {
+    PENDING_SERVICE_OWNER_NOTICE.lock().take()
+}
+
+pub(crate) fn app_data_owner_command(credentials: &OwnerCredentials) -> Option<String> {
+    let OwnerIdentity::Unix { uid, gid } = credentials.identity else {
+        return None;
+    };
+    let path = credentials.app_data_dir.replace('\'', r"'\''");
+    Some(format!("sudo chown -R {uid}:{gid} '{path}'"))
+}
 
 /// Capabilities of the service session that owns the running Core.
 /// They are discarded with that session rather than cached across service upgrades.
@@ -215,7 +245,7 @@ pub(crate) fn macos_service_install_marker_exists() -> std::io::Result<bool> {
 }
 
 #[cfg(windows)]
-pub(crate) fn trusted_service_evidence() -> Result<bool> {
+fn open_registered_service() -> Result<Option<windows_service::service::Service>> {
     use windows_service::{
         Error as WindowsServiceError,
         service::ServiceAccess,
@@ -228,15 +258,33 @@ pub(crate) fn trusted_service_evidence() -> Result<bool> {
         clash_verge_service_ipc::WINDOWS_SERVICE_NAME,
         ServiceAccess::QUERY_STATUS,
     ) {
-        Ok(service) => {
-            drop(service);
-            Ok(true)
-        }
+        Ok(service) => Ok(Some(service)),
         Err(WindowsServiceError::Winapi(error)) if error.raw_os_error() == Some(ERROR_SERVICE_DOES_NOT_EXIST) => {
-            Ok(false)
+            Ok(None)
         }
         Err(error) => Err(error).context("failed to inspect Windows service registration"),
     }
+}
+
+#[cfg(windows)]
+pub(crate) fn trusted_service_evidence() -> Result<bool> {
+    Ok(open_registered_service()?.is_some())
+}
+
+/// Whether IPC cannot succeed until the service is started again.
+#[cfg(windows)]
+pub(crate) fn service_stopped() -> Result<bool> {
+    use windows_service::service::{ServiceExitCode, ServiceState};
+
+    const ERROR_SERVICE_NEVER_STARTED: u32 = 1077;
+    let Some(service) = open_registered_service()? else {
+        return Ok(true);
+    };
+    let status = service
+        .query_status()
+        .context("failed to query Windows service status")?;
+    Ok(status.current_state == ServiceState::Stopped
+        && status.exit_code != ServiceExitCode::Win32(ERROR_SERVICE_NEVER_STARTED))
 }
 
 #[cfg(target_os = "linux")]

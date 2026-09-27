@@ -849,6 +849,8 @@ impl CoreManager {
                 );
             }
         } else {
+            #[cfg(windows)]
+            crate::core::service::notify_service_fallback();
             logging!(
                 info,
                 Type::Core,

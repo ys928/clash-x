@@ -1,4 +1,6 @@
 use super::*;
+use crate::core::manager::CoreFailure;
+use clash_verge_service_ipc::ServiceStatusSnapshot;
 
 /// 通过服务停止 core。
 #[tracing::instrument(skip_all, level = "info", fields(code = tracing::field::Empty, outcome = tracing::field::Empty))]
@@ -106,9 +108,9 @@ pub(crate) struct OwnerRecoveryPolicy {
     pub(crate) reset_system_proxy: bool,
 }
 
-pub(crate) const fn owner_recovery_policy(_reason: OwnerRecoveryReason, is_macos: bool) -> OwnerRecoveryPolicy {
+pub(crate) const fn owner_recovery_policy(reason: OwnerRecoveryReason, is_macos: bool) -> OwnerRecoveryPolicy {
     OwnerRecoveryPolicy {
-        reset_system_proxy: !is_macos,
+        reset_system_proxy: !is_macos || matches!(reason, OwnerRecoveryReason::SameOwnerFailure),
     }
 }
 
@@ -133,6 +135,7 @@ pub(crate) fn start_owner_monitor() {
     AsyncHandler::spawn(move || async move {
         logging!(debug, Type::Service, "owner monitor started (generation {generation})");
         let mut watch = OwnerWatch::new();
+        let mut core_restarts = None;
         loop {
             tokio::time::sleep(OWNER_MONITOR_INTERVAL).await;
             if OWNER_MONITOR_GENERATION.load(Ordering::Acquire) != generation {
@@ -152,7 +155,10 @@ pub(crate) fn start_owner_monitor() {
                 break;
             }
 
-            let sample = read_owner_sample().await;
+            let (sample, status) = read_owner_sample().await;
+            if let Some(status) = &status {
+                log_core_restarts(&mut core_restarts, status);
+            }
             let mut step = watch.observe(sample);
             if matches!(step, OwnerStep::VerifyTransport) {
                 if watch.just_became_sustained() {
@@ -168,7 +174,7 @@ pub(crate) fn start_owner_monitor() {
             }
 
             if let OwnerStep::Recover(reason) = step {
-                recover_after_owner_loss(generation, reason).await;
+                recover_after_owner_loss(generation, reason, status.as_ref()).await;
                 break;
             }
         }
@@ -176,7 +182,7 @@ pub(crate) fn start_owner_monitor() {
 }
 
 /// Samples ownership, treating every unusable reply as unreadable.
-pub(crate) async fn read_owner_sample() -> OwnerSample {
+pub(crate) async fn read_owner_sample() -> (OwnerSample, Option<ServiceStatusSnapshot>) {
     let response = match current_owner_credentials() {
         Ok(credentials) => clash_verge_service_ipc::get_status(&credentials).await,
         Err(error) => Err(error),
@@ -186,12 +192,12 @@ pub(crate) async fn read_owner_sample() -> OwnerSample {
         Ok(response) => response,
         Err(error) => {
             logging!(debug, Type::Service, "service owner status was unreadable: {error:#}");
-            return OwnerSample::Unreadable;
+            return (OwnerSample::Unreadable, None);
         }
     };
 
     if response.code == clash_verge_service_ipc::ServiceErrorCode::NotActive as u16 {
-        return OwnerSample::NotActive;
+        return (OwnerSample::NotActive, None);
     }
     if response.code != 0 {
         logging!(
@@ -201,24 +207,25 @@ pub(crate) async fn read_owner_sample() -> OwnerSample {
             response.code,
             response.message
         );
-        return OwnerSample::Unreadable;
+        return (OwnerSample::Unreadable, None);
     }
     let Some(status) = response.data else {
         logging!(debug, Type::Service, "service owner status omitted data");
-        return OwnerSample::Unreadable;
+        return (OwnerSample::Unreadable, None);
     };
 
     // A session that no longer matches is another owner's, whatever the flags say.
     if !session_matches_active_status(status.is_active, status.active_generation) {
-        return OwnerSample::NotActive;
+        return (OwnerSample::NotActive, None);
     }
 
-    OwnerSample::Status {
+    let sample = OwnerSample::Status {
         is_active: status.is_active,
         desired_core_should_be_running: status.desired_core_should_be_running,
         service_state: status.service_state,
         core_pid: status.core_pid,
-    }
+    };
+    (sample, Some(status))
 }
 
 pub(crate) fn session_matches_active_status(is_active: bool, active_generation: Option<u64>) -> bool {
@@ -236,7 +243,11 @@ pub(crate) fn owner_monitor_generation() -> u64 {
     OWNER_MONITOR_GENERATION.load(Ordering::Acquire)
 }
 
-pub(crate) async fn recover_after_owner_loss(generation: u64, reason: OwnerRecoveryReason) {
+pub(crate) async fn recover_after_owner_loss(
+    generation: u64,
+    reason: OwnerRecoveryReason,
+    status: Option<&ServiceStatusSnapshot>,
+) {
     let manager = CoreManager::global();
     if !matches!(*manager.get_running_mode(), RunningMode::Service) {
         return;
@@ -252,6 +263,9 @@ pub(crate) async fn recover_after_owner_loss(generation: u64, reason: OwnerRecov
         return;
     }
     recover_after_owner_loss_while_locked(reason).await;
+    if let (OwnerRecoveryReason::SameOwnerFailure, Some(status)) = (reason, status) {
+        report_service_core_stopped(status);
+    }
 }
 
 pub(crate) fn claim_owner_recovery_generation(generation: &AtomicU64, captured_generation: u64) -> Option<u64> {
@@ -276,13 +290,14 @@ pub(crate) async fn recover_after_owner_loss_while_locked(reason: OwnerRecoveryR
     );
     mark_service_unavailable_after_owner_loss(&RUN_STATE, reason);
     proxy_control::stop_guard().await;
+    if owner_recovery_policy(reason, cfg!(target_os = "macos")).reset_system_proxy {
+        clear_proxy_after_owner_loss().await;
+    }
     clear_active_service_session();
     CoreManager::global().core_stopped();
+}
 
-    if !owner_recovery_policy(reason, cfg!(target_os = "macos")).reset_system_proxy {
-        return;
-    }
-
+async fn clear_proxy_after_owner_loss() {
     let mut last_error = None;
     for attempt in 1..=3 {
         match proxy_control::clear().await {
@@ -305,4 +320,29 @@ pub(crate) async fn recover_after_owner_loss_while_locked(reason: OwnerRecoveryR
             "failed to clear local proxy after owner loss: {error:#}"
         );
     }
+}
+
+fn log_core_restarts(seen: &mut Option<u32>, status: &ServiceStatusSnapshot) {
+    if seen.is_some_and(|previous| status.restart_count > previous) {
+        logging!(
+            warn,
+            Type::Service,
+            "service restarted the core ({} restarts so far); last exit: {}",
+            status.restart_count,
+            status.last_core_exit_reason.as_deref().unwrap_or("unknown")
+        );
+    }
+    *seen = Some(status.restart_count);
+}
+
+fn report_service_core_stopped(status: &ServiceStatusSnapshot) {
+    let detail = format!(
+        "service state {:?}, {} restarts, last exit: {}",
+        status.service_state,
+        status.restart_count,
+        status.last_core_exit_reason.as_deref().unwrap_or("none reported")
+    );
+    logging!(error, Type::Service, "service core stopped: {detail}");
+    CoreManager::global().record_startup_error(CoreFailure::ServiceCoreStopped(detail));
+    Handle::notice_message("core_start::error", "");
 }

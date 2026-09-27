@@ -4,7 +4,7 @@ import { ReactNode, isValidElement } from 'react'
 import type { FailedOperation } from '@/services/cmds'
 import type { TranslationKey } from '@/types/generated/i18n-keys'
 
-type NoticeType = 'success' | 'error' | 'info'
+type NoticeType = 'success' | 'error' | 'info' | 'warning'
 
 interface NoticeTranslationDescriptor {
   key: string
@@ -47,6 +47,7 @@ type ShowNotice = ((
   success: NoticeShortcut
   error: NoticeShortcut
   info: NoticeShortcut
+  warning: NoticeShortcut
 }
 
 type NoticeSubscriber = () => void
@@ -55,6 +56,7 @@ const DEFAULT_DURATIONS: Readonly<Record<NoticeType, number>> = {
   success: 3000,
   info: 5000,
   error: 8000,
+  warning: 0,
 }
 
 const TRANSLATION_KEY_PATTERN = /^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)+$/
@@ -509,6 +511,8 @@ export const showNotice: ShowNotice = Object.assign(baseShowNotice, {
     baseShowNotice('error', message, ...extras),
   info: (message: NoticeContent, ...extras: NoticeExtra[]) =>
     baseShowNotice('info', message, ...extras),
+  warning: (message: NoticeContent, ...extras: NoticeExtra[]) =>
+    baseShowNotice('warning', message, ...extras),
 })
 
 export function hideNotice(id: number) {

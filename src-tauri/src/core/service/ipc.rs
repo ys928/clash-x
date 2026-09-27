@@ -78,6 +78,21 @@ pub(crate) async fn start_with_existing_service(config_file: &Path) -> Result<()
             response.code,
             err_msg
         );
+        #[cfg(windows)]
+        if response.code == ServiceErrorCode::InvalidInstallLocation as u16 {
+            PENDING_SERVICE_REPAIR_NOTICE.store(true, Ordering::Relaxed);
+            Handle::notice_message("service_core::repair_required", "");
+        }
+        if response.code == ServiceErrorCode::AppDataRootNotOwned as u16 {
+            *PENDING_SERVICE_OWNER_NOTICE.lock() = app_data_owner_command(&credentials);
+            Handle::notice_message("service_core::app_data_not_owned", "");
+        }
+        if matches!(*CoreManager::global().get_running_mode(), RunningMode::NotRunning) {
+            RUN_STATE.observe(ServiceHealth::Unavailable(format!(
+                "service core start refused (code {}): {}",
+                response.code, err_msg
+            )));
+        }
         start_owner_monitor();
         bail!(
             "failed to start Service core at {}: {err_msg}",
@@ -100,6 +115,9 @@ pub(crate) async fn start_with_existing_service(config_file: &Path) -> Result<()
 
     // PAC follows the Running Mode; the caller opens it via `core_started(Service)`.
     start_owner_monitor();
+    PENDING_SERVICE_FALLBACK_NOTICE.store(false, Ordering::Relaxed);
+    PENDING_SERVICE_REPAIR_NOTICE.store(false, Ordering::Relaxed);
+    PENDING_SERVICE_OWNER_NOTICE.lock().take();
     tracing::Span::current().record("outcome", "started");
     logging!(
         info,
@@ -143,7 +161,7 @@ pub(crate) async fn get_clash_logs_by_service() -> Result<Vec<String>> {
 
     if response.code > 0 {
         if response.code == clash_verge_service_ipc::ServiceErrorCode::NotActive as u16 {
-            recover_after_owner_loss(generation, OwnerRecoveryReason::Displaced).await;
+            recover_after_owner_loss(generation, OwnerRecoveryReason::Displaced, None).await;
         }
         let err_msg = response.message;
         bail!(err_msg);
@@ -161,7 +179,7 @@ pub(crate) async fn get_clash_log_snapshot_by_service() -> Result<String> {
     let response = response.context("无法连接到Clash Verge Service")?;
     if response.code > 0 {
         if response.code == clash_verge_service_ipc::ServiceErrorCode::NotActive as u16 {
-            recover_after_owner_loss(generation, OwnerRecoveryReason::Displaced).await;
+            recover_after_owner_loss(generation, OwnerRecoveryReason::Displaced, None).await;
         }
         bail!(response.message);
     }

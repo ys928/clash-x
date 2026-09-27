@@ -260,13 +260,16 @@ fn generated_service_session_token_is_lower_hex() -> anyhow::Result<()> {
 }
 
 #[test]
-fn macos_recovery_never_resets_machine_wide_proxy() {
+fn macos_recovery_resets_machine_wide_proxy_only_for_its_own_failed_core() {
     for reason in [
         OwnerRecoveryReason::Displaced,
         OwnerRecoveryReason::SameOwnerFailure,
         OwnerRecoveryReason::TransportFailure,
     ] {
-        assert!(!owner_recovery_policy(reason, true).reset_system_proxy);
+        assert_eq!(
+            owner_recovery_policy(reason, true).reset_system_proxy,
+            reason == OwnerRecoveryReason::SameOwnerFailure
+        );
         assert!(owner_recovery_policy(reason, false).reset_system_proxy);
     }
 

@@ -364,7 +364,7 @@ export const getAppUptime = async () => {
 }
 
 export const installService = async () => {
-  return invoke<void>('install_service')
+  return invoke<ServiceInstallOutcome>('install_service')
 }
 
 export const uninstallService = async () => {
@@ -372,11 +372,36 @@ export const uninstallService = async () => {
 }
 
 export const reinstallService = async () => {
-  return invoke<void>('reinstall_service')
+  return invoke<ServiceInstallOutcome>('reinstall_service')
 }
 
 export const repairService = async () => {
-  return invoke<void>('repair_service')
+  return invoke<ServiceInstallOutcome>('repair_service')
+}
+
+export type ServiceInstallOutcome =
+  | { status: 'installed' }
+  | { status: 'sidecar'; reason: string }
+
+export const getCoreStartupError = async () => {
+  return invoke<CoreStartupError | null>('get_core_startup_error')
+}
+
+export const takeServiceFallbackNotice = async () => {
+  return invoke<boolean>('take_service_fallback_notice')
+}
+
+export const takeServiceRepairNotice = async () => {
+  return invoke<boolean>('take_service_repair_notice')
+}
+
+export const takeServiceOwnerNotice = async () => {
+  return invoke<string | null>('take_service_owner_notice')
+}
+
+export type CoreStartupError = {
+  kind: 'startFailed' | 'serviceCoreStopped'
+  detail: string
 }
 
 export const continueWithSidecar = async () => {

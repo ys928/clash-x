@@ -1,7 +1,25 @@
-import { showNotice } from '@/services/notice-service'
+import { getCurrentWindow } from '@tauri-apps/api/window'
+
+import {
+  getCoreStartupError,
+  takeServiceFallbackNotice,
+  takeServiceOwnerNotice,
+  takeServiceRepairNotice,
+} from '@/services/cmds'
+import { hideNotice, showNotice } from '@/services/notice-service'
 
 type NavigateFunction = (path: string, options?: any) => void
 type TranslateFunction = (key: string) => string
+
+let shownStartupError: string | null = null
+let startupErrorReads = 0
+let settledStartupErrorRead = 0
+let shownOwnerNotice: number | null = null
+
+export const forgetShownStartupError = () => {
+  shownStartupError = null
+  settledStartupErrorRead = ++startupErrorReads
+}
 
 export const handleNoticeMessage = (
   status: string,
@@ -24,6 +42,94 @@ export const handleNoticeMessage = (
       showNotice.error(msg)
     },
     'set_config::error': () => showNotice.error(msg),
+    'core_start::error': () => {
+      const read = ++startupErrorReads
+      void getCoreStartupError()
+        .then(async (failure) => {
+          if (read < settledStartupErrorRead) return
+          settledStartupErrorRead = read
+          if (!failure) {
+            shownStartupError = null
+            return
+          }
+          const window = getCurrentWindow()
+          const [visible, minimized] = await Promise.all([
+            window.isVisible(),
+            window.isMinimized(),
+          ])
+          const shown = `${failure.kind}:${failure.detail}`
+          if (
+            read === settledStartupErrorRead &&
+            visible &&
+            !minimized &&
+            shownStartupError !== shown
+          ) {
+            shownStartupError = shown
+            showNotice.error(
+              failure.kind === 'serviceCoreStopped'
+                ? 'settings.feedback.errors.clash.serviceCoreStopped'
+                : 'settings.feedback.errors.clash.startFailed',
+              failure.detail,
+            )
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to read the pending core startup error', error)
+        })
+    },
+    'service_core::app_data_not_owned': () => {
+      void takeServiceOwnerNotice()
+        .then((command) => {
+          if (command) {
+            if (shownOwnerNotice !== null) hideNotice(shownOwnerNotice)
+            shownOwnerNotice = showNotice.warning(
+              'settings.feedback.notifications.clashService.appDataNotOwned',
+              { command },
+              0,
+            )
+          }
+        })
+        .catch((error) => {
+          console.error(
+            'Failed to read the pending service owner notice',
+            error,
+          )
+        })
+    },
+    'service_core::repair_required': () => {
+      void takeServiceRepairNotice()
+        .then((required) => {
+          if (required) {
+            showNotice.warning(
+              'layout.components.serviceMigration.unavailableMessage',
+              0,
+            )
+          }
+        })
+        .catch((error) => {
+          console.error(
+            'Failed to read the pending service repair notice',
+            error,
+          )
+        })
+    },
+    'service_core::sidecar_fallback': () => {
+      void takeServiceFallbackNotice()
+        .then((required) => {
+          if (required) {
+            showNotice.warning(
+              'settings.feedback.notifications.clashService.sidecarFallback',
+              0,
+            )
+          }
+        })
+        .catch((error) => {
+          console.error(
+            'Failed to read the pending Sidecar fallback notice',
+            error,
+          )
+        })
+    },
     'tun_mode::auto_disabled': () =>
       showNotice.info(
         'settings.sections.system.notifications.tunMode.autoDisabled',
