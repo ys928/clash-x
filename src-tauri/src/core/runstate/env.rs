@@ -48,13 +48,13 @@ impl RunStateEnv for RealEnv {
             .await
             .context("service registration probe did not finish")??;
         #[cfg(unix)]
-        if !registered && let Err(error) = clash_verge_service_ipc::execution::check_sidecar_available().await {
-            if error
+        if !registered
+            && let Err(error) = clash_verge_service_ipc::execution::check_sidecar_available().await
+            && error
                 .downcast_ref::<clash_verge_service_ipc::execution::ResidualServiceError>()
                 .is_some()
-            {
-                return Ok(true);
-            }
+        {
+            return Ok(true);
         }
         Ok(registered)
     }

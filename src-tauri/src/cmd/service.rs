@@ -12,7 +12,7 @@ use crate::{
 #[serde(tag = "status", rename_all = "camelCase")]
 pub enum ServiceInstallOutcome {
     Installed,
-    #[cfg(any(windows, test))]
+    #[cfg(windows)]
     Sidecar {
         reason: String,
     },
@@ -43,7 +43,7 @@ async fn execute_service_operation_sync(status: ServiceStatus, error_code: &str)
         .map_err(|error| proxy_aware_coded_error(&error, error_code))
 }
 
-#[cfg(any(windows, test))]
+#[cfg(windows)]
 async fn finish_service_installation<Fallback, FallbackFuture>(
     installation: anyhow::Result<()>,
     error_code: &str,
