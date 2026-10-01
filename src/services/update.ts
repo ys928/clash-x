@@ -188,7 +188,6 @@ export const checkUpdateSafe = async (
       const result = await check({
         ...(options ?? {}),
         proxy,
-        allowDowngrades: false,
       })
       return await interpretCheckResult(result)
     } catch (err) {
