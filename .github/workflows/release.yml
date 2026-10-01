@@ -543,12 +543,13 @@ jobs:
           subject-path: target/${{ matrix.target }}/release/bundle/nsis/*setup*
 
       - name: Upload release assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $files = Get-ChildItem "target\${{ matrix.target }}\release\bundle\nsis\*setup*" | Select-Object -ExpandProperty FullName
-          gh release upload "$RELEASE_TAG" $files --clobber
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        uses: softprops/action-gh-release@v3
+        with:
+          release_id: ${{ needs.prepare_release.outputs.release_id }}
+          files: target/${{ matrix.target }}/release/bundle/nsis/*setup*
+          fail_on_unmatched_files: true
+          overwrite_files: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   release-update:
     if: ${{ !inputs.preview && !contains(github.ref_name, '-rc') }}
