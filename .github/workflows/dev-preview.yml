@@ -1,0 +1,19 @@
+name: Dev Preview Release
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions: write-all
+
+concurrency:
+  group: dev-preview-release
+  cancel-in-progress: true
+
+jobs:
+  release:
+    uses: ./.github/workflows/release.yml
+    with:
+      preview: true
+    secrets: inherit
