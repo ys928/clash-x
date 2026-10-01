@@ -596,6 +596,15 @@ export interface TranslationResources {
           submit: string
           title: string
         }
+        delete: {
+          feedback: {
+            failed: string
+            notFound: string
+            success: string
+          }
+          message: string
+          title: string
+        }
         editor: {
           form: {
             actions: {
@@ -665,6 +674,7 @@ export interface TranslationResources {
       page: {
         actions: {
           addGlobal: string
+          deleteGlobal: string
           editGlobal: string
         }
         empty: {

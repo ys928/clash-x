@@ -144,3 +144,29 @@ export async function addGlobalRules(
   const saved = await saveProfileFile('Rules', serializeGlobalRulesSeq(next))
   return saved ? 'added' : 'invalid'
 }
+
+export async function removeGlobalRule(
+  raw: string,
+): Promise<'removed' | 'notFound' | 'invalid'> {
+  const seq = await loadGlobalRulesSeq()
+  const key = normalizeRuleRaw(raw)
+  if (!key) return 'notFound'
+
+  const removeMatching = (rules: string[]) =>
+    rules.filter((item) => normalizeRuleRaw(item) !== key)
+  const next: GlobalRulesSeq = {
+    ...seq,
+    prepend: removeMatching(seq.prepend),
+    append: removeMatching(seq.append),
+  }
+
+  if (
+    next.prepend.length === seq.prepend.length &&
+    next.append.length === seq.append.length
+  ) {
+    return 'notFound'
+  }
+
+  const saved = await saveProfileFile('Rules', serializeGlobalRulesSeq(next))
+  return saved ? 'removed' : 'invalid'
+}

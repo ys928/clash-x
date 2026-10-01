@@ -1,15 +1,22 @@
-import { Box, Typography, alpha, useTheme } from '@mui/material'
+import { DeleteOutlineRounded } from '@mui/icons-material'
+import { Box, IconButton, Typography, alpha, useTheme } from '@mui/material'
 import { memo } from 'react'
 import type { Rule } from 'tauri-plugin-mihomo-api'
 
 interface Props {
   value: Rule & { lineNo: number }
+  onDelete?: () => void
+  deleteLabel?: string
 }
 
 const resolveType = (type: Rule['type']) =>
   typeof type === 'string' ? type : type.Unknown
 
-const RuleItem = memo(function RuleItem({ value }: Props) {
+const RuleItem = memo(function RuleItem({
+  value,
+  onDelete,
+  deleteLabel,
+}: Props) {
   const theme = useTheme()
   const typeLabel = resolveType(value.type)
   const isReject = value.proxy === 'REJECT' || value.proxy === 'REJECT-DROP'
@@ -20,7 +27,8 @@ const RuleItem = memo(function RuleItem({ value }: Props) {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: '40px minmax(88px, 128px) minmax(0, 1fr) auto',
+        gridTemplateColumns:
+          '40px minmax(88px, 128px) minmax(0, 1fr) auto 32px',
         alignItems: 'center',
         columnGap: 1.25,
         px: 1.5,
@@ -31,6 +39,9 @@ const RuleItem = memo(function RuleItem({ value }: Props) {
         transition: 'background-color 0.12s ease',
         '&:hover': {
           bgcolor: alpha(theme.palette.text.primary, isLight ? 0.03 : 0.06),
+        },
+        '&:hover .rule-delete-action, &:focus-within .rule-delete-action': {
+          opacity: 1,
         },
       }}
     >
@@ -122,6 +133,27 @@ const RuleItem = memo(function RuleItem({ value }: Props) {
       >
         {value.proxy}
       </Typography>
+
+      {onDelete ? (
+        <IconButton
+          className="rule-delete-action"
+          size="small"
+          color="error"
+          onClick={onDelete}
+          aria-label={deleteLabel}
+          title={deleteLabel}
+          sx={{
+            opacity: 0,
+            transition: 'opacity 0.12s ease',
+            '@media (hover: none)': { opacity: 1 },
+            '&:focus-visible': { opacity: 1 },
+          }}
+        >
+          <DeleteOutlineRounded fontSize="small" />
+        </IconButton>
+      ) : (
+        <Box />
+      )}
     </Box>
   )
 })

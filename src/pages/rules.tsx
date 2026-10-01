@@ -19,14 +19,17 @@ import { ScrollTopButton } from '@/components/layout/scroll-top-button'
 import { AddGlobalRuleDialog } from '@/components/rule/add-global-rule-dialog'
 import { ProviderButton } from '@/components/rule/provider-button'
 import RuleItem from '@/components/rule/rule-item'
-import { AppEmpty, AppPage, AppSearchField } from '@/components/ui'
+import { AppDialog, AppEmpty, AppPage, AppSearchField } from '@/components/ui'
 import { useVisibility } from '@/hooks/use-visibility'
 import { useAppRefreshers, useRulesData } from '@/providers/app-data-context'
+import { showNotice } from '@/services/notice-service'
 import {
   emptyGlobalRulesSeq,
   globalRuleKeySet,
   loadGlobalRulesSeq,
+  normalizeRuleRaw,
   parseGlobalRule,
+  removeGlobalRule,
   runtimeRuleKey,
   type GlobalRulesSeq,
 } from '@/utils/global-rules'
@@ -152,6 +155,8 @@ const RulesPage = () => {
   const [policyFilter, setPolicyFilter] = useState(ALL)
   const [refreshing, setRefreshing] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const [globalSeq, setGlobalSeq] =
     useState<GlobalRulesSeq>(emptyGlobalRulesSeq)
   const virtuosoRef = useRef<VirtualListHandle>(null)
@@ -184,11 +189,26 @@ const RulesPage = () => {
   const globalRules = useMemo(
     () =>
       [...globalSeq.prepend, ...globalSeq.append]
-        .map(parseGlobalRule)
-        .filter((rule): rule is NonNullable<typeof rule> => rule !== null)
-        .map((rule) => rule as Rule),
+        .map((raw) => ({ raw, rule: parseGlobalRule(raw) }))
+        .filter(
+          (
+            item,
+          ): item is { raw: string; rule: NonNullable<typeof item.rule> } =>
+            item.rule !== null,
+        )
+        .map(
+          ({ raw, rule }) => ({ ...rule, globalRaw: raw }) as unknown as Rule,
+        ),
     [globalSeq],
   )
+
+  const globalRawByKey = useMemo(() => {
+    const result = new Map<string, string>()
+    for (const raw of [...globalSeq.prepend, ...globalSeq.append]) {
+      result.set(normalizeRuleRaw(raw), raw)
+    }
+    return result
+  }, [globalSeq])
 
   const scopedRules = useMemo(() => {
     if (scopeFilter === 'global') return globalRules
@@ -262,6 +282,29 @@ const RulesPage = () => {
       refreshRuleProviders(),
     ])
   }, [reloadGlobalSeq, refreshRules, refreshRuleProviders])
+
+  const handleDelete = useCallback(async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    try {
+      const result = await removeGlobalRule(pendingDelete)
+      if (result === 'removed') {
+        showNotice.success('rules.modals.delete.feedback.success')
+        setPendingDelete(null)
+        await handleSaved()
+      } else if (result === 'notFound') {
+        showNotice.info('rules.modals.delete.feedback.notFound')
+        setPendingDelete(null)
+        await reloadGlobalSeq()
+      } else {
+        showNotice.error('rules.modals.delete.feedback.failed')
+      }
+    } catch (err) {
+      showNotice.error(err)
+    } finally {
+      setDeleting(false)
+    }
+  }, [handleSaved, pendingDelete, reloadGlobalSeq])
 
   const handleScroll = useCallback((e: Event) => {
     setShowScrollTop((e.target as HTMLElement).scrollTop > 100)
@@ -360,6 +403,32 @@ const RulesPage = () => {
         onClose={() => setAddOpen(false)}
         onSaved={handleSaved}
       />
+
+      <AppDialog
+        open={pendingDelete !== null}
+        title={t('rules.modals.delete.title')}
+        okBtn={t('shared.actions.confirm')}
+        cancelBtn={t('shared.actions.cancel')}
+        loading={deleting}
+        disableCancel={deleting}
+        onOk={() => void handleDelete()}
+        onCancel={() => setPendingDelete(null)}
+        onClose={() => {
+          if (!deleting) setPendingDelete(null)
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          {t('rules.modals.delete.message')}
+        </Typography>
+        {pendingDelete && (
+          <Typography
+            variant="body2"
+            sx={{ mt: 1.25, fontWeight: 600, wordBreak: 'break-all' }}
+          >
+            {pendingDelete}
+          </Typography>
+        )}
+      </AppDialog>
 
       <Box
         sx={{
@@ -553,7 +622,25 @@ const RulesPage = () => {
             ref={virtuosoRef}
             count={filteredRules.length}
             estimateSize={40}
-            renderItem={(i) => <RuleItem value={filteredRules[i]} />}
+            renderItem={(i) => {
+              const rule = filteredRules[i]
+              const key = runtimeRuleKey(
+                resolveType(rule.type),
+                rule.payload,
+                rule.proxy,
+              )
+              const raw =
+                'globalRaw' in rule
+                  ? String(rule.globalRaw)
+                  : globalRawByKey.get(key)
+              return (
+                <RuleItem
+                  value={rule}
+                  onDelete={raw ? () => setPendingDelete(raw) : undefined}
+                  deleteLabel={t('rules.page.actions.deleteGlobal')}
+                />
+              )
+            }}
             style={{ flex: 1 }}
             onScroll={handleScroll}
           />

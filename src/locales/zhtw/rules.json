@@ -11,7 +11,8 @@
     "title": "規則",
     "actions": {
       "editGlobal": "全域規則",
-      "addGlobal": "新增全域規則"
+      "addGlobal": "新增全域規則",
+      "deleteGlobal": "刪除全域規則"
     },
     "filters": {
       "allTypes": "全部類型",
@@ -49,6 +50,15 @@
       "feedback": {
         "duplicate": "此規則已存在",
         "failed": "儲存全域規則失敗"
+      }
+    },
+    "delete": {
+      "title": "刪除全域規則",
+      "message": "確定要刪除此全域規則嗎？此變更會立即套用至所有訂閱。",
+      "feedback": {
+        "success": "全域規則已刪除",
+        "notFound": "規則不存在或已被刪除",
+        "failed": "刪除全域規則失敗"
       }
     },
     "editor": {

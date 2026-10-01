@@ -11,7 +11,8 @@
     "title": "规则",
     "actions": {
       "editGlobal": "全局规则",
-      "addGlobal": "新增全局规则"
+      "addGlobal": "新增全局规则",
+      "deleteGlobal": "删除全局规则"
     },
     "filters": {
       "allTypes": "全部类型",
@@ -49,6 +50,15 @@
       "feedback": {
         "duplicate": "该规则已存在",
         "failed": "保存全局规则失败"
+      }
+    },
+    "delete": {
+      "title": "删除全局规则",
+      "message": "确定要删除这条全局规则吗？此操作会立即对所有订阅生效。",
+      "feedback": {
+        "success": "全局规则已删除",
+        "notFound": "规则不存在或已被删除",
+        "failed": "删除全局规则失败"
       }
     },
     "editor": {

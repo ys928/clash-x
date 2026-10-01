@@ -11,7 +11,8 @@
     "title": "Rules",
     "actions": {
       "editGlobal": "Global Rules",
-      "addGlobal": "Add Global Rule"
+      "addGlobal": "Add Global Rule",
+      "deleteGlobal": "Delete global rule"
     },
     "filters": {
       "allTypes": "All types",
@@ -49,6 +50,15 @@
       "feedback": {
         "duplicate": "This rule already exists",
         "failed": "Failed to save global rule"
+      }
+    },
+    "delete": {
+      "title": "Delete Global Rule",
+      "message": "Delete this global rule? The change will apply to all subscriptions immediately.",
+      "feedback": {
+        "success": "Global rule deleted",
+        "notFound": "The rule no longer exists",
+        "failed": "Failed to delete global rule"
       }
     },
     "editor": {
