@@ -545,7 +545,7 @@ jobs:
       - name: Upload release assets
         uses: softprops/action-gh-release@v3
         with:
-          release_id: ${{ needs.prepare_release.outputs.release_id }}
+          tag_name: ${{ env.RELEASE_TAG }}
           files: target/${{ matrix.target }}/release/bundle/nsis/*setup*
           fail_on_unmatched_files: true
           overwrite_files: true
