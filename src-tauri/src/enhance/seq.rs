@@ -324,4 +324,31 @@ proxy-groups: "invalid"
 
         assert_eq!(config.get("proxy-groups").and_then(Value::as_str), Some("invalid"));
     }
+
+    #[test]
+    fn global_rules_prepend_before_profile_rules() {
+        let config_str = r#"
+rules:
+  - "MATCH,PROXY"
+"#;
+        let config: Mapping = serde_yaml_ng::from_str(config_str).expect("valid config");
+
+        let profile_rules = SeqMap {
+            prepend: Sequence::from_iter([Value::from("DOMAIN-SUFFIX,example.com,PROXY")]),
+            append: Sequence::new(),
+            delete: vec![],
+        };
+        let global_rules = SeqMap {
+            prepend: Sequence::from_iter([Value::from("DOMAIN-SUFFIX,local,DIRECT")]),
+            append: Sequence::new(),
+            delete: vec![],
+        };
+
+        let config = use_seq(profile_rules, config, "rules");
+        let config = use_seq(global_rules, config, "rules");
+        let rules = config["rules"].as_sequence().expect("rules sequence");
+
+        assert_eq!(rules[0].as_str(), Some("DOMAIN-SUFFIX,local,DIRECT"));
+        assert_eq!(rules[1].as_str(), Some("DOMAIN-SUFFIX,example.com,PROXY"));
+    }
 }

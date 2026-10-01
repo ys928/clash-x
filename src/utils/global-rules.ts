@@ -15,22 +15,65 @@ export const emptyGlobalRulesSeq = (): GlobalRulesSeq => ({
   delete: [],
 })
 
-const normalizeRuleRaw = (raw: string) => raw.replace(/,no-resolve$/i, '')
+export const normalizeRuleRaw = (raw: string) => {
+  const parts = raw
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  if (parts.at(-1)?.toLowerCase() === 'no-resolve') parts.pop()
+  if (parts.length === 0) return ''
+
+  parts[0] = parts[0].toUpperCase()
+  if (
+    parts.length > 1 &&
+    ['DOMAIN', 'DOMAIN-SUFFIX', 'DOMAIN-KEYWORD'].includes(parts[0])
+  ) {
+    parts[1] = parts[1].toLowerCase()
+  }
+  if (parts.length > 2) {
+    parts[parts.length - 1] = parts[parts.length - 1].toUpperCase()
+  }
+  return parts.join(',')
+}
+
+export const dedupeRuleRaws = (rawRules: string[]) => {
+  const seen = new Set<string>()
+  return rawRules.filter((raw) => {
+    const key = normalizeRuleRaw(raw)
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+export const parseGlobalRule = (raw: string) => {
+  const parts = normalizeRuleRaw(raw).split(',')
+  if (parts.length < 2) return null
+
+  const type = parts[0]
+  const proxy = parts.at(-1) ?? ''
+  const payload = type === 'MATCH' ? undefined : parts.slice(1, -1).join(',')
+  return { type, payload, proxy }
+}
 
 export const runtimeRuleKey = (
   type: string,
   payload: string | undefined,
   proxy: string | undefined,
 ) => {
-  const policy = proxy ?? ''
-  if (type === 'MATCH' || !payload) return `${type},${policy}`
-  return `${type},${payload},${policy}`
+  const raw =
+    type === 'MATCH' || !payload
+      ? `${type},${proxy ?? ''}`
+      : `${type},${payload},${proxy ?? ''}`
+  return normalizeRuleRaw(raw)
 }
 
 export const globalRuleKeySet = (seq: GlobalRulesSeq) => {
   const keys = new Set<string>()
   for (const raw of [...seq.prepend, ...seq.append]) {
-    keys.add(normalizeRuleRaw(raw))
+    const key = normalizeRuleRaw(raw)
+    if (key) keys.add(key)
   }
   return keys
 }
@@ -69,7 +112,7 @@ export async function addGlobalRule(
   position: 'prepend' | 'append',
 ): Promise<'added' | 'duplicate' | 'invalid'> {
   const seq = await loadGlobalRulesSeq()
-  if (seq.prepend.includes(raw) || seq.append.includes(raw)) {
+  if (globalRuleKeySet(seq).has(normalizeRuleRaw(raw))) {
     return 'duplicate'
   }
 
@@ -87,8 +130,10 @@ export async function addGlobalRules(
   position: 'prepend' | 'append' = 'prepend',
 ): Promise<'added' | 'noop' | 'invalid'> {
   const seq = await loadGlobalRulesSeq()
-  const existing = new Set([...seq.prepend, ...seq.append])
-  const toAdd = rawRules.filter((raw) => !existing.has(raw))
+  const existing = globalRuleKeySet(seq)
+  const toAdd = dedupeRuleRaws(rawRules).filter(
+    (raw) => !existing.has(normalizeRuleRaw(raw)),
+  )
   if (toAdd.length === 0) return 'noop'
 
   const next: GlobalRulesSeq =

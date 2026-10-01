@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { Rule } from 'tauri-plugin-mihomo-api'
 
 import { VirtualList, type VirtualListHandle } from '@/components/base'
 import { ScrollTopButton } from '@/components/layout/scroll-top-button'
@@ -25,6 +26,7 @@ import {
   emptyGlobalRulesSeq,
   globalRuleKeySet,
   loadGlobalRulesSeq,
+  parseGlobalRule,
   runtimeRuleKey,
   type GlobalRulesSeq,
 } from '@/utils/global-rules'
@@ -179,15 +181,25 @@ const RulesPage = () => {
 
   const globalKeys = useMemo(() => globalRuleKeySet(globalSeq), [globalSeq])
 
+  const globalRules = useMemo(
+    () =>
+      [...globalSeq.prepend, ...globalSeq.append]
+        .map(parseGlobalRule)
+        .filter((rule): rule is NonNullable<typeof rule> => rule !== null)
+        .map((rule) => rule as Rule),
+    [globalSeq],
+  )
+
   const scopedRules = useMemo(() => {
+    if (scopeFilter === 'global') return globalRules
     if (scopeFilter === 'all') return rules
     return rules.filter((item) => {
       const type = resolveType(item.type)
       const key = runtimeRuleKey(type, item.payload, item.proxy)
       const isGlobal = globalKeys.has(key)
-      return scopeFilter === 'global' ? isGlobal : !isGlobal
+      return !isGlobal
     })
-  }, [rules, scopeFilter, globalKeys])
+  }, [globalKeys, globalRules, rules, scopeFilter])
 
   const typeOptions = useMemo(() => {
     const counts = new Map<string, number>()
@@ -228,7 +240,7 @@ const RulesPage = () => {
     scopeFilter !== 'all' ||
     typeFilter !== ALL ||
     policyFilter !== ALL ||
-    filteredRules.length !== rules.length
+    filteredRules.length !== scopedRules.length
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -287,7 +299,7 @@ const RulesPage = () => {
           >
             {t('rules.page.stats.showing', {
               filtered: filteredRules.length,
-              total: rules.length,
+              total: scopedRules.length,
             })}
           </Typography>
           {providerCount > 0 && (

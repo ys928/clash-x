@@ -51,6 +51,7 @@ struct ProfileItems {
     merge_item: ChainItem,
     script_item: ChainItem,
     rules_item: ChainItem,
+    global_rules: ChainItem,
     proxies_item: ChainItem,
     groups_item: ChainItem,
     global_merge: ChainItem,
@@ -73,6 +74,10 @@ impl Default for ProfileItems {
             },
             rules_item: ChainItem {
                 uid: "".into(),
+                data: ChainType::Rules(SeqMap::default()),
+            },
+            global_rules: ChainItem {
+                uid: "Rules".into(),
                 data: ChainType::Rules(SeqMap::default()),
             },
             proxies_item: ChainItem {
@@ -196,7 +201,7 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
 
     let name = current_item.name.clone().unwrap_or_default();
 
-    let (merge_item, script_item, rules_item, proxies_item, groups_item, global_merge, global_script) = tokio::join!(
+    let (merge_item, script_item, rules_item, global_rules, proxies_item, groups_item, global_merge, global_script) = tokio::join!(
         chain_item_or_default(profiles.get_item(&merge_uid).ok(), || ChainItem {
             uid: "".into(),
             data: ChainType::Merge(Mapping::new()),
@@ -207,6 +212,10 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         },),
         chain_item_or_default(profiles.get_item(&rules_uid).ok(), || ChainItem {
             uid: "".into(),
+            data: ChainType::Rules(SeqMap::default()),
+        },),
+        chain_item_or_default(profiles.get_item("Rules").ok(), || ChainItem {
+            uid: "Rules".into(),
             data: ChainType::Rules(SeqMap::default()),
         },),
         chain_item_or_default(profiles.get_item(&proxies_uid).ok(), || ChainItem {
@@ -232,6 +241,7 @@ async fn collect_profile_items(profiles: &IProfiles) -> Result<ProfileItems> {
         merge_item,
         script_item,
         rules_item,
+        global_rules,
         proxies_item,
         groups_item,
         global_merge,
@@ -266,10 +276,18 @@ async fn process_global_items(
 fn process_seq_items(
     mut config: Mapping,
     rules_item: ChainItem,
+    global_rules: ChainItem,
     proxies_item: ChainItem,
     groups_item: ChainItem,
 ) -> Mapping {
+    let rules_uid = rules_item.uid;
     if let ChainType::Rules(rules) = rules_item.data {
+        config = use_seq(rules, config, "rules");
+    }
+
+    if rules_uid != global_rules.uid
+        && let ChainType::Rules(rules) = global_rules.data
+    {
         config = use_seq(rules, config, "rules");
     }
 
@@ -796,6 +814,7 @@ pub async fn enhance(
     let merge_item = profile.merge_item;
     let script_item = profile.script_item;
     let rules_item = profile.rules_item;
+    let global_rules = profile.global_rules;
     let proxies_item = profile.proxies_item;
     let groups_item = profile.groups_item;
     let global_merge = profile.global_merge;
@@ -804,7 +823,7 @@ pub async fn enhance(
 
     let result_map = HashMap::new();
 
-    let config = process_seq_items(config, rules_item, proxies_item, groups_item);
+    let config = process_seq_items(config, rules_item, global_rules, proxies_item, groups_item);
     let exists_keys = use_keys(&config).collect::<Vec<_>>();
     let gui_tun_keys = gui_tun_keys(&clash_config);
 

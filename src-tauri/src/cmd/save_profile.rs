@@ -99,6 +99,12 @@ async fn restore_original(
 }
 
 fn profile_affects_runtime(profiles: &IProfiles, index: &str) -> bool {
+    // Rules is a global enhancement file and must be reapplied even when the
+    // current profile uses a dedicated rules sidecar.
+    if index == "Rules" {
+        return profiles.current.is_some();
+    }
+
     let Some(current_uid) = profiles.current.as_ref() else {
         return false;
     };
@@ -117,6 +123,29 @@ fn profile_affects_runtime(profiles: &IProfiles, index: &str) -> bool {
         item.current_groups().map_or("Groups", String::as_str),
     ]
     .contains(&index)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::PrfOption;
+
+    #[test]
+    fn global_rules_refresh_runtime_with_custom_profile_rules() {
+        let profiles = IProfiles {
+            current: Some("current".into()),
+            items: Some(vec![PrfItem {
+                uid: Some("current".into()),
+                option: Some(PrfOption {
+                    rules: Some("custom-rules".into()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }]),
+        };
+
+        assert!(profile_affects_runtime(&profiles, "Rules"));
+    }
 }
 
 async fn handle_saved_profile_file(
