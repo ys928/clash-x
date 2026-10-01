@@ -326,6 +326,7 @@ proxy-groups: "invalid"
     }
 
     #[test]
+    #[allow(clippy::expect_used)]
     fn global_rules_prepend_before_profile_rules() {
         let config_str = r#"
 rules:
