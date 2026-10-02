@@ -104,6 +104,7 @@ jobs:
 
       - name: Fetch UPDATE logs
         id: fetch_update_logs
+        if: ${{ !inputs.preview }}
         run: bash ./scripts/extract_update_logs.sh
         shell: bash
 
@@ -118,18 +119,26 @@ jobs:
         shell: bash
 
       - run: |
-          if [ -z "$UPDATE_LOGS" ]; then
-            echo "No update logs found, using default message"
-            UPDATE_LOGS="More new features are now supported. Check for detailed changelog soon."
-          else
-            echo "Using found update logs"
+          if [ "${{ inputs.preview }}" != "true" ]; then
+            if [ -z "${UPDATE_LOGS:-}" ]; then
+              echo "No update logs found, using default message"
+              UPDATE_LOGS="More new features are now supported. Check for detailed changelog soon."
+            else
+              echo "Using found update logs"
+            fi
           fi
 
-          cat > release.txt << EOF
+          : > release.txt
+
+          if [ "${{ inputs.preview }}" != "true" ]; then
+            cat >> release.txt << EOF
           $UPDATE_LOGS
 
           ---
+          EOF
+          fi
 
+          cat >> release.txt << EOF
           **下载**
 
           **Windows**（不支持 Win7）
