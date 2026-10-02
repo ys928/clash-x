@@ -85,8 +85,8 @@ macro_rules! logging_error {
     };
 
     ($type:expr, $fmt:literal $(, $arg:expr)*) => {
-        log::error!(target: "app", "[{}] {}", $type, format_args!($fmt $(, $arg)*));
-    };
+        log::error!(target: "app", "[{}] {}", $type, format_args!($fmt $(, $arg)*))
+    }
 }
 
 const LOGS_QUEUE_LEN: usize = 100;
