@@ -13,6 +13,7 @@ const upLineWidth = 4
 const downLineAlpha = 1
 const downLineWidth = 4
 const sampleIntervalMs = 1000
+const frameIntervalMs = 1000 / 15
 const animationDurationMs = sampleIntervalMs
 
 const zeroTraffic: Traffic = { up: 0, down: 0, upTotal: 0, downTotal: 0 }
@@ -35,7 +36,7 @@ type TrafficValueKey = 'up' | 'down'
  * draw the traffic graph
  */
 export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
-  const animationStartRef = useRef<number | null>(null)
+  const countRef = useRef(0)
   const styleRef = useRef(true)
   const listRef = useRef<Traffic[]>(createDefaultList())
   const canvasRef = useRef<HTMLCanvasElement>(null!)
@@ -68,6 +69,7 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
       if (shouldAppend) {
         if (list.length > maxPoint + 2) list.shift()
         list.push(data)
+        countRef.current = 0
         requestDrawRef.current(true)
       }
 
@@ -82,8 +84,11 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
   }, [])
 
   useEffect(() => {
-    let animation: Animation | null = null
+    let raf = 0
+    let frameTimer: ReturnType<typeof setTimeout> | null = null
     let resizeObserver: ResizeObserver | null = null
+    let animationStart = 0
+    let lastFrameTime = 0
     const canvas = canvasRef.current!
 
     if (!canvas) return
@@ -97,13 +102,25 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
     const upLineColor = secondary.main || '#9c27b0'
     const downLineColor = primary.main || '#5B8DEF'
 
-    const drawGraph = () => {
+    const cancelPendingDraw = () => {
+      if (frameTimer !== null) {
+        clearTimeout(frameTimer)
+        frameTimer = null
+      }
+
+      if (raf) {
+        cancelAnimationFrame(raf)
+        raf = 0
+      }
+    }
+
+    const drawGraph = (offset = countRef.current) => {
       const list = listRef.current
       const lineStyle = styleRef.current
 
       const width = canvas.width
       const height = canvas.height
-      const dx = width / (maxPoint + 1)
+      const dx = width / maxPoint
       const dy = height / 7
       const l1 = dy
       const l2 = dy * 4
@@ -125,17 +142,17 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
       const drawBezier = (list: Traffic[], valueKey: TrafficValueKey) => {
         if (list.length === 0) return
 
-        const firstX = (dx * -1 + 3) | 0
+        const firstX = (dx * -1 - offset + 3) | 0
         const firstY = countY(list[0]?.[valueKey] ?? 0)
 
         context.moveTo(firstX, firstY)
 
         for (let i = 1; i < list.length; i++) {
-          const p1x = (dx * (i - 1) + 3) | 0
+          const p1x = (dx * (i - 1) - offset + 3) | 0
           const p1y = countY(list[i]?.[valueKey] ?? 0)
 
           const hasNext = i + 1 < list.length
-          const p2x = hasNext ? (dx * i + 3) | 0 : p1x
+          const p2x = hasNext ? (dx * i - offset + 3) | 0 : p1x
           const p2y = hasNext ? countY(list[i + 1]?.[valueKey] ?? 0) : p1y
 
           context.quadraticCurveTo(p1x, p1y, (p1x + p2x) / 2, (p1y + p2y) / 2)
@@ -145,10 +162,13 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
       const drawLine = (list: Traffic[], valueKey: TrafficValueKey) => {
         if (list.length === 0) return
 
-        context.moveTo((dx * -1) | 0, countY(list[0]?.[valueKey] ?? 0))
+        context.moveTo((dx * -1 - offset) | 0, countY(list[0]?.[valueKey] ?? 0))
 
         for (let i = 1; i < list.length; i++) {
-          context.lineTo((dx * (i - 1)) | 0, countY(list[i]?.[valueKey] ?? 0))
+          context.lineTo(
+            (dx * (i - 1) - offset) | 0,
+            countY(list[i]?.[valueKey] ?? 0),
+          )
         }
       }
 
@@ -191,28 +211,51 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
       context.closePath()
     }
 
-    const requestDraw = (animate = false) => {
-      if (animate) animationStartRef.current = performance.now()
-      animation?.cancel()
-      drawGraph()
+    const drawAnimatedFrame = (timestamp: number) => {
+      raf = 0
 
-      const elapsed =
-        animationStartRef.current === null
-          ? 0
-          : Math.min(
-              performance.now() - animationStartRef.current,
-              animationDurationMs,
-            )
-      const step = canvas.getBoundingClientRect().width / (maxPoint + 1)
-      animation = canvas.animate(
-        [
-          { transform: 'translateX(0)' },
-          { transform: `translateX(${-step}px)` },
-        ],
-        { duration: animationDurationMs, easing: 'linear', fill: 'forwards' },
+      const timeSinceLastFrame = timestamp - lastFrameTime
+      if (timeSinceLastFrame < frameIntervalMs) {
+        frameTimer = setTimeout(() => {
+          frameTimer = null
+          raf = requestAnimationFrame(drawAnimatedFrame)
+        }, frameIntervalMs - timeSinceLastFrame)
+        return
+      }
+
+      lastFrameTime = timestamp
+
+      const dx = canvas.width / maxPoint
+      const progress = Math.min(
+        (timestamp - animationStart) / animationDurationMs,
+        1,
       )
-      animation.currentTime = elapsed
-      if (animationStartRef.current === null) animation.pause()
+      const offset = progress * dx
+      countRef.current = offset
+      drawGraph(offset)
+
+      if (progress < 1) {
+        raf = requestAnimationFrame(drawAnimatedFrame)
+        return
+      }
+
+      countRef.current = dx
+    }
+
+    const requestDraw = (animate = false) => {
+      cancelPendingDraw()
+
+      if (!animate) {
+        raf = requestAnimationFrame(() => {
+          raf = 0
+          drawGraph()
+        })
+        return
+      }
+
+      animationStart = performance.now()
+      lastFrameTime = animationStart - frameIntervalMs
+      raf = requestAnimationFrame(drawAnimatedFrame)
     }
 
     requestDrawRef.current = requestDraw
@@ -220,7 +263,7 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
 
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => requestDraw(false))
-      resizeObserver.observe(canvas.parentElement!)
+      resizeObserver.observe(canvas)
     }
 
     return () => {
@@ -228,20 +271,9 @@ export function TrafficGraph({ ref }: { ref?: Ref<TrafficRef> }) {
         requestDrawRef.current = () => {}
       }
       resizeObserver?.disconnect()
-      animation?.cancel()
+      cancelPendingDraw()
     }
   }, [palette])
 
-  return (
-    <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
-      <canvas
-        ref={canvasRef}
-        width={310}
-        style={{
-          width: `${((maxPoint + 1) / maxPoint) * 100}%`,
-          height: '100%',
-        }}
-      />
-    </div>
-  )
+  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
 }

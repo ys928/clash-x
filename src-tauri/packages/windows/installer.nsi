@@ -901,7 +901,6 @@ Section Install
 
   nsExec::Exec 'netsh int tcp res'
 
-  !include "Win\RestartManager.nsh"
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
   !insertmacro CheckAllVergeProcesses
 
