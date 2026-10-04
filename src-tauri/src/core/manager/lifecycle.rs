@@ -30,6 +30,21 @@ enum ProxyStopIntent {
     HandOverToService,
 }
 
+fn report_sidecar_failure(error: anyhow::Error, service_rejection: Option<&str>) -> anyhow::Error {
+    let error = match service_rejection {
+        Some(reason) => error.context(format!("Service core rejected: {reason}; Sidecar fallback failed")),
+        None => error,
+    };
+    if SysproxyFailure::from_chain(&error).is_none() {
+        crate::core::notification::record_failure(
+            crate::core::notification::FailedOperation::SystemProxyRestore,
+            "SERVICE_SIDECAR_FAILED",
+            format!("{error:#}"),
+        );
+    }
+    error
+}
+
 const fn proxy_stop_intent(is_macos: bool, running_mode: RunningMode, decision: StartupDecision) -> ProxyStopIntent {
     match (is_macos, running_mode, decision) {
         (true, RunningMode::Sidecar, StartupDecision::Service) => ProxyStopIntent::HandOverToService,
@@ -318,9 +333,12 @@ impl CoreManager {
     }
 
     #[tracing::instrument(skip_all, level = "info", fields(status = tracing::field::Empty, tun_disabled = false, readiness_generation = tracing::field::Empty))]
-    pub async fn continue_with_sidecar(&self) -> Result<()> {
+    pub async fn continue_with_sidecar(&self, service_rejection: Option<String>) -> Result<()> {
         if !self.try_start_config_update() {
-            anyhow::bail!("configuration update is already running");
+            return Err(report_sidecar_failure(
+                anyhow::anyhow!("configuration update is already running"),
+                service_rejection.as_deref(),
+            ));
         }
         defer! {
             self.finish_config_update();
@@ -377,7 +395,7 @@ impl CoreManager {
             }
             return Err(error);
         }
-        Ok(())
+        result.map_err(|error| report_sidecar_failure(error, service_rejection.as_deref()))
     }
 
     #[tracing::instrument(skip_all, level = "info", fields(readiness_generation = tracing::field::Empty))]
@@ -520,6 +538,7 @@ impl CoreManager {
         }
         // tell the window when a background apply lands
         Handle::refresh_verge();
+        crate::core::notification::retire_failure("SERVICE_SIDECAR_FAILED");
         Ok(())
     }
 

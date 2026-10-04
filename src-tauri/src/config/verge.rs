@@ -83,8 +83,7 @@ pub struct IVerge {
     /// enable dns settings - this controls whether dns_config.yaml is applied
     pub enable_dns_settings: Option<bool>,
 
-    // Force-enable confirmation is valid only for the current app session.
-    #[serde(skip)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dns_override_confirmation: Option<String>,
 
     pub use_default_bypass: Option<bool>,

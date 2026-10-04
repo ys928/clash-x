@@ -256,7 +256,7 @@ fn open_registered_service() -> Result<Option<windows_service::service::Service>
     let manager = WindowsServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)?;
     match manager.open_service(
         clash_verge_service_ipc::WINDOWS_SERVICE_NAME,
-        ServiceAccess::QUERY_STATUS,
+        ServiceAccess::QUERY_STATUS | ServiceAccess::QUERY_CONFIG,
     ) {
         Ok(service) => Ok(Some(service)),
         Err(WindowsServiceError::Winapi(error)) if error.raw_os_error() == Some(ERROR_SERVICE_DOES_NOT_EXIST) => {
@@ -271,20 +271,32 @@ pub(crate) fn trusted_service_evidence() -> Result<bool> {
     Ok(open_registered_service()?.is_some())
 }
 
-/// Whether IPC cannot succeed until the service is started again.
+/// Why IPC cannot succeed until the service is started again, if it cannot.
 #[cfg(windows)]
-pub(crate) fn service_stopped() -> Result<bool> {
-    use windows_service::service::{ServiceExitCode, ServiceState};
-
+pub(crate) fn service_stop_reason() -> Result<Option<&'static str>> {
+    use windows_service::service::{ServiceExitCode, ServiceStartType, ServiceState};
     const ERROR_SERVICE_NEVER_STARTED: u32 = 1077;
+    const NOT_RUNNING: &str = "the Windows service is not running";
+    const NOT_AUTO_STARTED: &str = "the Windows service is stopped and no longer starts with Windows";
     let Some(service) = open_registered_service()? else {
-        return Ok(true);
+        return Ok(Some(NOT_RUNNING));
     };
     let status = service
         .query_status()
         .context("failed to query Windows service status")?;
-    Ok(status.current_state == ServiceState::Stopped
-        && status.exit_code != ServiceExitCode::Win32(ERROR_SERVICE_NEVER_STARTED))
+    if status.current_state != ServiceState::Stopped {
+        return Ok(None);
+    }
+    if !cfg!(feature = "verge-dev")
+        && service
+            .query_config()
+            .context("failed to query Windows service configuration")?
+            .start_type
+            != ServiceStartType::AutoStart
+    {
+        return Ok(Some(NOT_AUTO_STARTED));
+    }
+    Ok((status.exit_code != ServiceExitCode::Win32(ERROR_SERVICE_NEVER_STARTED)).then_some(NOT_RUNNING))
 }
 
 #[cfg(target_os = "linux")]

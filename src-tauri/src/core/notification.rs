@@ -231,46 +231,6 @@ pub fn what_was_asked() -> FailedOperation {
 
 static PENDING_FAILURES: Lazy<FailureTable> = Lazy::new(FailureTable::default);
 
-/// A removal has a revision too, so a delayed read cannot restore a resolved failure.
-#[derive(Debug, Default, Clone, serde::Serialize)]
-pub struct SidecarFailureSnapshot {
-    pub revision: u64,
-    pub detail: Option<String>,
-}
-
-impl SidecarFailureSnapshot {
-    fn record(&mut self, detail: String) {
-        self.revision += 1;
-        self.detail = Some(detail);
-    }
-
-    fn recover(&mut self) -> bool {
-        if self.detail.take().is_none() {
-            return false;
-        }
-        self.revision += 1;
-        true
-    }
-}
-
-static SIDECAR_FAILURE: Lazy<Mutex<SidecarFailureSnapshot>> = Lazy::new(Mutex::default);
-
-pub fn sidecar_failure_snapshot() -> SidecarFailureSnapshot {
-    SIDECAR_FAILURE.lock().clone()
-}
-
-pub fn record_sidecar_failure(detail: String) {
-    SIDECAR_FAILURE.lock().record(detail);
-    notify_pending_failures_changed();
-}
-
-pub fn retire_sidecar_failure() {
-    let changed = SIDECAR_FAILURE.lock().recover();
-    if changed {
-        notify_pending_failures_changed();
-    }
-}
-
 pub fn record_failure(operation: FailedOperation, code: &str, detail: impl Into<String>) {
     PENDING_FAILURES.record(operation, code, detail.into());
     notify_pending_failures_changed();
@@ -278,6 +238,12 @@ pub fn record_failure(operation: FailedOperation, code: &str, detail: impl Into<
 
 pub fn has_pending_failure(code: &str) -> bool {
     PENDING_FAILURES.entries.lock().contains_key(code)
+}
+
+pub fn retire_failure(code: &str) {
+    if PENDING_FAILURES.entries.lock().remove(code).is_some() {
+        notify_pending_failures_changed();
+    }
 }
 
 /// Return unresolved failures oldest first without clearing them.

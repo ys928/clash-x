@@ -160,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn dns_override_confirmation_expires_on_restart() -> Result<()> {
+    fn dns_override_confirmation_survives_restart_only_for_the_same_source() -> Result<()> {
         let source = Some("provider-dns".into());
         let confirmed = IVerge {
             enable_dns_settings: Some(true),
@@ -168,13 +168,25 @@ mod tests {
             ..IVerge::default()
         };
         assert!(DnsOverrideState::new(source.clone(), true, confirmed.dns_override_confirmation.clone()).enabled);
-        for saved in [
-            serde_yaml_ng::to_string(&confirmed)?,
-            "enable_dns_settings: true\ndns_override_confirmation: provider-dns".to_owned(),
+        let saved = serde_yaml_ng::to_string(&confirmed)?;
+        let mut restarted: IVerge = serde_yaml_ng::from_str(&saved)?;
+        let state = DnsOverrideState::new(
+            source.clone(),
+            restarted.enable_dns_settings.unwrap_or(false),
+            restarted.dns_override_confirmation.clone(),
+        );
+        assert!(state.enabled);
+        assert!(!state.apply_to(&mut restarted));
+        for (saved, source) in [
+            (saved, Some("updated".into())),
+            (
+                "enable_dns_settings: true\ndns_override_confirmation: provider-dns".to_owned(),
+                source,
+            ),
         ] {
             let mut restarted: IVerge = serde_yaml_ng::from_str(&saved)?;
             let state = DnsOverrideState::new(
-                source.clone(),
+                source,
                 restarted.enable_dns_settings.unwrap_or(false),
                 restarted.dns_override_confirmation.clone(),
             );
