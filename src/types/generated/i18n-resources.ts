@@ -767,6 +767,7 @@ export interface TranslationResources {
             stopFailed: string
           }
           clashService: {
+            coreAlreadyRunning: string
             installFailed: string
             reinstallFailed: string
             repairFailed: string
