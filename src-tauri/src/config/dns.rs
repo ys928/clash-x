@@ -171,7 +171,7 @@ mod tests {
         let saved = serde_yaml_ng::to_string(&confirmed)?;
         let mut restarted: IVerge = serde_yaml_ng::from_str(&saved)?;
         let state = DnsOverrideState::new(
-            source.clone(),
+            source,
             restarted.enable_dns_settings.unwrap_or(false),
             restarted.dns_override_confirmation.clone(),
         );
@@ -181,7 +181,7 @@ mod tests {
             (saved, Some("updated".into())),
             (
                 "enable_dns_settings: true\ndns_override_confirmation: provider-dns".to_owned(),
-                source,
+                Some("updated".into()),
             ),
         ] {
             let mut restarted: IVerge = serde_yaml_ng::from_str(&saved)?;
