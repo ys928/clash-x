@@ -449,13 +449,15 @@ impl SilentUpdater {
     }
 
     pub fn cancel_download(&self) {
-        if let Some(cancel) = self.manual_cancel.lock().take() {
+        let cancel = self.manual_cancel.lock().take();
+        if let Some(cancel) = cancel {
             cancel.cancel();
         }
     }
 
     pub fn discard_pending(&self) {
-        if let Some(cancel) = self.background_cancel.lock().take() {
+        let cancel = self.background_cancel.lock().take();
+        if let Some(cancel) = cancel {
             cancel.cancel();
         }
         self.update_ready.store(false, Ordering::Release);
