@@ -24,7 +24,11 @@ import type { Options as ReactMarkdownOptions } from 'react-markdown'
 import { BaseDialog, DialogRef } from '@/components/base'
 import { useUpdate } from '@/hooks/use-update'
 import { useUpdateStatus } from '@/hooks/use-update-status'
-import { restartApp } from '@/services/cmds'
+import {
+  cancelUpdateDownload,
+  installUpdate,
+  restartApp,
+} from '@/services/cmds'
 import { showNotice } from '@/services/notice-service'
 import { useSetUpdateState, useUpdateState } from '@/services/states'
 import { openExternalUrl } from '@/utils/open-external-url'
@@ -281,8 +285,9 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
         return
       }
 
-      await packageUpdate.downloadAndInstall(onDownloadEvent)
-      await restartApp()
+      if (await installUpdate(packageUpdate.version, onDownloadEvent)) {
+        await restartApp()
+      }
     } catch (err: any) {
       showNotice.error(err)
     } finally {
@@ -314,7 +319,12 @@ export function UpdateViewer({ ref }: { ref?: Ref<DialogRef> }) {
       okBtn={t('settings.modals.update.actions.update')}
       cancelBtn={t('shared.actions.cancel')}
       onClose={() => !updateState && setOpen(false)}
-      onCancel={() => !updateState && setOpen(false)}
+      onCancel={() => {
+        if (updateState) {
+          void cancelUpdateDownload().catch(showNotice.error)
+        }
+        setOpen(false)
+      }}
       onOk={() => {
         void onUpdate()
       }}

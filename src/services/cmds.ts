@@ -1,4 +1,5 @@
-import { invoke } from '@tauri-apps/api/core'
+import { Channel, invoke } from '@tauri-apps/api/core'
+import type { DownloadEvent } from '@tauri-apps/plugin-updater'
 
 import type { AutoSwitchGroup } from '@/components/proxy/auto-switch-model'
 import { showNotice } from '@/services/notice-service'
@@ -209,6 +210,19 @@ export async function restartCore() {
 
 export async function restartApp() {
   return invoke<void>('restart_app')
+}
+
+export async function installUpdate(
+  version: string,
+  onEvent: (event: DownloadEvent) => void,
+) {
+  const channel = new Channel<DownloadEvent>()
+  channel.onmessage = onEvent
+  return invoke<boolean>('install_update', { version, onEvent: channel })
+}
+
+export async function cancelUpdateDownload() {
+  return invoke<void>('cancel_update_download')
 }
 
 export interface UpdateStatus {
