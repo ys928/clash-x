@@ -256,11 +256,13 @@ const ProfilePage = () => {
     }
     setLoading(true)
 
+    const prevCurrent = profiles.current
+
     const handleImportSuccess = async (noticeKey: string) => {
       showNotice.success(noticeKey)
       setUrl('')
       setImportOpen(false)
-      await performRobustRefresh()
+      await performRobustRefresh(prevCurrent)
     }
     try {
       // 尝试正常导入
@@ -299,7 +301,7 @@ const ProfilePage = () => {
 
   // 强化的刷新策略
   // maxRetries 设为 1：useProfiles 内部 useQuery 已配置 retry:3，业务层只需 1 次额外重试
-  const performRobustRefresh = async () => {
+  const performRobustRefresh = async (prevCurrent?: string) => {
     let retryCount = 0
     const maxRetries = 1
     const baseDelay = 200
@@ -309,14 +311,16 @@ const ProfilePage = () => {
         debugLog(`[导入刷新] 第${retryCount + 1}次尝试刷新配置数据`)
 
         // 强制刷新，绕过所有缓存
-        await mutateProfiles()
+        const fresh = await fetchCacheData(['getProfiles'], getProfiles)
 
         // 等待状态稳定
         await new Promise((resolve) =>
           setTimeout(resolve, baseDelay * (retryCount + 1)),
         )
 
-        await onEnhance()
+        if (fresh?.current !== prevCurrent) {
+          await onEnhance()
+        }
         return
       } catch (error) {
         console.error(`[导入刷新] 第${retryCount + 1}次刷新失败:`, error)
@@ -331,8 +335,10 @@ const ProfilePage = () => {
     console.warn(`[导入刷新] 常规刷新失败，尝试清除缓存重新获取`)
     try {
       // 清除缓存并重新获取
-      await fetchCacheData(['getProfiles'], getProfiles)
-      await onEnhance()
+      const fresh = await fetchCacheData(['getProfiles'], getProfiles)
+      if (fresh?.current !== prevCurrent) {
+        await onEnhance()
+      }
       showNotice.error(
         'profiles.page.feedback.notifications.importNeedsRefresh',
         3000,

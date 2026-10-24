@@ -44,7 +44,7 @@ export const useProfiles = () => {
             ['getProfiles'],
             (current) => (current ? { ...current, ...value } : current),
           )
-        } else if (outcome.status !== 'busy') {
+        } else {
           await mutateProfiles()
         }
 
