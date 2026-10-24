@@ -39,6 +39,7 @@ import {
 } from '@/components/proxy/proxy-empty-state-model'
 import {
   getAutoSwitchGroups,
+  getAutoSwitchGroups as getAutoSwitchGroupsCommand,
   hydrateAutoSwitchGroups,
   subscribeAutoSwitchGroups,
 } from '@/components/proxy/auto-switch-store'
@@ -56,6 +57,7 @@ import {
 import delayManager from '@/services/delay'
 import i18n from '@/services/i18n'
 import { showNotice } from '@/services/notice-service'
+import { subscribeVergeEvents } from '@/services/events'
 import { revalidateQuery } from '@/services/query-client'
 import parseTraffic from '@/utils/parse-traffic'
 import {
@@ -112,6 +114,7 @@ const autoSwitchGroups = shallowRef(getAutoSwitchGroups())
 
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 let unsubAutoSwitch: (() => void) | null = null
+let unsubAutoSwitchNotice: (() => void) | null = null
 let unsubDelay: (() => void) | null = null
 
 const sortTooltip = computed(
@@ -447,6 +450,14 @@ onMounted(() => {
   unsubAutoSwitch = subscribeAutoSwitchGroups(() => {
     autoSwitchGroups.value = getAutoSwitchGroups()
   })
+  unsubAutoSwitchNotice = subscribeVergeEvents({
+    'verge://notice-message': ([status]) => {
+      if (!status.startsWith('auto_switch::')) return
+      void getAutoSwitchGroupsCommand().then((next) => {
+        autoSwitchGroups.value = next
+      })
+    },
+  })
 
   void refreshAll()
   refreshTimer = setInterval(() => {
@@ -457,6 +468,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (refreshTimer) clearInterval(refreshTimer)
   unsubAutoSwitch?.()
+  unsubAutoSwitchNotice?.()
   unsubDelay?.()
 })
 </script>
@@ -631,6 +643,11 @@ onUnmounted(() => {
               :member="item.member"
               :selected="primaryGroup!.now === item.member.ref.name"
               :auto-switch-active="autoSwitchActive"
+              :auto-switch-last-run="
+                autoSwitchGroups.find(
+                  (group) => group.targetGroupName === primaryGroup!.name,
+                )?.lastRun
+              "
               :show-type="showType"
               :timeout="latencyTimeout"
               @select="onSelectMember(primaryGroup!, $event)"

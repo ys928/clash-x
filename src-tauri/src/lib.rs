@@ -169,6 +169,8 @@ mod app_init {
             cmd::patch_auto_switch_group,
             cmd::delete_auto_switch_group,
             cmd::run_auto_switch_once,
+            cmd::get_auto_switch_history,
+            cmd::clear_auto_switch_history,
             cmd::get_runtime_yaml,
             cmd::get_runtime_logs,
             cmd::get_runtime_proxy_chain_config,

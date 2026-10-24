@@ -10,6 +10,27 @@ export const MAX_INTERVAL_SECONDS = 3600
 export const MIN_THRESHOLD_MS = 0
 export const MAX_THRESHOLD_MS = 5000
 
+export type AutoSwitchRunStatus =
+  | 'switched'
+  | 'kept'
+  | 'skipped'
+  | 'failed'
+  | 'testing'
+
+export interface AutoSwitchLastRun {
+  ranAt: number
+  status: AutoSwitchRunStatus
+  reasonCode: string
+  reason: string
+  from?: string
+  to?: string
+  delay?: number
+  currentDelay?: number
+  bestName?: string
+  thresholdMs?: number
+  nextRunAt?: number
+}
+
 export interface AutoSwitchGroup {
   id: string
   name: string
@@ -24,6 +45,7 @@ export interface AutoSwitchGroup {
    * `0` means always prefer the lowest-latency node after each test.
    */
   thresholdMs: number
+  lastRun?: AutoSwitchLastRun
 }
 
 export interface AutoSwitchDecisionInput {

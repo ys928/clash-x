@@ -8,7 +8,10 @@ use crate::{
     config::Config,
     core::{
         handle::Handle,
-        proxy_view::{ProxyMemberRef, ProxyNodeSource, ProxyNodeView, ProxyViewBuilder, ProxyViewInput, ProxyViewV1},
+        proxy_view::{
+            ProxyMemberRef, ProxyNodeSource, ProxyNodeView, ProxyViewBuilder, ProxyViewInput,
+            ProxyViewV1,
+        },
     },
     feat,
     process::AsyncHandler,
@@ -34,6 +37,8 @@ use tauri_plugin_mihomo::models::ProxyType;
 use tokio::sync::{Mutex as AsyncMutex, watch};
 
 const AUTO_SWITCH_FILE: &str = "auto-switch.yaml";
+const AUTO_SWITCH_HISTORY_FILE: &str = "auto-switch-history.yaml";
+const MAX_HISTORY_ENTRIES: usize = 200;
 const DEFAULT_INTERVAL_SECONDS: u32 = 60;
 const DEFAULT_THRESHOLD_MS: u32 = 50;
 
@@ -78,6 +83,8 @@ pub struct AutoSwitchGroup {
     pub interval_seconds: u32,
     #[serde(default = "default_threshold_ms")]
     pub threshold_ms: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_run: Option<AutoSwitchLastRun>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -85,6 +92,64 @@ pub struct AutoSwitchGroup {
 struct AutoSwitchFile {
     #[serde(default)]
     groups: Vec<AutoSwitchGroup>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoSwitchLastRun {
+    pub ran_at: i64,
+    pub status: AutoSwitchRunStatus,
+    pub reason_code: String,
+    pub reason: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delay: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_delay: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub best_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub threshold_ms: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_run_at: Option<i64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum AutoSwitchRunStatus {
+    Switched,
+    Kept,
+    Skipped,
+    Failed,
+    Testing,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoSwitchHistoryEntry {
+    pub id: String,
+    pub at: i64,
+    pub group_id: String,
+    pub group_name: String,
+    pub status: AutoSwitchRunStatus,
+    pub reason_code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delay: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+struct AutoSwitchHistoryFile {
+    #[serde(default)]
+    entries: Vec<AutoSwitchHistoryEntry>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -103,6 +168,7 @@ pub enum AutoSwitchDecision {
 pub struct AutoSwitchRunResult {
     pub decision: AutoSwitchDecision,
     pub results: Vec<DelaySample>,
+    pub last_run: Option<AutoSwitchLastRun>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -129,6 +195,8 @@ pub struct AutoSwitchManager {
     runner_started: AtomicBool,
     loaded: AtomicBool,
     io: AsyncMutex<()>,
+    last_runs: Arc<RwLock<HashMap<String, AutoSwitchLastRun>>>,
+    history: Arc<RwLock<Vec<AutoSwitchHistoryEntry>>>,
     /// Prevent overlapping runs for the same group id.
     running: ParkingMutex<HashSet<String>>,
 }
@@ -144,6 +212,8 @@ impl AutoSwitchManager {
                 runner_started: AtomicBool::new(false),
                 loaded: AtomicBool::new(false),
                 io: AsyncMutex::new(()),
+                last_runs: Arc::new(RwLock::new(HashMap::new())),
+                history: Arc::new(RwLock::new(Vec::new())),
                 running: ParkingMutex::new(HashSet::new()),
             }
         })
@@ -155,6 +225,20 @@ impl AutoSwitchManager {
             if !self.loaded.swap(true, Ordering::SeqCst) {
                 let groups = load_from_disk().await.unwrap_or_default();
                 self.replace_in_memory(groups);
+                let history = load_history_from_disk().await.unwrap_or_default();
+                for entry in &history {
+                    if let Some(last) = history_entry_to_last_run(entry) {
+                        self.last_runs.write().insert(entry.group_id.clone(), last);
+                    }
+                }
+                *self.history.write() = history
+                    .into_iter()
+                    .rev()
+                    .take(MAX_HISTORY_ENTRIES)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect();
             }
         }
         self.ensure_runner();
@@ -162,7 +246,40 @@ impl AutoSwitchManager {
     }
 
     pub fn list(&self) -> Vec<AutoSwitchGroup> {
-        self.groups.read().clone()
+        let last_runs = self.last_runs.read();
+        self.groups
+            .read()
+            .iter()
+            .cloned()
+            .map(|mut group| {
+                group.last_run = last_runs.get(&group.id).cloned().or(group.last_run);
+                group
+            })
+            .collect()
+    }
+
+    pub fn history(
+        &self,
+        limit: Option<usize>,
+        group_id: Option<&str>,
+    ) -> Vec<AutoSwitchHistoryEntry> {
+        let entries = self.history.read();
+        let limit = limit
+            .unwrap_or(MAX_HISTORY_ENTRIES)
+            .min(MAX_HISTORY_ENTRIES);
+        entries
+            .iter()
+            .rev()
+            .filter(|entry| group_id.is_none_or(|id| entry.group_id == id))
+            .take(limit)
+            .cloned()
+            .collect()
+    }
+
+    pub async fn clear_history(&self) -> Result<()> {
+        let _guard = self.io.lock().await;
+        self.history.write().clear();
+        save_history_to_disk(&[]).await
     }
 
     pub async fn replace_all(&self, groups: Vec<AutoSwitchGroup>) -> Result<Vec<AutoSwitchGroup>> {
@@ -184,7 +301,11 @@ impl AutoSwitchManager {
         self.persist_and_publish(next).await
     }
 
-    pub async fn patch(&self, id: &str, patch: AutoSwitchGroupPatch) -> Result<Vec<AutoSwitchGroup>> {
+    pub async fn patch(
+        &self,
+        id: &str,
+        patch: AutoSwitchGroupPatch,
+    ) -> Result<Vec<AutoSwitchGroup>> {
         let mut next = self.list();
         let Some(existing) = next.iter_mut().find(|item| item.id == id) else {
             bail!("auto-switch group not found: {id}");
@@ -231,7 +352,10 @@ impl AutoSwitchManager {
         let _ = self.groups_tx.send(groups);
     }
 
-    async fn persist_and_publish(&self, groups: Vec<AutoSwitchGroup>) -> Result<Vec<AutoSwitchGroup>> {
+    async fn persist_and_publish(
+        &self,
+        groups: Vec<AutoSwitchGroup>,
+    ) -> Result<Vec<AutoSwitchGroup>> {
         let _guard = self.io.lock().await;
         self.loaded.store(true, Ordering::SeqCst);
         save_to_disk(&groups).await?;
@@ -320,34 +444,112 @@ impl AutoSwitchManager {
         }
     }
 
-    async fn execute_group(&self, group: &AutoSwitchGroup, force: bool) -> Result<AutoSwitchRunResult> {
+    async fn execute_group(
+        &self,
+        group: &AutoSwitchGroup,
+        force: bool,
+    ) -> Result<AutoSwitchRunResult> {
         if !force && !group.enabled {
+            let last_run = self
+                .record_outcome(
+                    group,
+                    AutoSwitchRunStatus::Skipped,
+                    "skipped_disabled",
+                    "Smart switch group is disabled",
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await;
             return Ok(AutoSwitchRunResult {
                 decision: AutoSwitchDecision::Keep,
                 results: Vec::new(),
+                last_run: Some(last_run),
             });
         }
 
-        {
+        let already_running = {
             let mut running = self.running.lock();
-            if !running.insert(group.id.clone()) {
-                if force {
-                    bail!("auto-switch group is already running: {}", group.id);
-                }
-                return Ok(AutoSwitchRunResult {
-                    decision: AutoSwitchDecision::Keep,
-                    results: Vec::new(),
-                });
+            !running.insert(group.id.clone())
+        };
+        if already_running {
+            if force {
+                self.record_outcome(
+                    group,
+                    AutoSwitchRunStatus::Skipped,
+                    "skipped_already_running",
+                    "Smart switch group is already running",
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await;
+                bail!("auto-switch group is already running: {}", group.id);
             }
+            let last_run = self
+                .record_outcome(
+                    group,
+                    AutoSwitchRunStatus::Skipped,
+                    "skipped_overlap",
+                    "Smart switch group run overlapped",
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await;
+            return Ok(AutoSwitchRunResult {
+                decision: AutoSwitchDecision::Keep,
+                results: Vec::new(),
+                last_run: Some(last_run),
+            });
         }
         let _guard = RunningGuard(group.id.clone());
 
-        self.execute_group_inner(group).await
+        match self.execute_group_inner(group).await {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                let message = format!("{error:#}");
+                let (reason_code, status) = if message.starts_with("skipped_") {
+                    (
+                        message.split(':').next().unwrap_or("skipped"),
+                        AutoSwitchRunStatus::Skipped,
+                    )
+                } else if message.starts_with("failed_switch") {
+                    ("failed_switch", AutoSwitchRunStatus::Failed)
+                } else {
+                    ("failed_measure", AutoSwitchRunStatus::Failed)
+                };
+                self.record_outcome(
+                    group,
+                    status,
+                    reason_code,
+                    &message,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .await;
+                Err(error)
+            }
+        }
     }
 
     async fn execute_group_inner(&self, group: &AutoSwitchGroup) -> Result<AutoSwitchRunResult> {
-        let view = fetch_proxy_view().await?;
+        let view = fetch_proxy_view()
+            .await
+            .map_err(|error| anyhow::anyhow!("failed_measure: {error:#}"))?;
         let mode = current_clash_mode().await;
+        if mode == "direct" {
+            bail!("skipped_direct_mode: Clash is in direct mode");
+        }
         let Some(target) = resolve_target_group(&view, &group.target_group_name, &mode) else {
             logging!(
                 debug,
@@ -356,7 +558,7 @@ impl AutoSwitchManager {
                 group.name,
                 group.target_group_name
             );
-            bail!("target-unavailable");
+            bail!("skipped_target_unavailable: target group is unavailable");
         };
 
         let members = resolve_curated_nodes(&view, target, group);
@@ -367,7 +569,7 @@ impl AutoSwitchManager {
                 "[AutoSwitch] skip {}: no resolvable nodes",
                 group.name
             );
-            bail!("no-nodes");
+            bail!("skipped_no_resolvable_nodes: no curated nodes are available");
         }
 
         let timeout = latency_timeout_ms().await;
@@ -384,11 +586,52 @@ impl AutoSwitchManager {
         );
 
         let results = measure_delays(&members, &test_url, timeout).await;
-        let decision = decide_auto_switch(target.now.as_deref(), &results, group.threshold_ms, timeout);
+        if !results
+            .iter()
+            .any(|sample| classify_delay(sample.delay, timeout) == "measured")
+        {
+            bail!("skipped_no_valid_measurements: no valid latency measurements");
+        }
+        let decision =
+            decide_auto_switch(target.now.as_deref(), &results, group.threshold_ms, timeout);
 
         match &decision {
             AutoSwitchDecision::Keep => {
-                logging!(info, Type::Timer, "[AutoSwitch] keep current for {}", group.name);
+                logging!(
+                    info,
+                    Type::Timer,
+                    "[AutoSwitch] keep current for {}",
+                    group.name
+                );
+                let best = results
+                    .iter()
+                    .filter(|sample| classify_delay(sample.delay, timeout) == "measured")
+                    .min_by_key(|sample| sample.delay);
+                let (reason_code, reason) = if best
+                    .is_some_and(|sample| target.now.as_deref() == Some(sample.name.as_str()))
+                {
+                    (
+                        "kept_already_best",
+                        "Current node is already the best measured node",
+                    )
+                } else {
+                    (
+                        "kept_below_threshold",
+                        "Best node did not clear the switch threshold",
+                    )
+                };
+                self.record_outcome(
+                    group,
+                    AutoSwitchRunStatus::Kept,
+                    reason_code,
+                    reason,
+                    target.now.clone(),
+                    None,
+                    best.map(|sample| sample.delay),
+                    best.map(|sample| sample.name.clone()),
+                    Some(group.threshold_ms),
+                )
+                .await;
             }
             AutoSwitchDecision::Switch {
                 name,
@@ -408,14 +651,93 @@ impl AutoSwitchManager {
                         current_delay
                     );
                     let previous = target.now.clone();
-                    feat::switch_proxy_node(&target.name, name).await;
+                    if !feat::switch_proxy_node(&target.name, name).await {
+                        let message = format!("failed_switch: failed to switch to {name}");
+                        bail!("{message}");
+                    }
                     maybe_close_connections(previous.as_deref()).await;
-                    notify_switched(&group.name, &from, name, *best_delay);
+                    self.record_outcome(
+                        group,
+                        AutoSwitchRunStatus::Switched,
+                        "switched",
+                        "Switched to a faster measured node",
+                        Some(from),
+                        Some(name.clone()),
+                        Some(*best_delay),
+                        Some(name.clone()),
+                        Some(group.threshold_ms),
+                    )
+                    .await;
                 }
             }
         }
 
-        Ok(AutoSwitchRunResult { decision, results })
+        Ok(AutoSwitchRunResult {
+            decision,
+            results,
+            last_run: self.last_runs.read().get(&group.id).cloned(),
+        })
+    }
+
+    async fn record_outcome(
+        &self,
+        group: &AutoSwitchGroup,
+        status: AutoSwitchRunStatus,
+        reason_code: &str,
+        reason: &str,
+        from: Option<String>,
+        to: Option<String>,
+        delay: Option<u32>,
+        best_name: Option<String>,
+        threshold_ms: Option<u32>,
+    ) -> AutoSwitchLastRun {
+        let ran_at = chrono::Utc::now().timestamp_millis();
+        let last_run = AutoSwitchLastRun {
+            ran_at,
+            status: status.clone(),
+            reason_code: reason_code.to_owned(),
+            reason: reason.to_owned(),
+            from: from.clone(),
+            to: to.clone(),
+            delay,
+            current_delay: None,
+            best_name,
+            threshold_ms,
+            next_run_at: Some(ran_at + i64::from(group.interval_seconds) * 1000),
+        };
+        self.last_runs
+            .write()
+            .insert(group.id.clone(), last_run.clone());
+        let entry = AutoSwitchHistoryEntry {
+            id: format!("{}-{}", ran_at, group.id),
+            at: ran_at,
+            group_id: group.id.clone(),
+            group_name: group.name.clone(),
+            status: status.clone(),
+            reason_code: reason_code.to_owned(),
+            from,
+            to,
+            delay,
+            detail: Some(reason.to_owned()),
+        };
+        {
+            let mut history = self.history.write();
+            history.push(entry.clone());
+            if history.len() > MAX_HISTORY_ENTRIES {
+                let excess = history.len() - MAX_HISTORY_ENTRIES;
+                history.drain(..excess);
+            }
+        }
+        let history = self.history.read().clone();
+        if let Err(error) = save_history_to_disk(&history).await {
+            logging!(
+                warn,
+                Type::Timer,
+                "[AutoSwitch] failed to persist history: {error:#}"
+            );
+        }
+        notify_outcome(&status, &group.name, &last_run);
+        last_run
     }
 }
 
@@ -459,6 +781,51 @@ async fn save_to_disk(groups: &[AutoSwitchGroup]) -> Result<()> {
     .await
 }
 
+fn history_path() -> Result<PathBuf> {
+    Ok(dirs::app_home_dir()?.join(AUTO_SWITCH_HISTORY_FILE))
+}
+
+async fn load_history_from_disk() -> Result<Vec<AutoSwitchHistoryEntry>> {
+    let path = history_path()?;
+    if !tokio::fs::try_exists(&path).await.unwrap_or(false) {
+        return Ok(Vec::new());
+    }
+    Ok(help::read_yaml::<AutoSwitchHistoryFile>(&path)
+        .await?
+        .entries)
+}
+
+async fn save_history_to_disk(entries: &[AutoSwitchHistoryEntry]) -> Result<()> {
+    let path = history_path()?;
+    if let Some(parent) = path.parent() {
+        tokio::fs::create_dir_all(parent).await?;
+    }
+    help::save_yaml(
+        &path,
+        &AutoSwitchHistoryFile {
+            entries: entries.to_vec(),
+        },
+        Some("# Clash Verge Auto Switch History"),
+    )
+    .await
+}
+
+fn history_entry_to_last_run(entry: &AutoSwitchHistoryEntry) -> Option<AutoSwitchLastRun> {
+    Some(AutoSwitchLastRun {
+        ran_at: entry.at,
+        status: entry.status.clone(),
+        reason_code: entry.reason_code.clone(),
+        reason: entry.detail.clone().unwrap_or_default(),
+        from: entry.from.clone(),
+        to: entry.to.clone(),
+        delay: entry.delay,
+        current_delay: None,
+        best_name: entry.to.clone(),
+        threshold_ms: None,
+        next_run_at: None,
+    })
+}
+
 fn normalize_group(mut group: AutoSwitchGroup) -> Result<AutoSwitchGroup> {
     if group.id.trim().is_empty() {
         bail!("auto-switch group id is required");
@@ -477,7 +844,9 @@ fn normalize_group(mut group: AutoSwitchGroup) -> Result<AutoSwitchGroup> {
             source: node.source,
         })
         .collect();
-    group.interval_seconds = group.interval_seconds.clamp(MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS);
+    group.interval_seconds = group
+        .interval_seconds
+        .clamp(MIN_INTERVAL_SECONDS, MAX_INTERVAL_SECONDS);
     group.threshold_ms = group.threshold_ms.clamp(MIN_THRESHOLD_MS, MAX_THRESHOLD_MS);
     Ok(group)
 }
@@ -563,7 +932,10 @@ const fn is_selectable_type(proxy_type: &ProxyType) -> bool {
     )
 }
 
-fn lookup_group<'a>(view: &'a ProxyViewV1, name: &str) -> Option<&'a crate::core::proxy_view::ProxyGroupView> {
+fn lookup_group<'a>(
+    view: &'a ProxyViewV1,
+    name: &str,
+) -> Option<&'a crate::core::proxy_view::ProxyGroupView> {
     if view.global.as_ref().is_some_and(|group| group.name == name) {
         return view.global.as_ref();
     }
@@ -590,9 +962,14 @@ fn resolve_target_group<'a>(
 
 fn same_source(left: &ProxyNodeSource, right: &ProxyNodeSource) -> bool {
     match (left, right) {
-        (ProxyNodeSource::Core { proxy_name: left_name }, ProxyNodeSource::Core { proxy_name: right_name }) => {
-            left_name == right_name
-        }
+        (
+            ProxyNodeSource::Core {
+                proxy_name: left_name,
+            },
+            ProxyNodeSource::Core {
+                proxy_name: right_name,
+            },
+        ) => left_name == right_name,
         (
             ProxyNodeSource::Provider {
                 provider_name: left_provider,
@@ -607,7 +984,10 @@ fn same_source(left: &ProxyNodeSource, right: &ProxyNodeSource) -> bool {
     }
 }
 
-fn rebind_node<'a>(candidates: &[&'a ProxyNodeView], binding: &ProxyNodeBinding) -> Option<&'a ProxyNodeView> {
+fn rebind_node<'a>(
+    candidates: &[&'a ProxyNodeView],
+    binding: &ProxyNodeBinding,
+) -> Option<&'a ProxyNodeView> {
     let matches = candidates
         .iter()
         .copied()
@@ -710,7 +1090,8 @@ pub(crate) fn decide_auto_switch(
         return AutoSwitchDecision::Keep;
     };
 
-    let current = current_name.and_then(|name| measured.iter().find(|sample| sample.name == name).cloned());
+    let current =
+        current_name.and_then(|name| measured.iter().find(|sample| sample.name == name).cloned());
 
     let Some(current) = current else {
         if best.name == current_name.unwrap_or_default() {
@@ -739,7 +1120,11 @@ pub(crate) fn decide_auto_switch(
     }
 }
 
-async fn measure_delays(members: &[CuratedNode<'_>], test_url: &str, timeout: u32) -> Vec<DelaySample> {
+async fn measure_delays(
+    members: &[CuratedNode<'_>],
+    test_url: &str,
+    timeout: u32,
+) -> Vec<DelaySample> {
     let mut results = Vec::with_capacity(members.len());
     let mut pending = FuturesUnordered::new();
     let mut index = 0;
@@ -807,14 +1192,25 @@ async fn maybe_close_connections(previous_proxy: Option<&str>) {
     }
 }
 
-fn notify_switched(group: &str, from: &str, to: &str, delay: u32) {
+fn notify_outcome(status: &AutoSwitchRunStatus, group: &str, run: &AutoSwitchLastRun) {
+    let event = match status {
+        AutoSwitchRunStatus::Switched => "auto_switch::switched",
+        AutoSwitchRunStatus::Kept => "auto_switch::kept",
+        AutoSwitchRunStatus::Skipped => "auto_switch::skipped",
+        AutoSwitchRunStatus::Failed => "auto_switch::failed",
+        AutoSwitchRunStatus::Testing => return,
+    };
     let payload = serde_json::json!({
         "group": group,
-        "from": from,
-        "to": to,
-        "delay": delay,
+        "status": status,
+        "reason": run.reason,
+        "reason_code": run.reason_code,
+        "from": run.from,
+        "to": run.to,
+        "delay": run.delay,
+        "threshold": run.threshold_ms,
     });
-    Handle::notice_message("auto_switch::switched", payload.to_string());
+    Handle::notice_message(event, payload.to_string());
 }
 
 #[cfg(test)]

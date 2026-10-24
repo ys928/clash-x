@@ -36,7 +36,7 @@ async fn record_switched_node(group_name: &str, proxy_name: &str) {
     }
 }
 
-pub async fn switch_proxy_node(group_name: &str, proxy_name: &str) {
+pub async fn switch_proxy_node(group_name: &str, proxy_name: &str) -> bool {
     match handle::Handle::mihomo()
         .select_node_for_group(group_name, proxy_name)
         .await
@@ -45,7 +45,7 @@ pub async fn switch_proxy_node(group_name: &str, proxy_name: &str) {
             record_switched_node(group_name, proxy_name).await;
             handle::Handle::refresh_proxy_config();
             let _ = tray::Tray::global().update_menu().await;
-            return;
+            return true;
         }
         Err(err) => {
             logging!(error, Type::Tray, "切换代理失败: {err:?}");
@@ -60,11 +60,13 @@ pub async fn switch_proxy_node(group_name: &str, proxy_name: &str) {
             logging!(info, Type::Tray, "代理切换回退成功: {} -> {}", group_name, proxy_name);
             record_switched_node(group_name, proxy_name).await;
             let _ = tray::Tray::global().update_menu().await;
+            return true;
         }
         Err(err) => {
             logging!(error, Type::Tray, "代理切换最终失败: {err:?}");
         }
     }
+    false
 }
 
 async fn should_update_profile(uid: &String, ignore_auto_update: bool) -> Result<Option<(String, Option<PrfOption>)>> {

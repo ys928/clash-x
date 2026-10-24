@@ -1,5 +1,8 @@
 use super::{CmdResult, StringifyErr as _};
-use crate::module::auto_switch::{AutoSwitchGroup, AutoSwitchGroupPatch, AutoSwitchManager, AutoSwitchRunResult};
+use crate::module::auto_switch::{
+    AutoSwitchGroup, AutoSwitchGroupPatch, AutoSwitchHistoryEntry, AutoSwitchManager,
+    AutoSwitchRunResult,
+};
 
 #[tauri::command]
 pub async fn get_auto_switch_groups() -> CmdResult<Vec<AutoSwitchGroup>> {
@@ -29,4 +32,17 @@ pub async fn delete_auto_switch_group(id: String) -> CmdResult<Vec<AutoSwitchGro
 #[tauri::command]
 pub async fn run_auto_switch_once(group: AutoSwitchGroup) -> CmdResult<AutoSwitchRunResult> {
     AutoSwitchManager::global().run_once(group).await.stringify_err()
+}
+
+#[tauri::command]
+pub async fn get_auto_switch_history(
+    limit: Option<usize>,
+    group_id: Option<String>,
+) -> CmdResult<Vec<AutoSwitchHistoryEntry>> {
+    Ok(AutoSwitchManager::global().history(limit, group_id.as_deref()))
+}
+
+#[tauri::command]
+pub async fn clear_auto_switch_history() -> CmdResult<()> {
+    AutoSwitchManager::global().clear_history().await.stringify_err()
 }

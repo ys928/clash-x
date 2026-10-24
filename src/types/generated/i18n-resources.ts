@@ -462,6 +462,7 @@ export interface TranslationResources {
             targetUnavailable: string
             testFailed: string
           }
+          failed: string
           fields: {
             enabled: string
             interval: string
@@ -474,20 +475,59 @@ export interface TranslationResources {
             thresholdCustom: string
             thresholdHint: string
           }
+          help: {
+            willNotSwitch: string
+            willSwitch: string
+          }
           hintBody: string
           hintTitle: string
+          history: {
+            clear: string
+            clearConfirm: string
+            empty: string
+            filter: string
+            title: string
+          }
           intervalMinutes: string
           intervalSeconds: string
+          justSwitched: string
+          kept: string
+          lastRun: string
           listMeta: string
+          nextRun: string
           nodeManaged: string
           noMatchingNodes: string
+          noRun: string
           pickTargetFirst: string
+          ranAt: string
+          reason: string
+          reasons: {
+            already_best: string
+            below_threshold: string
+            direct_mode: string
+            no_resolvable_nodes: string
+            no_valid_measurements: string
+            target_unavailable: string
+          }
+          route: string
           saved: string
           searchNodes: string
+          skipped: string
+          status: {
+            failed: string
+            kept: string
+            none: string
+            skipped: string
+            switched: string
+            testing: string
+          }
           subtitle: string
           switched: string
+          systemNotify: string
+          systemNotifyHint: string
           testedKeep: string
           testNow: string
+          threshold: string
           thresholdAlways: string
           thresholdMs: string
           title: string

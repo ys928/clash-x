@@ -230,8 +230,57 @@ export const handleNoticeMessage = (
           delay?: number
         }
         showNotice.info('proxies.page.autoSwitch.switched', payload)
+        if (
+          typeof window !== 'undefined' &&
+          window.localStorage.getItem(
+            'clash-verge-auto-switch-system-notify',
+          ) === '1' &&
+          'Notification' in window &&
+          Notification.permission !== 'denied'
+        ) {
+          const body = `${payload.from ?? '—'} → ${payload.to ?? '—'}${
+            payload.delay !== undefined ? ` (${payload.delay}ms)` : ''
+          }`
+          if (Notification.permission === 'granted') {
+            new Notification('Smart Switch', { body })
+          } else {
+            void Notification.requestPermission().then((permission) => {
+              if (permission === 'granted')
+                new Notification('Smart Switch', { body })
+            })
+          }
+        }
       } catch {
         showNotice.info('proxies.page.autoSwitch.switched')
+      }
+    },
+    // Kept runs are intentionally silent; the panel and activity history show them.
+    'auto_switch::skipped': () => {
+      try {
+        const payload = JSON.parse(msg) as { reason_code?: string }
+        const actionable = new Set([
+          'direct_mode',
+          'target_unavailable',
+          'no_resolvable_nodes',
+          'skipped_direct_mode',
+          'skipped_target_unavailable',
+          'skipped_no_resolvable_nodes',
+        ])
+        if (actionable.has(payload.reason_code ?? '')) {
+          showNotice.info('proxies.page.autoSwitch.skipped', payload)
+        }
+      } catch {
+        // Routine skipped runs do not need a toast.
+      }
+    },
+    'auto_switch::failed': () => {
+      try {
+        showNotice.error(
+          'proxies.page.autoSwitch.failed',
+          JSON.parse(msg) as Record<string, unknown>,
+        )
+      } catch {
+        showNotice.error('proxies.page.autoSwitch.failed')
       }
     },
   }

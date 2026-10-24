@@ -1,7 +1,11 @@
 import { Channel, invoke } from '@tauri-apps/api/core'
 import type { DownloadEvent } from '@tauri-apps/plugin-updater'
 
-import type { AutoSwitchGroup } from '@/components/proxy/auto-switch-model'
+import type {
+  AutoSwitchGroup,
+  AutoSwitchLastRun,
+  AutoSwitchRunStatus,
+} from '@/components/proxy/auto-switch-model'
 import { showNotice } from '@/services/notice-service'
 import type { ProxyViewV1 } from '@/types/proxy-view'
 import { debugLog } from '@/utils/debug'
@@ -137,6 +141,20 @@ type AutoSwitchDecision =
 export interface AutoSwitchRunResult {
   decision: AutoSwitchDecision
   results: Array<{ name: string; delay: number }>
+  lastRun?: AutoSwitchLastRun
+}
+
+export interface AutoSwitchHistoryEntry {
+  id: string
+  at: number
+  groupId: string
+  groupName: string
+  status: AutoSwitchRunStatus
+  reasonCode: string
+  from?: string
+  to?: string
+  delay?: number
+  detail?: string
 }
 
 export async function getAutoSwitchGroups() {
@@ -164,6 +182,17 @@ export async function deleteAutoSwitchGroup(id: string) {
 
 export async function runAutoSwitchOnce(group: AutoSwitchGroup) {
   return invoke<AutoSwitchRunResult>('run_auto_switch_once', { group })
+}
+
+export async function getAutoSwitchHistory(limit?: number, groupId?: string) {
+  return invoke<AutoSwitchHistoryEntry[]>('get_auto_switch_history', {
+    limit,
+    groupId,
+  })
+}
+
+export async function clearAutoSwitchHistory() {
+  return invoke<void>('clear_auto_switch_history')
 }
 
 export async function getVergeConfig() {

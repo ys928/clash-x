@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import delayManager, { type DelayUpdate } from '@/services/delay'
 import i18n from '@/services/i18n'
+import type { AutoSwitchLastRun } from '@/components/proxy/auto-switch-model'
 import {
   isInteractableMember,
   memberDetails,
@@ -28,11 +29,13 @@ const props = withDefaults(
     member: ResolvedProxyMember
     selected: boolean
     autoSwitchActive?: boolean
+    autoSwitchLastRun?: AutoSwitchLastRun
     showType?: boolean
     timeout?: number
   }>(),
   {
     autoSwitchActive: false,
+    autoSwitchLastRun: undefined,
     showType: true,
     timeout: 10000,
   },
@@ -43,6 +46,7 @@ const emit = defineEmits<{
 }>()
 
 const delayState = ref<DelayUpdate>({ delay: -1, updatedAt: 0 })
+const nowTick = ref(Date.now())
 
 const name = computed(() => props.member.ref.name)
 const unresolved = computed(() => props.member.kind === 'unresolved')
@@ -63,6 +67,18 @@ const nestedNow = computed(() =>
 const delayValue = computed(() => delayState.value.delay)
 const showAutoSwitch = computed(
   () => !unresolved.value && props.selected && props.autoSwitchActive,
+)
+const justSwitched = computed(
+  () =>
+    nowTick.value &&
+    props.autoSwitchLastRun?.status === 'switched' &&
+    Date.now() - props.autoSwitchLastRun.ranAt < 20000 &&
+    props.autoSwitchLastRun.to === name.value,
+)
+const autoSwitchOutcome = computed(() =>
+  props.autoSwitchLastRun
+    ? t(`proxies.page.autoSwitch.status.${props.autoSwitchLastRun.status}`)
+    : t('proxies.page.autoSwitch.nodeManaged'),
 )
 
 const delayText = computed(() =>
@@ -126,8 +142,15 @@ watch(
   { immediate: true },
 )
 
-onMounted(syncDelay)
+let highlightTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  syncDelay()
+  highlightTimer = setInterval(() => {
+    nowTick.value = Date.now()
+  }, 1000)
+})
 onUnmounted(() => {
+  if (highlightTimer) clearInterval(highlightTimer)
   if (!isPreset.value) {
     delayManager.removeListener(name.value, props.group.name)
   }
@@ -159,9 +182,14 @@ const onCheckDelay = async (event: Event) => {
       'is-selected': selected && !unresolved,
       'is-disabled': unresolved,
       'is-auto': showAutoSwitch,
+      'is-just-switched': justSwitched,
     }"
     :disabled="unresolved"
-    :title="name"
+    :title="
+      showAutoSwitch
+        ? `${t('proxies.page.autoSwitch.nodeManaged')} · ${autoSwitchOutcome}`
+        : name
+    "
     @click="onSelect"
   >
     <div class="proxy-node__body">
@@ -185,9 +213,9 @@ const onCheckDelay = async (event: Event) => {
       <span
         v-if="showAutoSwitch"
         class="proxy-node__auto"
-        :title="t('proxies.page.autoSwitch.nodeManaged')"
+        :title="autoSwitchOutcome"
       >
-        ⇄
+        {{ justSwitched ? t('proxies.page.autoSwitch.justSwitched') : '⇄' }}
       </span>
       <span v-if="delayValue === -2" class="proxy-node__delay is-loading">…</span>
       <button
@@ -246,6 +274,11 @@ const onCheckDelay = async (event: Event) => {
     box-shadow:
       inset 3px 0 0 var(--primary-main),
       inset 0 0 0 1px color-mix(in srgb, var(--primary-main) 28%, transparent);
+  }
+
+  &.is-just-switched {
+    animation: proxy-node-switch-pulse 1.2s ease-in-out 2;
+    border-color: var(--el-color-success, #67c23a);
   }
 
   &.is-disabled {
@@ -345,6 +378,12 @@ const onCheckDelay = async (event: Event) => {
 
   &:hover &__check {
     opacity: 1;
+  }
+}
+
+@keyframes proxy-node-switch-pulse {
+  50% {
+    background: color-mix(in srgb, var(--el-color-success, #67c23a) 14%, var(--background-paper));
   }
 }
 </style>

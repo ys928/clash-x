@@ -3,10 +3,12 @@ import {
   Close,
   Connection,
   Delete,
+  Refresh,
   Plus,
   Search,
   Switch,
 } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import {
@@ -28,12 +30,17 @@ import {
 } from '@/components/proxy/auto-switch-store'
 import {
   deleteAutoSwitchGroup,
+  clearAutoSwitchHistory,
+  getAutoSwitchGroups as getAutoSwitchGroupsCommand,
+  getAutoSwitchHistory,
+  type AutoSwitchHistoryEntry,
   patchAutoSwitchGroup,
   runAutoSwitchOnce,
   upsertAutoSwitchGroup,
 } from '@/services/cmds'
 import i18n from '@/services/i18n'
 import { showNotice } from '@/services/notice-service'
+import { subscribeVergeEvents } from '@/services/events'
 import {
   isInteractableMember,
   resolveMember,
@@ -45,6 +52,24 @@ import {
 const INTERVAL_PRESETS = [30, 60, 120, 300]
 const THRESHOLD_PRESETS = [0, 30, 50, 100, 200]
 const SELECTABLE = new Set(['Selector', 'URLTest', 'Fallback'])
+const AUTO_SWITCH_STATUS_KEYS: Record<string, string> = {
+  switched: 'proxies.page.autoSwitch.status.switched',
+  kept: 'proxies.page.autoSwitch.status.kept',
+  skipped: 'proxies.page.autoSwitch.status.skipped',
+  failed: 'proxies.page.autoSwitch.status.failed',
+  testing: 'proxies.page.autoSwitch.status.testing',
+}
+const AUTO_SWITCH_REASON_KEYS: Record<string, string> = {
+  kept_already_best: 'proxies.page.autoSwitch.reasons.already_best',
+  kept_below_threshold: 'proxies.page.autoSwitch.reasons.below_threshold',
+  skipped_no_valid_measurements:
+    'proxies.page.autoSwitch.reasons.no_valid_measurements',
+  skipped_direct_mode: 'proxies.page.autoSwitch.reasons.direct_mode',
+  skipped_target_unavailable:
+    'proxies.page.autoSwitch.reasons.target_unavailable',
+  skipped_no_resolvable_nodes:
+    'proxies.page.autoSwitch.reasons.no_resolvable_nodes',
+}
 
 const props = defineProps<{
   open: boolean
@@ -64,6 +89,10 @@ const groups = ref<AutoSwitchGroup[]>(getAutoSwitchGroups())
 const editing = ref<AutoSwitchGroup | null>(null)
 const nodeFilter = ref('')
 const testingId = ref<string | null>(null)
+const history = ref<AutoSwitchHistoryEntry[]>([])
+const historyLoading = ref(false)
+const historyGroupId = ref('')
+const systemNotify = ref(false)
 
 const selectableGroups = computed(() => {
   if (!props.proxyView) return [] as ProxyGroupView[]
@@ -134,6 +163,99 @@ const formatInterval = (seconds: number) =>
     : t('proxies.page.autoSwitch.intervalMinutes', {
         count: Math.round(seconds / 60),
       })
+
+const formatTime = (value?: number) =>
+  value
+    ? new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }).format(value)
+    : '—'
+
+const statusLabel = (status?: string) =>
+  status
+    ? t(
+        AUTO_SWITCH_STATUS_KEYS[status] ??
+          `proxies.page.autoSwitch.status.${status}`,
+      )
+    : t('proxies.page.autoSwitch.status.none')
+
+const reasonText = (run?: AutoSwitchGroup['lastRun']) => {
+  if (!run) return t('proxies.page.autoSwitch.noRun')
+  const key =
+    AUTO_SWITCH_REASON_KEYS[run.reasonCode] ??
+    `proxies.page.autoSwitch.reasons.${run.reasonCode}`
+  const translated = t(key)
+  return translated === key ? run.reason : translated
+}
+
+const historyReason = (entry: AutoSwitchHistoryEntry) => {
+  const key =
+    AUTO_SWITCH_REASON_KEYS[entry.reasonCode] ??
+    `proxies.page.autoSwitch.reasons.${entry.reasonCode}`
+  const translated = t(key)
+  return translated === key ? entry.detail || entry.reasonCode : translated
+}
+
+const nextRunAt = computed(() => {
+  const run = editing.value?.lastRun
+  if (!run) return undefined
+  if (run.nextRunAt !== undefined) return run.nextRunAt
+  if (!editing.value?.enabled) return undefined
+  return run.ranAt + editing.value.intervalSeconds * 1000
+})
+
+const selectedHistory = computed(() =>
+  history.value.filter(
+    (entry) => !historyGroupId.value || entry.groupId === historyGroupId.value,
+  ),
+)
+
+const loadHistory = async () => {
+  historyLoading.value = true
+  try {
+    history.value = await getAutoSwitchHistory(
+      50,
+      historyGroupId.value || undefined,
+    )
+  } catch (error) {
+    showNotice.error(error)
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+const clearHistory = async () => {
+  try {
+    await ElMessageBox.confirm(
+      t('proxies.page.autoSwitch.history.clearConfirm'),
+      t('proxies.page.autoSwitch.history.clear'),
+      { type: 'warning' },
+    )
+    await clearAutoSwitchHistory()
+    await loadHistory()
+  } catch {
+    // Cancelled confirmations are intentionally silent.
+  }
+}
+
+const syncGroups = async () => {
+  try {
+    groups.value = await getAutoSwitchGroupsCommand()
+    if (editing.value) {
+      const current = groups.value.find(
+        (group) => group.id === editing.value?.id,
+      )
+      if (current)
+        editing.value = {
+          ...current,
+          nodes: current.nodes.map((node) => ({ ...node })),
+        }
+    }
+  } catch {
+    groups.value = getAutoSwitchGroups()
+  }
+}
 
 const close = () => {
   editing.value = null
@@ -282,11 +404,9 @@ const handleTest = async (group: AutoSwitchGroup) => {
     )
   } finally {
     testingId.value = null
+    await syncGroups()
+    await loadHistory()
   }
-}
-
-const syncGroups = () => {
-  groups.value = getAutoSwitchGroups()
 }
 
 watch(
@@ -301,11 +421,35 @@ watch(
 )
 
 let unsubscribe: (() => void) | undefined
+let unsubscribeEvents: (() => void) | undefined
 onMounted(() => {
   void hydrateAutoSwitchGroups().catch(() => {})
-  unsubscribe = subscribeAutoSwitchGroups(syncGroups)
+  void loadHistory()
+  systemNotify.value =
+    localStorage.getItem('clash-verge-auto-switch-system-notify') === '1'
+  unsubscribe = subscribeAutoSwitchGroups(() => {
+    void syncGroups()
+  })
+  unsubscribeEvents = subscribeVergeEvents({
+    'verge://notice-message': ([status, msg]) => {
+      if (!status.startsWith('auto_switch::')) return
+      void syncGroups()
+      void loadHistory()
+    },
+  })
 })
-onUnmounted(() => unsubscribe?.())
+onUnmounted(() => {
+  unsubscribe?.()
+  unsubscribeEvents?.()
+})
+
+watch(historyGroupId, () => void loadHistory())
+watch(systemNotify, (enabled) => {
+  localStorage.setItem(
+    'clash-verge-auto-switch-system-notify',
+    enabled ? '1' : '0',
+  )
+})
 </script>
 
 <template>
@@ -394,6 +538,10 @@ onUnmounted(() => unsubscribe?.())
                   })
                 }}
               </span>
+              <span v-if="group.lastRun" class="as-group__status">
+                {{ statusLabel(group.lastRun.status) }} ·
+                {{ formatTime(group.lastRun.ranAt) }}
+              </span>
             </span>
             <el-switch
               :model-value="group.enabled"
@@ -460,6 +608,40 @@ onUnmounted(() => unsubscribe?.())
               </el-tooltip>
             </div>
           </div>
+
+          <section class="as-card as-run-card">
+            <div class="as-card__toolbar">
+              <div class="as-card__title">{{ t('proxies.page.autoSwitch.lastRun') }}</div>
+              <el-tag
+                v-if="editing.lastRun"
+                size="small"
+                :type="
+                  editing.lastRun.status === 'failed'
+                    ? 'danger'
+                    : editing.lastRun.status === 'switched'
+                      ? 'success'
+                      : 'info'
+                "
+              >
+                {{ statusLabel(editing.lastRun.status) }}
+              </el-tag>
+            </div>
+            <div v-if="editing.lastRun" class="as-run-card__grid">
+              <span>{{ t('proxies.page.autoSwitch.ranAt') }}</span>
+              <strong>{{ formatTime(editing.lastRun.ranAt) }}</strong>
+              <span v-if="nextRunAt">{{ t('proxies.page.autoSwitch.nextRun') }}</span>
+              <strong v-if="nextRunAt">{{ formatTime(nextRunAt) }}</strong>
+              <span>{{ t('proxies.page.autoSwitch.reason') }}</span>
+              <strong>{{ reasonText(editing.lastRun) }}</strong>
+              <span v-if="editing.lastRun.from || editing.lastRun.to">{{ t('proxies.page.autoSwitch.route') }}</span>
+              <strong v-if="editing.lastRun.from || editing.lastRun.to">
+                {{ editing.lastRun.from || '—' }} → {{ editing.lastRun.to || '—' }}
+              </strong>
+              <span v-if="editing.lastRun.thresholdMs !== undefined">{{ t('proxies.page.autoSwitch.threshold') }}</span>
+              <strong v-if="editing.lastRun.thresholdMs !== undefined">{{ editing.lastRun.thresholdMs }}ms</strong>
+            </div>
+            <div v-else class="as-empty as-empty--compact">{{ t('proxies.page.autoSwitch.noRun') }}</div>
+          </section>
 
           <section class="as-card">
             <label class="as-field">
@@ -539,6 +721,10 @@ onUnmounted(() => unsubscribe?.())
                 />
                 <span class="as-number__unit">s</span>
               </div>
+              <ul class="as-help">
+                <li>{{ t('proxies.page.autoSwitch.help.willSwitch') }}</li>
+                <li>{{ t('proxies.page.autoSwitch.help.willNotSwitch') }}</li>
+              </ul>
             </section>
 
             <section class="as-card">
@@ -578,6 +764,40 @@ onUnmounted(() => unsubscribe?.())
               </div>
             </section>
           </div>
+
+          <section class="as-card as-history">
+            <div class="as-card__toolbar">
+              <div class="as-card__title">{{ t('proxies.page.autoSwitch.history.title') }}</div>
+              <div class="as-history__actions">
+                <el-button text size="small" :icon="Refresh" :loading="historyLoading" @click="loadHistory">
+                  {{ t('shared.actions.refresh') }}
+                </el-button>
+                <el-button text size="small" type="danger" :icon="Delete" @click="clearHistory">
+                  {{ t('proxies.page.autoSwitch.history.clear') }}
+                </el-button>
+              </div>
+            </div>
+            <el-select v-model="historyGroupId" clearable size="small" :placeholder="t('proxies.page.autoSwitch.history.filter')">
+              <el-option v-for="group in groups" :key="group.id" :label="group.name" :value="group.id" />
+            </el-select>
+            <div v-if="historyLoading" class="as-empty as-empty--compact">…</div>
+            <div v-else-if="selectedHistory.length === 0" class="as-empty as-empty--compact">
+              {{ t('proxies.page.autoSwitch.history.empty') }}
+            </div>
+            <div v-else class="as-history__list">
+              <div v-for="entry in selectedHistory" :key="entry.id" class="as-history__item">
+                <div class="as-history__line">
+                  <strong>{{ entry.groupName }}</strong>
+                  <el-tag size="small" effect="plain">{{ statusLabel(entry.status) }}</el-tag>
+                  <span>{{ formatTime(entry.at) }}</span>
+                </div>
+                <div class="as-history__detail">
+                  <span v-if="entry.from || entry.to">{{ entry.from || '—' }} → {{ entry.to || '—' }}</span>
+                  <span>{{ historyReason(entry) }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
 
           <section class="as-card as-card--nodes">
             <div class="as-card__toolbar">
@@ -653,6 +873,15 @@ onUnmounted(() => unsubscribe?.())
                 <span class="as-node__name">{{ node.name }}</span>
                 <span class="as-node__type">{{ node.type }}</span>
               </button>
+            </div>
+          </section>
+          <section class="as-card">
+            <div class="as-toggle-row">
+              <div class="as-toggle-row__copy">
+                <div class="as-toggle-row__title">{{ t('proxies.page.autoSwitch.systemNotify') }}</div>
+                <div class="as-card__hint">{{ t('proxies.page.autoSwitch.systemNotifyHint') }}</div>
+              </div>
+              <el-switch v-model="systemNotify" />
             </div>
           </section>
         </div>
@@ -953,6 +1182,76 @@ onUnmounted(() => unsubscribe?.())
     color: var(--text-secondary, #6b6f76);
     font-size: 12px;
     line-height: 1.45;
+  }
+}
+
+.as-run-card__grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  font-size: 12px;
+  color: var(--text-secondary, #6b6f76);
+
+  strong {
+    overflow: hidden;
+    color: var(--text-primary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.as-group__status {
+  overflow: hidden;
+  color: var(--text-secondary, #6b6f76);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.as-help {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-secondary, #6b6f76);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.as-history {
+  &__actions {
+    display: flex;
+    gap: 2px;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 250px;
+    overflow: auto;
+  }
+
+  &__item {
+    padding: 8px 10px;
+    border-radius: var(--cx-radius-md, 8px);
+    background: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  }
+
+  &__line,
+  &__detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  &__line span:last-child {
+    margin-left: auto;
+    color: var(--text-secondary, #6b6f76);
+  }
+
+  &__detail {
+    margin-top: 4px;
+    color: var(--text-secondary, #6b6f76);
   }
 }
 
