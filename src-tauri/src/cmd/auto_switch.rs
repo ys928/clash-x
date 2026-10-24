@@ -1,7 +1,6 @@
 use super::{CmdResult, StringifyErr as _};
 use crate::module::auto_switch::{
-    AutoSwitchGroup, AutoSwitchGroupPatch, AutoSwitchHistoryEntry, AutoSwitchManager,
-    AutoSwitchRunResult,
+    AutoSwitchGroup, AutoSwitchGroupPatch, AutoSwitchHistoryEntry, AutoSwitchManager, AutoSwitchRunResult,
 };
 
 #[tauri::command]
