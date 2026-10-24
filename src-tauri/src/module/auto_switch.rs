@@ -227,9 +227,8 @@ impl AutoSwitchManager {
                 self.replace_in_memory(groups);
                 let history = load_history_from_disk().await.unwrap_or_default();
                 for entry in &history {
-                    if let Some(last) = history_entry_to_last_run(entry) {
-                        self.last_runs.write().insert(entry.group_id.clone(), last);
-                    }
+                    let last = history_entry_to_last_run(entry);
+                    self.last_runs.write().insert(entry.group_id.clone(), last);
                 }
                 *self.history.write() = history
                     .into_iter()
@@ -456,11 +455,13 @@ impl AutoSwitchManager {
                     AutoSwitchRunStatus::Skipped,
                     "skipped_disabled",
                     "Smart switch group is disabled",
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
+                    RecordOutcomeParams {
+                        from: None,
+                        to: None,
+                        delay: None,
+                        best_name: None,
+                        threshold_ms: None,
+                    },
                 )
                 .await;
             return Ok(AutoSwitchRunResult {
@@ -481,11 +482,13 @@ impl AutoSwitchManager {
                     AutoSwitchRunStatus::Skipped,
                     "skipped_already_running",
                     "Smart switch group is already running",
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
+                    RecordOutcomeParams {
+                        from: None,
+                        to: None,
+                        delay: None,
+                        best_name: None,
+                        threshold_ms: None,
+                    },
                 )
                 .await;
                 bail!("auto-switch group is already running: {}", group.id);
@@ -496,11 +499,13 @@ impl AutoSwitchManager {
                     AutoSwitchRunStatus::Skipped,
                     "skipped_overlap",
                     "Smart switch group run overlapped",
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
+                    RecordOutcomeParams {
+                        from: None,
+                        to: None,
+                        delay: None,
+                        best_name: None,
+                        threshold_ms: None,
+                    },
                 )
                 .await;
             return Ok(AutoSwitchRunResult {
@@ -530,11 +535,13 @@ impl AutoSwitchManager {
                     status,
                     reason_code,
                     &message,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
+                    RecordOutcomeParams {
+                        from: None,
+                        to: None,
+                        delay: None,
+                        best_name: None,
+                        threshold_ms: None,
+                    },
                 )
                 .await;
                 Err(error)
@@ -625,11 +632,13 @@ impl AutoSwitchManager {
                     AutoSwitchRunStatus::Kept,
                     reason_code,
                     reason,
-                    target.now.clone(),
-                    None,
-                    best.map(|sample| sample.delay),
-                    best.map(|sample| sample.name.clone()),
-                    Some(group.threshold_ms),
+                    RecordOutcomeParams {
+                        from: target.now.clone(),
+                        to: None,
+                        delay: best.map(|sample| sample.delay),
+                        best_name: best.map(|sample| sample.name.clone()),
+                        threshold_ms: Some(group.threshold_ms),
+                    },
                 )
                 .await;
             }
@@ -661,11 +670,13 @@ impl AutoSwitchManager {
                         AutoSwitchRunStatus::Switched,
                         "switched",
                         "Switched to a faster measured node",
-                        Some(from),
-                        Some(name.clone()),
-                        Some(*best_delay),
-                        Some(name.clone()),
-                        Some(group.threshold_ms),
+                        RecordOutcomeParams {
+                            from: Some(from),
+                            to: Some(name.clone()),
+                            delay: Some(*best_delay),
+                            best_name: Some(name.clone()),
+                            threshold_ms: Some(group.threshold_ms),
+                        },
                     )
                     .await;
                 }
@@ -685,12 +696,15 @@ impl AutoSwitchManager {
         status: AutoSwitchRunStatus,
         reason_code: &str,
         reason: &str,
-        from: Option<String>,
-        to: Option<String>,
-        delay: Option<u32>,
-        best_name: Option<String>,
-        threshold_ms: Option<u32>,
+        params: RecordOutcomeParams,
     ) -> AutoSwitchLastRun {
+        let RecordOutcomeParams {
+            from,
+            to,
+            delay,
+            best_name,
+            threshold_ms,
+        } = params;
         let ran_at = chrono::Utc::now().timestamp_millis();
         let last_run = AutoSwitchLastRun {
             ran_at,
@@ -739,6 +753,14 @@ impl AutoSwitchManager {
         notify_outcome(&status, &group.name, &last_run);
         last_run
     }
+}
+
+struct RecordOutcomeParams {
+    from: Option<String>,
+    to: Option<String>,
+    delay: Option<u32>,
+    best_name: Option<String>,
+    threshold_ms: Option<u32>,
 }
 
 struct RunningGuard(String);
@@ -810,8 +832,8 @@ async fn save_history_to_disk(entries: &[AutoSwitchHistoryEntry]) -> Result<()> 
     .await
 }
 
-fn history_entry_to_last_run(entry: &AutoSwitchHistoryEntry) -> Option<AutoSwitchLastRun> {
-    Some(AutoSwitchLastRun {
+fn history_entry_to_last_run(entry: &AutoSwitchHistoryEntry) -> AutoSwitchLastRun {
+    AutoSwitchLastRun {
         ran_at: entry.at,
         status: entry.status.clone(),
         reason_code: entry.reason_code.clone(),
@@ -823,7 +845,7 @@ fn history_entry_to_last_run(entry: &AutoSwitchHistoryEntry) -> Option<AutoSwitc
         best_name: entry.to.clone(),
         threshold_ms: None,
         next_run_at: None,
-    })
+    }
 }
 
 fn normalize_group(mut group: AutoSwitchGroup) -> Result<AutoSwitchGroup> {
