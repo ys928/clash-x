@@ -23,7 +23,6 @@ use std::{
 };
 
 const RELEASE_VERSION_URL: &str = "https://github.com/MetaCubeX/mihomo/releases/latest/download/version.txt";
-const ALPHA_BASE_URL: &str = "https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha";
 const RELEASE_DOWNLOAD_URL: &str = "https://github.com/MetaCubeX/mihomo/releases/download";
 const VERSION_TIMEOUT_SECS: u64 = 20;
 const PACKAGE_TIMEOUT_SECS: u64 = 300;
@@ -46,7 +45,6 @@ pub async fn upgrade_core(force: bool) -> Result<CoreUpgradeReport> {
     let _serialized = UPGRADE_LOCK.lock().await;
     let core = Config::verge().await.latest_arc().get_valid_clash_core();
     tracing::Span::current().record("core", tracing::field::display(&core));
-    let alpha = core.ends_with("-alpha");
     let target = managed_core_path(&core)?;
 
     // A core already broken by the in-place updater cannot report a version; upgrading is the repair.
@@ -55,7 +53,7 @@ pub async fn upgrade_core(force: bool) -> Result<CoreUpgradeReport> {
         std::string::String::new()
     });
 
-    let (proxy, latest) = resolve_latest_version(alpha).await?;
+    let (proxy, latest) = resolve_latest_version().await?;
     let span = tracing::Span::current();
     span.record("from", tracing::field::display(&installed));
     span.record("to", tracing::field::display(&latest));
@@ -69,7 +67,7 @@ pub async fn upgrade_core(force: bool) -> Result<CoreUpgradeReport> {
         });
     }
 
-    let package = download_package(proxy, alpha, &latest).await?;
+    let package = download_package(proxy, &latest).await?;
     let staged = stage_core(&target, &package, &latest)?;
 
     // A hard link keeps the previous core reachable without touching the inode the running
@@ -182,19 +180,17 @@ fn managed_core_path(core: &str) -> Result<PathBuf> {
 }
 
 /// Pins the package to the resolved version, so a release moving on mid-upgrade cannot 404.
-fn package_url(alpha: bool, version: &str) -> Result<std::string::String> {
-    let asset = asset_base_name(alpha)?;
+fn package_url(version: &str) -> Result<std::string::String> {
+    let asset = asset_base_name()?;
     let extension = if cfg!(windows) { "zip" } else { "gz" };
-    Ok(if alpha {
-        format!("{ALPHA_BASE_URL}/{asset}-{version}.{extension}")
-    } else {
-        format!("{RELEASE_DOWNLOAD_URL}/{version}/{asset}-{version}.{extension}")
-    })
+    Ok(format!(
+        "{RELEASE_DOWNLOAD_URL}/{version}/{asset}-{version}.{extension}"
+    ))
 }
 
 /// Mirrors the asset map in `scripts/prebuild.mjs` so an upgrade keeps the build variant
 /// the bundled sidecar was taken from.
-fn asset_base_name(alpha: bool) -> Result<&'static str> {
+fn asset_base_name() -> Result<&'static str> {
     let arch = std::env::consts::ARCH;
     let unsupported = || anyhow!("no mihomo release asset for {}-{arch}", std::env::consts::OS);
 
@@ -207,7 +203,6 @@ fn asset_base_name(alpha: bool) -> Result<&'static str> {
         }
     } else if cfg!(target_os = "macos") {
         match arch {
-            "x86_64" if alpha => "mihomo-darwin-amd64-v1-go122",
             "x86_64" => "mihomo-darwin-amd64-v2-go122",
             "aarch64" => "mihomo-darwin-arm64-go122",
             _ => return Err(unsupported()),
@@ -227,13 +222,9 @@ fn asset_base_name(alpha: bool) -> Result<&'static str> {
 }
 
 /// Returns the proxy that reached GitHub so the package download reuses it.
-#[tracing::instrument(skip_all, level = "debug", fields(alpha))]
-async fn resolve_latest_version(alpha: bool) -> Result<(ProxyType, std::string::String)> {
-    let url = if alpha {
-        format!("{ALPHA_BASE_URL}/version.txt")
-    } else {
-        RELEASE_VERSION_URL.to_owned()
-    };
+#[tracing::instrument(skip_all, level = "debug")]
+async fn resolve_latest_version() -> Result<(ProxyType, std::string::String)> {
+    let url = RELEASE_VERSION_URL;
     let mut last_error = None;
 
     for proxy in [ProxyType::Localhost, ProxyType::System, ProxyType::None] {
@@ -288,8 +279,8 @@ fn is_usable_version(version: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_'))
 }
 
-async fn download_package(proxy: ProxyType, alpha: bool, version: &str) -> Result<Vec<u8>> {
-    let url = package_url(alpha, version)?;
+async fn download_package(proxy: ProxyType, version: &str) -> Result<Vec<u8>> {
+    let url = package_url(version)?;
     logging!(info, Type::Core, "core upgrade: downloading {url}");
 
     NetworkManager::new()
@@ -490,13 +481,12 @@ mod tests {
 
     #[test]
     fn package_urls_pin_the_resolved_version() {
-        let release = package_url(false, "v1.19.30").unwrap_or_default();
-        let alpha = package_url(true, "alpha-c0e43eb").unwrap_or_default();
+        let release = package_url("v1.19.30").unwrap_or_default();
         assert!(release.contains("/releases/download/v1.19.30/"), "{release}");
         assert!(
             release.ends_with("-v1.19.30.gz") || release.ends_with("-v1.19.30.zip"),
             "{release}"
         );
-        assert!(alpha.contains("/Prerelease-Alpha/"), "{alpha}");
+        assert!(!release.contains("/Prerelease-Alpha/"), "{release}");
     }
 }

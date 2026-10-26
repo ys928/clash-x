@@ -45,7 +45,6 @@ async function resolvePortable() {
 
   zip.addLocalFile(path.join(releaseDir, 'clash-x.exe'))
   zip.addLocalFile(path.join(releaseDir, 'verge-mihomo.exe'))
-  zip.addLocalFile(path.join(releaseDir, 'verge-mihomo-alpha.exe'))
   zip.addLocalFolder(path.join(releaseDir, 'resources'), 'resources')
   zip.addLocalFolder(
     path.join(

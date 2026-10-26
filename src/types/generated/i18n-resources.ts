@@ -897,12 +897,6 @@ export interface TranslationResources {
           }
           title: string
         }
-        clashCore: {
-          variants: {
-            alpha: string
-            release: string
-          }
-        }
         clashPort: {
           actions: {
             random: string

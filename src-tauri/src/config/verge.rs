@@ -234,7 +234,8 @@ pub struct IVergeTheme {
 }
 
 impl IVerge {
-    pub const VALID_CLASH_CORES: &'static [&'static str] = &["verge-mihomo", "verge-mihomo-alpha"];
+    pub const DEFAULT_CLASH_CORE: &'static str = "verge-mihomo";
+    pub const VALID_CLASH_CORES: &'static [&'static str] = &[Self::DEFAULT_CLASH_CORE];
 
     pub async fn validate_and_fix_config() -> Result<()> {
         let config_path = dirs::verge_path()?;
@@ -251,19 +252,21 @@ impl IVerge {
                 logging!(
                     warn,
                     Type::Config,
-                    "启动时发现无效的clash_core配置: '{}', 将自动修正为 'verge-mihomo'",
-                    core
+                    "启动时发现无效的clash_core配置: '{}', 将自动修正为 '{}'",
+                    core,
+                    Self::DEFAULT_CLASH_CORE
                 );
-                config.clash_core = Some("verge-mihomo".into());
+                config.clash_core = Some(Self::DEFAULT_CLASH_CORE.into());
                 needs_fix = true;
             }
         } else {
             logging!(
                 info,
                 Type::Config,
-                "启动时发现未配置clash_core, 将设置为默认值 'verge-mihomo'"
+                "启动时发现未配置clash_core, 将设置为默认值 '{}'",
+                Self::DEFAULT_CLASH_CORE
             );
-            config.clash_core = Some("verge-mihomo".into());
+            config.clash_core = Some(Self::DEFAULT_CLASH_CORE.into());
             needs_fix = true;
         }
 
@@ -296,7 +299,10 @@ impl IVerge {
     }
 
     pub fn get_valid_clash_core(&self) -> String {
-        self.clash_core.clone().unwrap_or_else(|| "verge-mihomo".into())
+        match self.clash_core.as_deref().map(str::trim) {
+            Some(core) if Self::VALID_CLASH_CORES.contains(&core) => core.into(),
+            _ => Self::DEFAULT_CLASH_CORE.into(),
+        }
     }
 
     pub async fn new() -> Self {
@@ -326,7 +332,7 @@ impl IVerge {
         Self {
             app_log_max_size: Some(128),
             app_log_max_count: Some(8),
-            clash_core: Some("verge-mihomo".into()),
+            clash_core: Some(Self::DEFAULT_CLASH_CORE.into()),
             language: Some(clash_verge_i18n::system_language().into()),
             theme_mode: Some("system".into()),
             #[cfg(not(target_os = "windows"))]
@@ -463,7 +469,14 @@ impl IVerge {
         patch!(proxy_host);
         patch!(theme_setting);
         patch!(web_ui_list);
-        patch!(clash_core);
+        if let Some(ref core) = patch.clash_core {
+            let core = core.trim();
+            if Self::VALID_CLASH_CORES.contains(&core) {
+                self.clash_core = Some(core.into());
+            } else {
+                self.clash_core = Some(Self::DEFAULT_CLASH_CORE.into());
+            }
+        }
         patch!(hotkeys);
         patch!(enable_global_hotkey);
 

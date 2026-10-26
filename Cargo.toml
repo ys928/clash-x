@@ -12,14 +12,14 @@ members = [
 resolver = "2"
 
 [profile.release]
+# Size-oriented release: keep unwind so setup catch_unwind still works.
 panic = "unwind"
 codegen-units = 1
-lto = "thin"
-opt-level = 3
-debug = 1
-strip = "none"
+lto = "fat"
+opt-level = "s"
+debug = false
+strip = "symbols"
 overflow-checks = false
-split-debuginfo = "unpacked"
 rpath = false
 
 [profile.dev]

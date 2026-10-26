@@ -189,12 +189,6 @@
         "portTooHigh": "連結埠不能大於 65535"
       }
     },
-    "clashCore": {
-      "variants": {
-        "release": "正式版",
-        "alpha": "預覽版"
-      }
-    },
     "liteMode": {
       "title": "輕量模式設定",
       "actions": {

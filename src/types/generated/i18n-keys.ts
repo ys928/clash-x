@@ -562,8 +562,6 @@ export const translationKeys = [
   'settings.modals.clashPort.messages.automaticFallbackFailed',
   'settings.modals.clashPort.messages.portTooLow',
   'settings.modals.clashPort.messages.portTooHigh',
-  'settings.modals.clashCore.variants.release',
-  'settings.modals.clashCore.variants.alpha',
   'settings.modals.liteMode.title',
   'settings.modals.liteMode.actions.enterNow',
   'settings.modals.liteMode.toggles.autoEnter',
