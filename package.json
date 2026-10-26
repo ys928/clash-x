@@ -44,7 +44,6 @@
     "@codemirror/lang-css": "^6.3.1",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-yaml": "^6.1.3",
-    "@codemirror/language": "^6.13.1",
     "@codemirror/lint": "^6.9.7",
     "@codemirror/state": "^6.7.6",
     "@codemirror/theme-one-dark": "^6.1.3",
@@ -76,7 +75,6 @@
     "i18next": "^26.2.0",
     "js-yaml": "^5.0.0",
     "lodash-es": "^4.18.1",
-    "meta-json-schema": "^1.19.25",
     "nanoid": "^6.0.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -88,7 +86,6 @@
     "rehype-raw": "^7.0.0",
     "swr": "^2.4.2",
     "tauri-plugin-mihomo-api": "github:clash-verge-rev/tauri-plugin-mihomo#main",
-    "types-pac": "^1.0.3",
     "validator": "^13.15.35",
     "vue": "^3.5.42"
   },

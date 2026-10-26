@@ -229,7 +229,7 @@ async fn resolve_latest_version() -> Result<(ProxyType, std::string::String)> {
 
     for proxy in [ProxyType::Localhost, ProxyType::System, ProxyType::None] {
         let attempt = NetworkManager::new()
-            .get(&url, proxy, Some(VERSION_TIMEOUT_SECS), None, false)
+            .get(url, proxy, Some(VERSION_TIMEOUT_SECS), None, false)
             .await;
 
         match attempt {
