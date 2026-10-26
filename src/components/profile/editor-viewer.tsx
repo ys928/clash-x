@@ -19,12 +19,11 @@ import { useLockFn } from 'ahooks'
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { BaseLoadingOverlay, MonacoEditor } from '@/components/base'
+import { BaseLoadingOverlay, CodeMirrorEditor } from '@/components/base'
 import { showNotice } from '@/services/notice-service'
 import { useThemeMode } from '@/services/states'
-import type { MonacoEditorInstance, MonacoMarker } from '@/types/monaco'
+import type { CodeEditorHandle, EditorMarker } from '@/types/editor'
 import debounce from '@/utils/debounce'
-import getSystem from '@/utils/get-system'
 
 const appWindow = getCurrentWebviewWindow()
 
@@ -44,7 +43,7 @@ export interface EditorViewerProps {
   onSave?: () => void | Promise<void>
   onResetToDefault?: () => void
   onClose: () => void
-  onValidate?: (markers: MonacoMarker[]) => void
+  onValidate?: (markers: EditorMarker[]) => void
 }
 
 export const EditorViewer = ({
@@ -66,15 +65,15 @@ export const EditorViewer = ({
   const { t } = useTranslation()
   const themeMode = useThemeMode()
   const [isMaximized, setIsMaximized] = useState(false)
-  const editorRef = useRef<MonacoEditorInstance | null>(null)
+  const editorRef = useRef<CodeEditorHandle | null>(null)
 
   const resolvedTitle = title ?? t('profiles.components.menu.editFile')
   const disableSave = loading || saveDisabled || dirty === false
 
   const syncEditorValue = useCallback(() => {
-    const model = editorRef.current?.getModel()
-    if (model && model.getValue() !== value) {
-      model.setValue(value)
+    const editor = editorRef.current
+    if (editor && editor.getValue() !== value) {
+      editor.setValue(value)
     }
   }, [value])
 
@@ -112,22 +111,7 @@ export const EditorViewer = ({
       const text = await navigator.clipboard.readText()
       if (!text) return
 
-      const editorInstance = editorRef.current
-      const model = editorInstance.getModel()
-      const selections = editorInstance.getSelections()
-      if (!model || !selections || selections.length === 0) return
-
-      editorInstance.pushUndoStop()
-      editorInstance.executeEdits(
-        'explicit-paste',
-        selections.map((selection) => ({
-          range: selection,
-          text,
-          forceMoveMarkers: true,
-        })),
-      )
-      editorInstance.pushUndoStop()
-      editorInstance.focus()
+      editorRef.current.pasteAtSelections(text)
     } catch (error) {
       showNotice.error(error)
     }
@@ -136,7 +120,7 @@ export const EditorViewer = ({
   const handleFormat = useLockFn(async () => {
     try {
       if (loading) return
-      await editorRef.current?.getAction('editor.action.formatDocument')?.run()
+      await editorRef.current?.formatDocument()
     } catch (error) {
       showNotice.error(error)
     }
@@ -210,49 +194,18 @@ export const EditorViewer = ({
         <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
           <BaseLoadingOverlay isLoading={loading} />
           {!loading && (
-            <MonacoEditor
+            <CodeMirrorEditor
               height="100%"
               path={path}
               value={value}
               language={language}
-              theme={themeMode === 'light' ? 'light' : 'vs-dark'}
-              loading={null}
-              saveViewState
-              keepCurrentModel={false}
+              theme={themeMode === 'light' ? 'light' : 'dark'}
               onMount={(editorInstance) => {
                 editorRef.current = editorInstance
                 syncEditorValue()
               }}
-              onChange={(nextValue) => onChange?.(nextValue ?? '')}
+              onChange={onChange}
               onValidate={onValidate}
-              options={{
-                automaticLayout: true,
-                tabSize: 2,
-                minimap: {
-                  enabled:
-                    typeof document !== 'undefined' &&
-                    document.documentElement.clientWidth >= 1500,
-                },
-                mouseWheelZoom: true,
-                readOnly,
-                readOnlyMessage: {
-                  value: t('profiles.modals.editor.messages.readOnly'),
-                },
-                renderValidationDecorations: 'on',
-                quickSuggestions: {
-                  strings: true,
-                  comments: true,
-                  other: true,
-                },
-                padding: {
-                  top: 33,
-                },
-                fontFamily: `Fira Code, JetBrains Mono, Roboto Mono, "Source Code Pro", Consolas, Menlo, Monaco, monospace, "Courier New", "Apple Color Emoji"${
-                  getSystem() === 'windows' ? ', twemoji mozilla' : ''
-                }`,
-                fontLigatures: false,
-                smoothScrolling: true,
-              }}
             />
           )}
         </div>

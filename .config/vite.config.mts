@@ -35,8 +35,6 @@ export default defineConfig({
     alias: {
       '@': path.join(repoRoot, 'src'),
       '@root': repoRoot,
-      'monaco-editor/esm/vs/editor/editor.worker.js':
-        'monaco-editor/editor/editor.worker',
     },
   },
   define: {
